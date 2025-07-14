@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import VendorHome from './pages/VendorHome';
 import MyListings from './pages/MyListings';
 import AddListing from './pages/AddListing';
+import ViewOrders from './pages/ViewOrders';
 
 const VendorApp = ({ user, onLogout }) => {
   const [currentPage, setCurrentPage] = useState('home'); // home page
@@ -45,9 +46,13 @@ const VendorApp = ({ user, onLogout }) => {
     <>
       {currentPage === 'home' && (
         <VendorHome
-        onNavigateToListings={navigateToListings}
           onNavigateToOrders={navigateToOrders}
           onNavigateToWallet={navigateToWallet}
+          onNavigateToListings={navigateToListings}
+          onLogout={() => {
+            onLogout(); // or clearToken(), navigate to login, etc.
+            setCurrentPage('landing'); // or wherever your login screen is
+          }}
         />
       )}
 
@@ -76,7 +81,9 @@ const VendorApp = ({ user, onLogout }) => {
       )}
 
       {/* Placeholder: These pages will be created next */}
-      {currentPage === 'orders' && <div>Orders Page Coming Soon</div>}
+      {currentPage === 'orders' && (
+        <ViewOrders onNavigateToHome={navigateToHome} />
+    )}
       {currentPage === 'wallet' && <div>Wallet Page Coming Soon</div>}
     </>
   );
