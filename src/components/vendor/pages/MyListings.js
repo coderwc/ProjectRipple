@@ -1,7 +1,7 @@
 import React from 'react';
-import { Trash2, Plus, User, LogOut } from 'lucide-react'; // Removed unused 'Home'
+import { Trash2, Plus, ArrowLeft } from 'lucide-react';
 
-const MyListings = ({ listings, setListings, user, onLogout, onNavigateToAdd, onNavigateToEdit }) => {
+const MyListings = ({ listings, setListings, user, onLogout, onNavigateToAdd, onNavigateToEdit, onNavigateToHome }) => {
   const handleDelete = (index) => {
     const updated = [...listings];
     updated.splice(index, 1);
@@ -20,23 +20,12 @@ const MyListings = ({ listings, setListings, user, onLogout, onNavigateToAdd, on
       </div>
 
       {/* Header */}
-      <div className="bg-white px-4 py-6 border-b border-gray-100">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-              <User className="w-6 h-6 text-gray-400" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">{user.name}</h1>
-              <p className="text-sm text-gray-500">Vendor Account</p>
-            </div>
-          </div>
-          <button 
-            onClick={onLogout}
-            className="p-2 text-gray-500 hover:text-gray-700"
-          >
-            <LogOut className="w-5 h-5" />
+      <div className="bg-white px-4 py-4 border-b border-gray-100">
+        <div className="flex items-center gap-3">
+          <button onClick={onNavigateToHome}>
+            <ArrowLeft className="w-6 h-6 text-gray-700" />
           </button>
+          <h1 className="text-xl font-bold text-gray-900">My Listings</h1>
         </div>
       </div>
 
@@ -110,7 +99,6 @@ const MyListings = ({ listings, setListings, user, onLogout, onNavigateToAdd, on
                       </p>
                     )}
                     
-                    {/* Item details */}
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
                         {item.category}
@@ -124,8 +112,7 @@ const MyListings = ({ listings, setListings, user, onLogout, onNavigateToAdd, on
                         </span>
                       )}
                     </div>
-                    
-                    {/* Price and expiry */}
+
                     <div className="flex justify-between items-center">
                       <span className="font-semibold text-sm text-gray-900">
                         SGD ${parseFloat(item.price || 0).toFixed(2)}
