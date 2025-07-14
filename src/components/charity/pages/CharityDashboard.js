@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { LogOut } from 'lucide-react';
 import Dashboard from './Dashboard';
 import CreatePostPage from './CreatePostPage';
 import AddItemsPage from './AddItemsPage';
@@ -59,6 +60,14 @@ const CharityDashboard = ({ user, onLogout }) => {
       image: "/api/placeholder/120/100"
     }
   ]);
+
+  // Logout handler with confirmation
+  const handleLogout = () => {
+    const confirmLogout = window.confirm("Are you sure you want to log out?");
+    if (confirmLogout) {
+      onLogout();
+    }
+  };
 
   // AI Analysis Functions
   const analyzeArticle = async () => {
@@ -182,8 +191,23 @@ const CharityDashboard = ({ user, onLogout }) => {
     setCurrentPage('driveDetails');
   };
 
+  // Logout Icon Component
+  const LogoutIcon = () => (
+    <button
+      onClick={handleLogout}
+      className="absolute top-6 right-4 flex items-center gap-1 text-sm text-gray-500 hover:text-red-600 transition-colors"
+      aria-label="Log out"
+      title="Logout"
+    >
+      <LogOut className="w-5 h-5" />
+    </button>
+  );
+
   return (
     <>
+      {/* Logout Icon - Always visible */}
+      <LogoutIcon />
+      
       {currentPage === 'driveDetails' && (
         <DriveDetailsPage
           drive={selectedDrive}
