@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Edit3, Check, X, Plus, Home, User } from 'lucide-react';
+import { Edit3, Check, X, Plus, Home, User, LogOut } from 'lucide-react';
 
 const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
   const [editingField, setEditingField] = useState(null);
@@ -24,6 +24,14 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
   useEffect(() => {
     localStorage.setItem('hopeFoundationProfile', JSON.stringify(profileData));
   }, [profileData]);
+
+  // Handle logout with confirmation
+  const handleLogout = () => {
+    const confirmLogout = window.confirm("Are you sure you want to log out?");
+    if (confirmLogout) {
+      onLogout();
+    }
+  };
 
   const handleEdit = (field) => {
     setEditingField(field);
@@ -77,8 +85,18 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
       </div>
 
       {/* Header */}
-      <div className="bg-white px-4 py-6">
+      <div className="relative bg-white px-4 py-6">
         <h1 className="text-2xl font-bold text-gray-900">NGO</h1>
+        
+        {/* Logout Icon - Top Right */}
+        <button
+          onClick={handleLogout}
+          className="absolute top-6 right-4 flex items-center gap-1 text-sm text-gray-500 hover:text-red-600 transition-colors"
+          aria-label="Log out"
+          title="Logout"
+        >
+          <LogOut className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Profile Content */}
@@ -251,16 +269,6 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
               </div>
             )}
           </div>
-        </div>
-
-        {/* Logout Section */}
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <button 
-            onClick={onLogout}
-            className="w-full bg-red-500 text-white py-3 rounded-lg font-medium hover:bg-red-600 transition-colors"
-          >
-            LOG OUT
-          </button>
         </div>
       </div>
 
