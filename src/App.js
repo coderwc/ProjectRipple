@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import LandingPage from './components/shared/LandingPage'; // Add this import
+import LandingPage from './components/shared/LandingPage';
 import AuthPage from './components/shared/AuthPage';
 import CharityApp from './components/charity/pages/CharityDashboard';
 import VendorApp from './components/vendor/VendorApp';
@@ -7,7 +7,7 @@ import VendorApp from './components/vendor/VendorApp';
 function App() {
   const [user, setUser] = useState(null);
   const [userType, setUserType] = useState(null);
-  const [showAuth, setShowAuth] = useState(false); // Add this state
+  const [showAuth, setShowAuth] = useState(false);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('rippleUser');
@@ -20,7 +20,7 @@ function App() {
 
   const handleSelectUserType = (type) => {
     setUserType(type);
-    setShowAuth(true); // Show auth page after user type selection
+    setShowAuth(true);
   };
 
   const handleLogin = (userData) => {
@@ -32,13 +32,24 @@ function App() {
   const handleLogout = () => {
     setUser(null);
     setUserType(null);
-    setShowAuth(false); // Go back to landing page
+    setShowAuth(false);
     localStorage.removeItem('rippleUser');
   };
 
-  // Show landing page first
+  const handleBackToLanding = () => {
+    setShowAuth(false);
+    setUserType(null);
+  };
+
+  // Show auth page if user selected a type but isn't logged in
   if (!user && showAuth) {
-    return <AuthPage onLogin={handleLogin} userType={userType} />;
+    return (
+      <AuthPage 
+        onLogin={handleLogin} 
+        userType={userType} 
+        onBack={handleBackToLanding}
+      />
+    );
   }
 
   // Show appropriate app based on user type

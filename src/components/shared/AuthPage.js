@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Apple, Heart, Package, FileText } from 'lucide-react';
 
-const AuthPage = ({ onLogin, userType: selectedUserType }) => {
+const AuthPage = ({ onLogin, userType: selectedUserType, onBack }) => {
   const [isSignIn, setIsSignIn] = useState(true);
   const [formData, setFormData] = useState({
     fullName: '',
@@ -52,7 +52,8 @@ const AuthPage = ({ onLogin, userType: selectedUserType }) => {
         queries: ''
       });
     } else {
-      console.log('Navigate back from sign-in page');
+      // Navigate back to landing page
+      onBack();
     }
   };
 
