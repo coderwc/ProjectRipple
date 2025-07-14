@@ -37,8 +37,20 @@ function App() {
     localStorage.removeItem('rippleUser');
   };
 
+  const handleBackToLanding = () => {
+    setShowAuth(false);
+    setUserType(null);
+  };
+
+  // Show auth page if user selected a type but isn't logged in
   if (!user && showAuth) {
-    return <AuthPage onLogin={handleLogin} userType={userType} />;
+    return (
+      <AuthPage 
+        onLogin={handleLogin} 
+        userType={userType} 
+        onBack={handleBackToLanding}
+      />
+    );
   }
 
   switch (userType) {

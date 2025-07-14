@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import VendorHome from './pages/VendorHome';
 import MyListings from './pages/MyListings';
 import AddListing from './pages/AddListing';
+import ViewOrders from './pages/ViewOrders';
 
 const VendorApp = ({ user, onLogout }) => {
-  const [currentPage, setCurrentPage] = useState('listings'); // 'listings', 'addListing', 'editListing'
+  const [currentPage, setCurrentPage] = useState('home'); // home page
   const [editingId, setEditingId] = useState(null);
   
   // Load listings from localStorage with user-specific key
@@ -17,6 +19,7 @@ const VendorApp = ({ user, onLogout }) => {
     localStorage.setItem(`vendorListings_${user.id}`, JSON.stringify(listings));
   }, [listings, user.id]);
 
+  const navigateToHome = () => setCurrentPage('home');
   const navigateToAdd = () => {
     setEditingId(null);
     setCurrentPage('addListing');
@@ -32,8 +35,27 @@ const VendorApp = ({ user, onLogout }) => {
     setEditingId(null);
   };
 
+  const navigateToOrders = () => {
+    setCurrentPage('orders');
+  };
+  const navigateToWallet = () => {
+    setCurrentPage('wallet');
+  };
+
   return (
     <>
+      {currentPage === 'home' && (
+        <VendorHome
+          onNavigateToOrders={navigateToOrders}
+          onNavigateToWallet={navigateToWallet}
+          onNavigateToListings={navigateToListings}
+          onLogout={() => {
+            onLogout(); // or clearToken(), navigate to login, etc.
+            setCurrentPage('landing'); // or wherever your login screen is
+          }}
+        />
+      )}
+
       {currentPage === 'listings' && (
         <MyListings
           listings={listings}
@@ -42,9 +64,10 @@ const VendorApp = ({ user, onLogout }) => {
           onLogout={onLogout}
           onNavigateToAdd={navigateToAdd}
           onNavigateToEdit={navigateToEdit}
+          onNavigateToHome={navigateToHome} //
         />
       )}
-      
+
       {(currentPage === 'addListing' || currentPage === 'editListing') && (
         <AddListing
           listings={listings}
@@ -53,8 +76,15 @@ const VendorApp = ({ user, onLogout }) => {
           editingId={editingId}
           isEditing={currentPage === 'editListing'}
           onBack={navigateToListings}
+          onNavigateToHome={navigateToHome}
         />
       )}
+
+      {/* Placeholder: These pages will be created next */}
+      {currentPage === 'orders' && (
+        <ViewOrders onNavigateToHome={navigateToHome} />
+    )}
+      {currentPage === 'wallet' && <div>Wallet Page Coming Soon</div>}
     </>
   );
 };
