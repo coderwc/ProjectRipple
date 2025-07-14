@@ -35,19 +35,29 @@ const ViewOrders = ({ onNavigateToHome }) => {
       if (sortBy === 'Status') return statusOrder[a.status] - statusOrder[b.status];
       return 0;
     });
-    
+
   return (
     <div className="max-w-sm mx-auto min-h-screen bg-gray-50">
+
+      {/* Status Bar */}
+      <div className="flex justify-between items-center px-4 py-2 bg-white text-sm font-medium">
+        <span>9:30</span>
+        <div className="flex gap-1">
+          <div className="w-4 h-2 bg-black rounded-sm"></div>
+          <div className="w-4 h-2 bg-black rounded-sm"></div>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="relative bg-white px-4 py-6 border-b border-gray-100">
         <button onClick={onNavigateToHome} className="absolute left-4 top-6 text-gray-600 hover:text-gray-900">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-center text-lg font-semibold text-gray-900">View Orders</h1>
+        <h1 className="text-left pl-12 text-lg font-bold text-gray-900">View Orders</h1>
       </div>
 
       {/* Filters */}
-      <div className="px-4 pt-4">
+      <div className="px-4 pt-6">
         <div className="flex flex-wrap gap-2">
         {['All', 'Pending', 'Shipped', 'Completed', 'Cancelled'].map((status) => (
             <button
