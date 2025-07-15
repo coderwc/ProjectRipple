@@ -1,29 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { Edit3, Check, X, Plus, Home, User } from 'lucide-react';
 
-const ProfilePage = ({ currentPage, setCurrentPage, onLogout, user }) => {
+const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
   const [editingField, setEditingField] = useState(null);
 
   const defaultProfileData = {
     name: "Freshmart",
     tagline: "Sustainable Pantry Staples for Every Home",
     aboutUs:
-      "Freshmart is your go-to source for quality canned food, bottled essentials, and non-perishable goods. We believe in reducing food waste by offering surplus and near-expiry products at affordable prices. By partnering with local communities and charities, Freshmart ensures that good food doesn’t go to waste — it goes where it's needed most.",
-    focusAreas: ["Canned Food", "Bottled Goods", "Food Waste Reduction", "Community Support"]
+      "Freshmart is your go-to vendor for canned food, bottled drinks, and other long-lasting pantry essentials. We reduce food waste by offering surplus and near-expiry items at discounted prices. Our mission is to make quality food more accessible while supporting local communities and minimizing environmental impact.",
+    focusAreas: ["Canned Food", "Bottled Drinks", "Pantry Staples", "Food Waste Reduction"]
   };
 
-  const profileKey = `vendorProfile_${user.id}`;
-
   const [profileData, setProfileData] = useState(() => {
-    const savedProfile = localStorage.getItem(profileKey);
+    const savedProfile = localStorage.getItem('freshmartProfile');
     return savedProfile ? JSON.parse(savedProfile) : defaultProfileData;
   });
 
   const [tempData, setTempData] = useState({ ...profileData });
 
   useEffect(() => {
-    localStorage.setItem(profileKey, JSON.stringify(profileData));
-  }, [profileData, profileKey]);
+    localStorage.setItem('freshmartProfile', JSON.stringify(profileData));
+  }, [profileData]);
 
   const handleEdit = (field) => {
     setEditingField(field);
@@ -169,14 +167,17 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout, user }) => {
                       <button
                         onClick={() => removeFocusArea(index)}
                         className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center"
-                      >×</button>
+                      >
+                        ×
+                      </button>
                     </div>
                   ))}
                   <button
                     onClick={addFocusArea}
                     className="bg-gray-200 text-gray-600 border border-dashed border-gray-400 rounded-full px-3 py-1 text-xs flex items-center gap-1"
                   >
-                    <Plus className="w-3 h-3" /> Add
+                    <Plus className="w-3 h-3" />
+                    Add
                   </button>
                 </div>
                 <div className="flex gap-2">
@@ -194,11 +195,13 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout, user }) => {
           </div>
         </div>
 
+        {/* Logout */}
         <div className="mt-6 pt-6 border-t border-gray-200">
           <button onClick={onLogout} className="w-full bg-red-500 text-white py-3 rounded-lg font-medium hover:bg-red-600 transition">LOG OUT</button>
         </div>
       </div>
 
+      {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-white border-t border-gray-200">
         <div className="flex justify-around py-3">
           <button onClick={() => setCurrentPage('home')} className="flex flex-col items-center gap-1">
@@ -209,7 +212,7 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout, user }) => {
             <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center">
               <Plus className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xs text-gray-600">Add</span>
+            <span className="text-xs text-gray-600">Add Listing</span>
           </button>
           <button onClick={() => setCurrentPage('profile')} className="flex flex-col items-center gap-1">
             <User className="w-6 h-6 text-gray-900" />

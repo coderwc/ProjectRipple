@@ -115,7 +115,7 @@ const VendorHome = ({
             <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">
               <Plus className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xs font-medium text-gray-600">Add Listings</span>
+            <span className="text-xs font-medium text-gray-600">Add Listing</span>
           </button>
 
           {/* Profile */}

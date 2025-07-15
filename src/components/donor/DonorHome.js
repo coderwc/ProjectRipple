@@ -12,9 +12,9 @@ import {
   AlertTriangle,
   Filter,
   SortAsc,
-  Droplet
+  Droplet,
+  LogOut
 } from 'lucide-react';
-
 
 const categories = [
   { name: 'Natural Disasters', icon: AlertTriangle },
@@ -41,7 +41,15 @@ const exploreDrives = [
 
 export default function DonorHome({ user, onSelectCategory, onSelectPost, onLogout }) {
   return (
-    <div className="max-w-sm mx-auto p-4 bg-gray-50 min-h-screen">
+    <div className="max-w-sm mx-auto p-4 bg-gray-50 min-h-screen relative">
+      {/* Logout Button */}
+      <button
+        onClick={onLogout}
+        className="absolute top-4 right-4 text-gray-500 hover:text-red-600 transition-colors"
+        title="Logout"
+      >
+        <LogOut className="w-5 h-5" />
+      </button>
 
       {/* Top Bar */}
       <div className="flex justify-between items-center mb-4">
@@ -58,37 +66,37 @@ export default function DonorHome({ user, onSelectCategory, onSelectPost, onLogo
       </div>
 
       {/* Category Grid */}
-<h2 className="text-sm font-semibold text-gray-700 mb-2">Donate by Category</h2>
-<div className="grid grid-cols-4 gap-3 mb-4">
-  {categories.map(({ name, icon: Icon }) => (
-    <button
-  key={name}
-  onClick={() => onSelectCategory(name)}
-  className="w-20 h-20 flex flex-col items-center justify-center bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-100 active:bg-gray-200 transition"
->
-  <Icon className="w-6 h-6 text-black mb-1" />
-  <span style={{ fontSize: '10px' }} className="text-center leading-tight">{name}</span>
-</button>
-  ))}
-</div>
+      <h2 className="text-sm font-semibold text-gray-700 mb-2">Donate by Category</h2>
+      <div className="grid grid-cols-4 gap-3 mb-4">
+        {categories.map(({ name, icon: Icon }) => (
+          <button
+            key={name}
+            onClick={() => onSelectCategory(name)}
+            className="w-20 h-20 flex flex-col items-center justify-center bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-100 active:bg-gray-200 transition"
+          >
+            <Icon className="w-6 h-6 text-black mb-1" />
+            <span style={{ fontSize: '10px' }} className="text-center leading-tight">{name}</span>
+          </button>
+        ))}
+      </div>
 
       {/* Most Urgent */}
       <div className="mb-6">
-  <h2 className="text-sm font-semibold text-gray-700 mb-2">Most Urgent</h2>
-  <div className="flex space-x-4 overflow-x-auto pb-2">
-    {urgentPosts.map((post, index) => (
-      <div
-        key={index}
-        className="min-w-[160px] shrink-0 p-4 bg-white rounded-lg shadow-sm border border-gray-200"
-      >
-        <div className="w-full h-24 bg-gray-100 rounded mb-2"></div>
-        <h3 className="text-sm font-semibold">{post.title}</h3>
-        <p className="text-xs text-gray-500">{post.ngo}</p>
-        <p className="text-xs text-blue-600 mt-1">{post.progress}% full</p>
+        <h2 className="text-sm font-semibold text-gray-700 mb-2">Most Urgent</h2>
+        <div className="flex space-x-4 overflow-x-auto pb-2">
+          {urgentPosts.map((post, index) => (
+            <div
+              key={index}
+              className="min-w-[160px] shrink-0 p-4 bg-white rounded-lg shadow-sm border border-gray-200"
+            >
+              <div className="w-full h-24 bg-gray-100 rounded mb-2"></div>
+              <h3 className="text-sm font-semibold">{post.title}</h3>
+              <p className="text-xs text-gray-500">{post.ngo}</p>
+              <p className="text-xs text-blue-600 mt-1">{post.progress}% full</p>
+            </div>
+          ))}
+        </div>
       </div>
-    ))}
-  </div>
-</div>
 
       {/* Explore + Sort/Filter */}
       <div className="flex justify-between items-center mb-2">
@@ -102,7 +110,7 @@ export default function DonorHome({ user, onSelectCategory, onSelectPost, onLogo
       </div>
 
       {/* Explore Feed */}
-      <div className="space-y-3">
+      <div className="space-y-3 pb-24">
         {exploreDrives.map((drive) => (
           <div
             key={drive.id}
@@ -112,7 +120,6 @@ export default function DonorHome({ user, onSelectCategory, onSelectPost, onLogo
             <div className="h-20 bg-gray-200 rounded mb-2" />
             <h3 className="text-sm font-semibold mb-1">{drive.title}</h3>
             <p className="text-xs text-gray-500 mb-1">{drive.org}</p>
-
             <div className="flex justify-between items-center text-xs text-gray-500">
               <div className="flex items-center gap-1">
                 <Droplet className="w-3 h-3 text-blue-500" />
