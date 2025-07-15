@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { LogOut } from 'lucide-react';
 import Dashboard from './Dashboard';
 import CreatePostPage from './CreatePostPage';
 import AddItemsPage from './AddItemsPage';
@@ -67,127 +68,15 @@ const CharityDashboard = ({ user, onLogout }) => {
     }
   ]);
 
-  // Handle post creation
-  const handlePostNeed = async () => {
-  console.log('🚀 handlePostNeed called!');
-  console.log('📝 Form data:', formData);
-  console.log('📦 Added items:', addedItems);
-
-  if (!formData.headline || !formData.storyDescription) {
-    alert('Please fill in all required fields');
-    return;
-  }
-
-  setLoading(true);
-  try {
-    const postData = {
-      charityId: user.id || user._id || 'temp-id',
-      charityName: user.name || 'Test Charity',
-      headline: formData.headline,
-      storyDescription: formData.storyDescription,
-      deadline: formData.deadline,
-      items: addedItems,
-      imageBase64: selectedImage
-    };
-
-    console.log('📤 Sending post data:', postData);
-
-    const result = await createPost(postData);
-    
-    console.log('📥 Server response:', result);
-
-    if (result.success) {
-      console.log('🎉 Post successful! Adding to dashboard and navigating to success...');
-      
-      // Add the new post to dashboard
-      const newDrive = {
-        id: Date.now(),
-        name: formData.headline,
-        vendor: user.name || 'Your Organization',
-        description: formData.storyDescription,
-        price: "Seeking donations",
-        expiry: formData.deadline || "Open-ended",
-        image: selectedImage || "/api/placeholder/120/100",
-        items: addedItems
-      };
-      
-      setOngoingDrives([newDrive, ...ongoingDrives]);
-      
-      // Reset form
-      setFormData({ headline: '', storyDescription: '', deadline: '' });
-      setAddedItems([]);
-      setSelectedImage(null);
-      
-      // Navigate to success page (with timeout)
-      setCurrentPage('success');
-    } else {
-      throw new Error(result.error || 'Failed to create post');
-    }
-
-  } catch (error) {
-    console.error('❌ Error creating post:', error);
-    alert('Error creating post. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
-
-  // Handle AI recommendations
-  const handleAIRecommendation = async () => {
-    if (!formData.storyDescription) {
-      alert('Please enter a story description first');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const result = await getAIRecommendations(
-        formData.storyDescription,
-        formData.headline,
-        user.location || 'Not specified'
-      );
-
-      if (result.success && result.analysis.recommended_items) {
-        const recommendedItems = result.analysis.recommended_items.map((item, index) => ({
-          id: Date.now() + index,
-          name: item.item,
-          category: 'AI Recommended',
-          quantity: parseInt(item.quantity) || 1
-        }));
-
-        setAddedItems([...addedItems, ...recommendedItems]);
-        alert(`Added ${recommendedItems.length} AI-recommended items!`);
-      }
-    } catch (error) {
-      console.error('Error getting AI recommendations:', error);
-      alert('Error getting recommendations. Please try again.');
-    } finally {
-      setLoading(false);
+  // Logout handler with confirmation
+  const handleLogout = () => {
+    const confirmLogout = window.confirm("Are you sure you want to log out?");
+    if (confirmLogout) {
+      onLogout();
     }
   };
 
-  // Handle adding items
-  const handleAddItem = () => {
-    if (selectedItemCategory && itemName && quantity > 0) {
-      const newItem = {
-        id: Date.now(),
-        category: selectedItemCategory,
-        name: itemName,
-        quantity: quantity
-      };
-      setAddedItems([...addedItems, newItem]);
-      
-      // Reset add item form
-      setSelectedItemCategory('');
-      setItemName('');
-      setQuantity(0);
-      
-      // Go back to create post
-      setCurrentPage('createPost');
-    }
-  };
-
-  // AI Analysis functions
+  // AI Analysis Functions
   const analyzeArticle = async () => {
     if (!articleText.trim()) {
       alert('Please enter article text first!');
@@ -257,116 +146,96 @@ const CharityDashboard = ({ user, onLogout }) => {
     setCurrentPage('driveDetails');
   };
 
-  // Render the appropriate page
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'dashboard':
-        return (
-          <Dashboard
-            showMore={showMore}
-            setShowMore={setShowMore}
-            selectedCategory={selectedCategory}
-            setSelectedCategory={setSelectedCategory}
-            ongoingDrives={ongoingDrives}
-            currentPage={currentPage}
-            setCurrentPage={setCurrentPage}
-            onDriveClick={handleDriveClick}
-          />
-        );
-
-      case 'createPost':
-        return (
-          <CreatePostPage
-            selectedImage={selectedImage}
-            setSelectedImage={setSelectedImage}
-            formData={formData}
-            setFormData={setFormData}
-            addedItems={addedItems}
-            setAddedItems={setAddedItems}
-            onBack={() => setCurrentPage('dashboard')}
-            onAddItems={() => setCurrentPage('addItems')}
-            onPostNeed={handlePostNeed}
-            onAIRecommendation={() => setCurrentPage('aiAnalysis')}
-          />
-        );
-
-      case 'addItems':
-        return (
-          <AddItemsPage
-            selectedItemCategory={selectedItemCategory}
-            setSelectedItemCategory={setSelectedItemCategory}
-            itemName={itemName}
-            setItemName={setItemName}
-            quantity={quantity}
-            setQuantity={setQuantity}
-            onBack={() => setCurrentPage('createPost')}
-            onAddItem={handleAddItem}
-            onPostNeed={handlePostNeed}
-            itemCategories={itemCategories}
-          />
-        );
-
-      case 'success':
-        return (
-          <SuccessPage onNavigate={setCurrentPage} />
-        );
-
-      case 'aiAnalysis':
-        return (
-          <AIAnalysisPage
-            articleText={articleText}
-            setArticleText={setArticleText}
-            aiAnalysis={aiAnalysis}
-            generatedItems={generatedItems}
-            setGeneratedItems={setGeneratedItems}
-            onBack={() => setCurrentPage('createPost')}
-            onAnalyze={analyzeArticle}
-            onUseItems={useGeneratedItems}
-          />
-        );
-
-      case 'profile':
-        return (
-          <ProfilePage
-            currentPage={currentPage}
-            setCurrentPage={setCurrentPage}
-            onLogout={onLogout}
-          />
-        );
-
-      case 'driveDetails':
-        return (
-          <DriveDetailsPage
-            drive={selectedDrive}
-            onBack={() => setCurrentPage('dashboard')}
-          />
-        );
-
-      default:
-        return (
-          <Dashboard
-            showMore={showMore}
-            setShowMore={setShowMore}
-            selectedCategory={selectedCategory}
-            setSelectedCategory={setSelectedCategory}
-            ongoingDrives={ongoingDrives}
-            currentPage={currentPage}
-            setCurrentPage={setCurrentPage}
-            onDriveClick={handleDriveClick}
-          />
-        );
-    }
-  };
+  // Logout Icon Component
+  const LogoutIcon = () => (
+    <button
+      onClick={handleLogout}
+      className="absolute top-6 right-4 flex items-center gap-1 text-sm text-gray-500 hover:text-red-600 transition-colors"
+      aria-label="Log out"
+      title="Logout"
+    >
+      <LogOut className="w-5 h-5" />
+    </button>
+  );
 
   return (
     <>
-      {renderPage()}
-      {loading && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg">
-            <p className="text-gray-700">Creating post...</p>
-          </div>
-        </div>
+      {/* Logout Icon - Always visible */}
+      <LogoutIcon />
+      
+      {currentPage === 'driveDetails' && (
+        <DriveDetailsPage
+          drive={selectedDrive}
+          onBack={() => setCurrentPage('dashboard')}
+        />
+      )}
+
+      {currentPage === 'success' && (
+        <SuccessPage onClose={() => setCurrentPage('dashboard')} />
+      )}
+      
+      {currentPage === 'profile' && (
+        <ProfilePage 
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+          onLogout={onLogout}
+        />
+      )}
+      
+      {currentPage === 'aiAnalysis' && (
+        <AIAnalysisPage
+          articleText={articleText}
+          setArticleText={setArticleText}
+          aiAnalysis={aiAnalysis}
+          generatedItems={generatedItems}
+          setGeneratedItems={setGeneratedItems}  // ← Make sure this is included
+          onBack={() => setCurrentPage('createPost')}
+          onAnalyze={analyzeArticle}
+          onUseItems={useGeneratedItems}
+        />
+      )}
+      
+      {currentPage === 'addItems' && (
+        <AddItemsPage
+          selectedItemCategory={selectedItemCategory}
+          setSelectedItemCategory={setSelectedItemCategory}
+          itemName={itemName}
+          setItemName={setItemName}
+          quantity={quantity}
+          setQuantity={setQuantity}
+          onBack={() => setCurrentPage('createPost')}
+          onAddItem={handleAddItem}
+          onPostNeed={handlePostNeed}
+          itemCategories={itemCategories}
+        />
+      )}
+      
+      {currentPage === 'createPost' && (
+        <CreatePostPage
+          selectedImage={selectedImage}
+          setSelectedImage={setSelectedImage}
+          formData={formData}
+          setFormData={setFormData}
+          addedItems={addedItems}
+          setAddedItems={setAddedItems}
+          onBack={() => setCurrentPage('dashboard')}
+          onAddItems={() => setCurrentPage('addItems')}
+          onPostNeed={handlePostNeed}
+          onAIRecommendation={() => setCurrentPage('aiAnalysis')} // NEW: AI button function
+        />
+      )}
+      
+      {currentPage === 'dashboard' && (
+        <Dashboard
+          showMore={showMore}
+          setShowMore={setShowMore}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          ongoingDrives={ongoingDrives}
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+          onDriveClick={handleDriveClick}
+        />
       )}
     </>
   );

@@ -77,7 +77,7 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
       </div>
 
       {/* Header */}
-      <div className="bg-white px-4 py-6">
+      <div className="relative bg-white px-4 py-6">
         <h1 className="text-2xl font-bold text-gray-900">NGO</h1>
       </div>
 
@@ -251,16 +251,11 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
               </div>
             )}
           </div>
-        </div>
 
-        {/* Logout Section */}
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <button 
-            onClick={onLogout}
-            className="w-full bg-red-500 text-white py-3 rounded-lg font-medium hover:bg-red-600 transition-colors"
-          >
-            LOG OUT
-          </button>
+          {/* New Logout Component */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <button onClick={onLogout} className="w-full bg-red-500 text-white py-3 rounded-lg font-medium hover:bg-red-600 transition">LOG OUT</button>
+          </div>
         </div>
       </div>
 
