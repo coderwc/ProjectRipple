@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Apple, Heart, Package, FileText } from 'lucide-react';
+import { loginUser, registerUser } from '../../api/posts';
 
 const AuthPage = ({ onLogin, userType: selectedUserType, onBack }) => {
   const [isSignIn, setIsSignIn] = useState(true);
@@ -13,32 +14,7 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack }) => {
     queries: ''
   });
 
-  const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleSubmit = () => {
-    // Create user data based on selected user type from landing page
-    const userData = {
-      id: Date.now(),
-      type: selectedUserType,
-      email: formData.email,
-      name: formData.fullName || 'User',
-      phone: formData.phone,
-      location: formData.location,
-      socials: formData.socials,
-      isSignIn: isSignIn
-    };
-    
-    console.log(`${isSignIn ? 'Sign in' : 'Sign up'} attempt:`, userData);
-    
-    // Call the onLogin function to navigate to appropriate dashboard
-    onLogin(userData);
-  };
-
+  // ADD THESE MISSING FUNCTIONS:
   const handleBackClick = () => {
     if (!isSignIn) {
       setIsSignIn(true);
@@ -52,7 +28,6 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack }) => {
         queries: ''
       });
     } else {
-      // Navigate back to landing page
       onBack();
     }
   };
@@ -69,6 +44,42 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack }) => {
       queries: ''
     });
   };
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+const handleSubmit = async () => {
+  try {
+    const userData = {
+      email: formData.email,
+      name: formData.fullName || 'User',
+      type: selectedUserType,
+      phone: formData.phone,
+      location: formData.location,
+      socials: formData.socials
+    };
+    
+    let result;
+    if (isSignIn) {
+      result = await loginUser(formData.email);
+    } else {
+      result = await registerUser(userData);
+    }
+    
+    if (result.success) {
+      onLogin(result.user);
+    } else {
+      alert(result.error || 'Authentication failed');
+    }
+    
+  } catch (error) {
+    console.error('Authentication error:', error);
+    alert('Authentication failed. Please try again.');
+  }
+};
 
   // Dynamic content based on selected user type
   const getUserTypeContent = () => {

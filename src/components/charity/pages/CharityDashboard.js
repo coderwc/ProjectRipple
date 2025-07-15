@@ -4,33 +4,40 @@ import Dashboard from './Dashboard';
 import CreatePostPage from './CreatePostPage';
 import AddItemsPage from './AddItemsPage';
 import SuccessPage from './SuccessPage';
-import AIAnalysisPage from './AIAnalysisPage'; // Import your existing AI page
-import { itemCategories } from '../constants/categories';
+import AIAnalysisPage from './AIAnalysisPage';
 import ProfilePage from './ProfilePage';
 import DriveDetailsPage from './DriveDetailsPage';
+import { createPost, getAIRecommendations } from '../../../api/posts';
+import { itemCategories } from '../constants/categories';
 
 const CharityDashboard = ({ user, onLogout }) => {
-  const [showMore, setShowMore] = useState(false);
+  // Page navigation
   const [currentPage, setCurrentPage] = useState('dashboard');
-  const [selectedCategory, setSelectedCategory] = useState('Natural Disasters');
-  const [selectedItemCategory, setSelectedItemCategory] = useState('');
-  const [itemName, setItemName] = useState('');
-  const [quantity, setQuantity] = useState(0);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [addedItems, setAddedItems] = useState([]);
-  
-  // AI Analysis State
-  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const [articleText, setArticleText] = useState('');
-  const [generatedItems, setGeneratedItems] = useState([]);
-  const [selectedDrive, setSelectedDrive] = useState(null);
-  
+  // Create post form state
+  const [selectedImage, setSelectedImage] = useState(null);
   const [formData, setFormData] = useState({
     headline: '',
     storyDescription: '',
     deadline: ''
   });
+  const [addedItems, setAddedItems] = useState([]);
+
+  // Add items page state
+  const [selectedItemCategory, setSelectedItemCategory] = useState('');
+  const [itemName, setItemName] = useState('');
+  const [quantity, setQuantity] = useState(0);
+
+  // AI Analysis state
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [articleText, setArticleText] = useState('');
+  const [generatedItems, setGeneratedItems] = useState([]);
+
+  // Dashboard state
+  const [showMore, setShowMore] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('Natural Disasters');
+  const [selectedDrive, setSelectedDrive] = useState(null);
   const [ongoingDrives, setOngoingDrives] = useState([
     {
       id: 1,
@@ -78,54 +85,45 @@ const CharityDashboard = ({ user, onLogout }) => {
 
     try {
       setAiAnalysis({ loading: true });
-      
-      console.log('🌐 Calling AI API with article text...');
-      
+
       const response = await fetch('http://localhost:5001/api/ai-recommendation', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           description: articleText,
           headline: 'Article Analysis',
           location: 'From article'
         })
       });
-      
+
       const data = await response.json();
-      console.log('📊 AI Response:', data);
-      
+
       if (data.success && data.analysis.recommended_items) {
         setAiAnalysis(data.analysis);
         setGeneratedItems(data.analysis.recommended_items);
       } else {
         throw new Error(data.error || 'Failed to analyze article');
       }
-      
+
     } catch (error) {
       console.error('❌ Analysis Error:', error);
       setAiAnalysis({
-        error: `Failed to analyze article: ${error.message}. Make sure your backend server is running.`
+        error: `Failed to analyze article: ${error.message}`
       });
     }
   };
 
   const useGeneratedItems = () => {
-    // Convert AI generated items to your addedItems format
     const convertedItems = generatedItems.map((item, index) => {
-      // Handle different data types for quantity
-      let quantityNumber = 1; // Default fallback
+      let quantityNumber = 1;
       
       if (typeof item.quantity === 'string') {
-        // Extract number from string like "100 units" or "500 packages"
         const match = item.quantity.match(/\d+/);
         quantityNumber = match ? parseInt(match[0]) : 1;
       } else if (typeof item.quantity === 'number') {
-        // If it's already a number
         quantityNumber = item.quantity;
       }
-      
+
       return {
         id: Date.now() + index,
         category: 'AI Generated',
@@ -133,59 +131,16 @@ const CharityDashboard = ({ user, onLogout }) => {
         quantity: quantityNumber
       };
     });
-    
+
     setAddedItems([...addedItems, ...convertedItems]);
     setCurrentPage('createPost');
-    
+
     // Reset AI state
     setArticleText('');
     setAiAnalysis(null);
     setGeneratedItems([]);
   };
 
-  // Handle posting with success page
-  const handlePostNeed = () => {
-    if (formData.headline && formData.storyDescription && addedItems.length > 0) {
-      const newDrive = {
-        id: Date.now(),
-        name: formData.headline,
-        vendor: "Hope Foundation",
-        description: formData.storyDescription,
-        price: "SGD $0",
-        expiry: formData.deadline || "TBD",
-        image: selectedImage || "/api/placeholder/120/100"
-      };
-      
-      setOngoingDrives(prev => [newDrive, ...prev]);
-      setCurrentPage('success');
-      
-      setTimeout(() => {
-        setCurrentPage('dashboard');
-      }, 3000);
-      
-      setFormData({ headline: '', storyDescription: '', deadline: '' });
-      setAddedItems([]);
-      setSelectedImage(null);
-    }
-  };
-
-  const handleAddItem = () => {
-    if (selectedItemCategory && itemName && quantity > 0) {
-      const newItem = {
-        id: Date.now(),
-        category: selectedItemCategory,
-        name: itemName,
-        quantity: quantity
-      };
-      setAddedItems([...addedItems, newItem]);
-      setSelectedItemCategory('');
-      setItemName('');
-      setQuantity(0);
-      setCurrentPage('createPost');
-    }
-  };
-
-  
   const handleDriveClick = (drive) => {
     setSelectedDrive(drive);
     setCurrentPage('driveDetails');
