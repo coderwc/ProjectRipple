@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Apple, Heart, Package, FileText } from 'lucide-react';
-import { loginUser, registerUser } from '../../api/posts';
 
 const AuthPage = ({ onLogin, userType: selectedUserType, onBack }) => {
   const [isSignIn, setIsSignIn] = useState(true);
@@ -14,7 +13,42 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack }) => {
     queries: ''
   });
 
-  // ADD THESE MISSING FUNCTIONS:
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  // MOCK SUBMIT - No typing required, just click and go!
+  const handleSubmit = async () => {
+    try {
+      // Mock authentication - no input required, just click and go!
+      const mockUser = {
+        id: Date.now(),
+        email: `test${selectedUserType}@example.com`,
+        name: `Test ${selectedUserType.charAt(0).toUpperCase() + selectedUserType.slice(1)}`,
+        type: selectedUserType,
+        phone: '+65 1234 5678',
+        location: 'Singapore',
+        socials: `https://${selectedUserType}example.com`,
+        queries: `Mock ${selectedUserType} for testing`
+      };
+      
+      // Simulate a brief loading delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      console.log(`Mock ${isSignIn ? 'Sign in' : 'Sign up'} for:`, mockUser);
+      
+      // Always successful login - no validation needed
+      onLogin(mockUser);
+      
+    } catch (error) {
+      console.error('Mock authentication error:', error);
+      alert('Something went wrong. Please try again.');
+    }
+  };
+
   const handleBackClick = () => {
     if (!isSignIn) {
       setIsSignIn(true);
@@ -44,42 +78,6 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack }) => {
       queries: ''
     });
   };
-  const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-const handleSubmit = async () => {
-  try {
-    const userData = {
-      email: formData.email,
-      name: formData.fullName || 'User',
-      type: selectedUserType,
-      phone: formData.phone,
-      location: formData.location,
-      socials: formData.socials
-    };
-    
-    let result;
-    if (isSignIn) {
-      result = await loginUser(formData.email);
-    } else {
-      result = await registerUser(userData);
-    }
-    
-    if (result.success) {
-      onLogin(result.user);
-    } else {
-      alert(result.error || 'Authentication failed');
-    }
-    
-  } catch (error) {
-    console.error('Authentication error:', error);
-    alert('Authentication failed. Please try again.');
-  }
-};
 
   // Dynamic content based on selected user type
   const getUserTypeContent = () => {
@@ -160,7 +158,6 @@ const handleSubmit = async () => {
                   selectedUserType === 'vendor' ? 'Your Company Name' : 'Your Full Name'
                 }
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition-all"
-                required={!isSignIn}
               />
             </div>
           )}
@@ -177,7 +174,6 @@ const handleSubmit = async () => {
               onChange={handleInputChange}
               placeholder="your.email@example.com"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition-all"
-              required
             />
           </div>
 
@@ -194,7 +190,6 @@ const handleSubmit = async () => {
                 onChange={handleInputChange}
                 placeholder="****************"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition-all"
-                required
               />
               <div className="text-right mt-2">
                 <button
@@ -221,7 +216,6 @@ const handleSubmit = async () => {
                   onChange={handleInputChange}
                   placeholder="Insert Number Here with Country Code"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition-all"
-                  required={!isSignIn}
                 />
               </div>
 
@@ -257,7 +251,6 @@ const handleSubmit = async () => {
                     selectedUserType === 'donor' ? 'Your city or region' : 'Insert Full Address Here'
                   }
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition-all"
-                  required={!isSignIn}
                 />
               </div>
 
@@ -307,6 +300,7 @@ const handleSubmit = async () => {
               <div className="space-y-3">
                 <button
                   type="button"
+                  onClick={handleSubmit}
                   className="w-full bg-gray-800 text-white py-3 px-4 rounded-lg hover:bg-gray-900 transition-colors flex items-center justify-center gap-3"
                 >
                   <Apple className="w-5 h-5" />
@@ -315,6 +309,7 @@ const handleSubmit = async () => {
 
                 <button
                   type="button"
+                  onClick={handleSubmit}
                   className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-3"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">

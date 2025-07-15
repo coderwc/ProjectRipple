@@ -38,35 +38,47 @@ const CharityDashboard = ({ user, onLogout }) => {
   const [showMore, setShowMore] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('Natural Disasters');
   const [selectedDrive, setSelectedDrive] = useState(null);
-  const [ongoingDrives, setOngoingDrives] = useState([
-    {
-      id: 1,
-      name: "Emergency Food Relief",
-      vendor: "Local Food Bank",
-      description: "Providing essential food supplies to families affected by recent flooding",
-      price: "SGD $15,500",
-      expiry: "2 Months",
-      image: "/api/placeholder/120/100"
-    },
-    {
-      id: 2,
-      name: "Winter Clothing Drive",
-      vendor: "Community Center",
-      description: "Collecting warm clothing for homeless individuals during winter season",
-      price: "SGD $8,200",
-      expiry: "3 Months",
-      image: "/api/placeholder/120/100"
-    },
-    {
-      id: 3,
-      name: "School Supplies Support",
-      vendor: "Education Foundation",
-      description: "Supporting underprivileged students with essential school materials",
-      price: "SGD $12,750",
-      expiry: "1 Month",
-      image: "/api/placeholder/120/100"
-    }
-  ]);
+const [ongoingDrives, setOngoingDrives] = useState([
+  {
+    id: 1,
+    name: "Emergency Food Relief",
+    vendor: "Local Food Bank",
+    description: "Providing essential food supplies to families affected by recent flooding",
+    expiry: "2 Months",
+    image: "/api/placeholder/120/100",
+    items: [
+      { name: "Canned Food", quantity: 100 },
+      { name: "Rice Bags", quantity: 50 },
+      { name: "Water Bottles", quantity: 200 }
+    ]
+  },
+  {
+    id: 2,
+    name: "Winter Clothing Drive",
+    vendor: "Community Center",
+    description: "Collecting warm clothing for homeless individuals during winter season",
+    expiry: "3 Months",
+    image: "/api/placeholder/120/100",
+    items: [
+      { name: "Winter Coats", quantity: 30 },
+      { name: "Blankets", quantity: 50 },
+      { name: "Gloves", quantity: 100 }
+    ]
+  },
+  {
+    id: 3,
+    name: "School Supplies Support",
+    vendor: "Education Foundation",
+    description: "Supporting underprivileged students with essential school materials",
+    expiry: "1 Month",
+    image: "/api/placeholder/120/100",
+    items: [
+      { name: "Notebooks", quantity: 200 },
+      { name: "Pens", quantity: 500 },
+      { name: "Backpacks", quantity: 50 }
+    ]
+  }
+]);
 
   // Logout handler with confirmation
   const handleLogout = () => {
@@ -75,6 +87,98 @@ const CharityDashboard = ({ user, onLogout }) => {
       onLogout();
     }
   };
+
+  // MISSING FUNCTIONS - ADD THESE:
+  const handleAddItem = () => {
+    if (!selectedItemCategory || !itemName || quantity <= 0) {
+      alert('Please fill in all fields correctly!');
+      return;
+    }
+
+    const newItem = {
+      id: Date.now(),
+      category: selectedItemCategory,
+      name: itemName,
+      quantity: quantity
+    };
+
+    setAddedItems([...addedItems, newItem]);
+    
+    // Reset form
+    setSelectedItemCategory('');
+    setItemName('');
+    setQuantity(0);
+    
+    // Go back to create post page
+    setCurrentPage('createPost');
+  };
+
+const handlePostNeed = async () => {
+  if (!formData.headline || !formData.storyDescription || !formData.deadline) {
+    alert('Please fill in all required fields!');
+    return;
+  }
+
+  if (addedItems.length === 0) {
+    alert('Please add at least one item to your post!');
+    return;
+  }
+
+  try {
+    setLoading(true);
+    
+    const postData = {
+      headline: formData.headline,
+      storyDescription: formData.storyDescription,
+      deadline: formData.deadline,
+      items: addedItems,
+      image: selectedImage,
+      author: user?.name || 'Anonymous',
+      location: 'Singapore',
+      charityId: user?.id || Date.now(),
+      charityName: user?.name || 'Test Charity'
+    };
+
+    // Call your API to create the post
+    const response = await createPost(postData);
+    
+    if (response.success) {
+      // 🎯 ADD THE NEW POST TO DASHBOARD
+      const newPost = {
+        id: Date.now(),
+        name: formData.headline,
+        vendor: user?.name || 'Hope Foundation',
+        description: formData.storyDescription,
+        expiry: formData.deadline,
+        image: selectedImage || "/api/placeholder/120/100",
+        items: addedItems
+      };
+      
+      // Add to the top of ongoing drives
+      setOngoingDrives([newPost, ...ongoingDrives]);
+
+      // Reset form data
+      setFormData({
+        headline: '',
+        storyDescription: '',
+        deadline: ''
+      });
+      setAddedItems([]);
+      setSelectedImage(null);
+      
+      // Navigate to success page
+      setCurrentPage('success');
+    } else {
+      throw new Error(response.error || 'Failed to create post');
+    }
+    
+  } catch (error) {
+    console.error('Error creating post:', error);
+    alert(`Failed to create post: ${error.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // AI Analysis Functions
   const analyzeArticle = async () => {
@@ -171,7 +275,7 @@ const CharityDashboard = ({ user, onLogout }) => {
       )}
 
       {currentPage === 'success' && (
-        <SuccessPage onClose={() => setCurrentPage('dashboard')} />
+        <SuccessPage onNavigate={() => setCurrentPage('dashboard')} />
       )}
       
       {currentPage === 'profile' && (
@@ -188,7 +292,7 @@ const CharityDashboard = ({ user, onLogout }) => {
           setArticleText={setArticleText}
           aiAnalysis={aiAnalysis}
           generatedItems={generatedItems}
-          setGeneratedItems={setGeneratedItems}  // ← Make sure this is included
+          setGeneratedItems={setGeneratedItems}
           onBack={() => setCurrentPage('createPost')}
           onAnalyze={analyzeArticle}
           onUseItems={useGeneratedItems}
@@ -221,7 +325,7 @@ const CharityDashboard = ({ user, onLogout }) => {
           onBack={() => setCurrentPage('dashboard')}
           onAddItems={() => setCurrentPage('addItems')}
           onPostNeed={handlePostNeed}
-          onAIRecommendation={() => setCurrentPage('aiAnalysis')} // NEW: AI button function
+          onAIRecommendation={() => setCurrentPage('aiAnalysis')}
         />
       )}
       
