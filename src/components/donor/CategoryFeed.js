@@ -100,40 +100,40 @@ const CategoryFeed = ({ onBack, onSelectPost, categoryName = "Natural Disasters"
       </div>
 
       {/* News Items */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {newsItems.map((item) => (
           <div 
             key={item.id} 
-            className="bg-white rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+            className="bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-all duration-200 border border-gray-100"
             onClick={() => onSelectPost && onSelectPost(item.id)}
           >
-            <div className="flex gap-3">
-              {/* Image placeholder */}
-              <div className="w-20 h-16 bg-gray-300 rounded flex-shrink-0"></div>
+            <div className="flex gap-4 items-start">
+              {/* Image placeholder - Grey placeholder, uniform size */}
+              <div className="w-20 h-20 bg-gray-300 rounded-lg flex-shrink-0"></div>
               
               {/* Content */}
-              <div className="flex-1">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-medium text-gray-900">{item.headline}</h3>
-                  <Heart className="w-5 h-5 text-gray-400 hover:text-red-500 cursor-pointer" />
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-start mb-3">
+                  <h3 className="font-semibold text-gray-900 text-base leading-tight line-clamp-2 pr-2">{item.headline}</h3>
+                  <Heart className="w-5 h-5 text-gray-300 hover:text-red-500 cursor-pointer transition-colors flex-shrink-0" />
                 </div>
                 
-                <p className="text-sm text-blue-600 mb-2">{item.source}</p>
+                <p className="text-sm text-blue-600 font-medium mb-3">{item.source}</p>
                 
                 {/* Progress section */}
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-blue-600">{item.kindness}</span>
-                    <div className="flex items-center gap-1">
+                    <span className="text-blue-600 font-medium">{item.kindness}</span>
+                    <div className="flex items-center gap-1 text-right">
                       <span className="text-gray-500">Remaining Days</span>
-                      <span className="font-medium text-gray-900">{item.remainingDays}</span>
+                      <span className="font-semibold text-gray-800 min-w-[2ch]">{item.remainingDays}</span>
                     </div>
                   </div>
                   
                   {/* Progress bar */}
-                  <div className="w-full bg-gray-200 rounded-full h-1">
+                  <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
                     <div 
-                      className="bg-blue-500 h-1 rounded-full transition-all" 
+                      className="bg-blue-500 h-full rounded-full transition-all duration-500 ease-out" 
                       style={{ width: `${item.progress}%` }}
                     ></div>
                   </div>
