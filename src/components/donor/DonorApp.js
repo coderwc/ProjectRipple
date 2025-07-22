@@ -1,33 +1,71 @@
 import React, { useState } from 'react';
 import DonorHome from './DonorHome';
+import CategoryFeed from './CategoryFeed';
+import CharityPost from './CharityPost';
 
-const DonorApp = ({ user, onLogout }) => {
-  const [currentPage, setCurrentPage] = useState('home');
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [selectedPostId, setSelectedPostId] = useState(null);
-
-  const goToCategory = (category) => {
-    setSelectedCategory(category);
-    setCurrentPage('category');
+function App() {
+  const [currentView, setCurrentView] = useState('home');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedPost, setSelectedPost] = useState(null);
+  
+  // Mock user data
+  const user = {
+    name: 'John Doe'
   };
 
-  const goToPost = (postId) => {
-    setSelectedPostId(postId);
-    setCurrentPage('post');
+  const handleSelectCategory = (categoryName) => {
+    setSelectedCategory(categoryName);
+    setCurrentView('category');
+  };
+
+  const handleBackToHome = () => {
+    setCurrentView('home');
+    setSelectedCategory('');
+    setSelectedPost(null);
+  };
+
+  const handleBackToCategory = () => {
+    setCurrentView('category');
+    setSelectedPost(null);
+  };
+
+  const handleSelectPost = (postId) => {
+    setSelectedPost(postId);
+    setCurrentView('post');
+  };
+
+  const handleLogout = () => {
+    console.log('User logged out');
+    // Add logout logic here
   };
 
   return (
-    <>
-      {currentPage === 'home' && (
+    <div className="App">
+      {currentView === 'home' && (
         <DonorHome
           user={user}
-          onSelectCategory={goToCategory}
-          onSelectPost={goToPost}
-          onLogout={onLogout}
+          onSelectCategory={handleSelectCategory}
+          onSelectPost={handleSelectPost}
+          onLogout={handleLogout}
         />
       )}
-    </>
+      
+      {currentView === 'category' && (
+        <CategoryFeed
+          categoryName={selectedCategory}
+          onBack={handleBackToHome}
+          onSelectPost={handleSelectPost}
+        />
+      )}
+      
+      {currentView === 'post' && (
+        <CharityPost
+          postId={selectedPost}
+          onBack={handleBackToCategory}
+        />
+      )}
+    </div>
   );
-};
+}
 
-export default DonorApp;
+export default App;
