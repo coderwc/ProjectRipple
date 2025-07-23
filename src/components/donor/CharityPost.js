@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Heart, Users, FileText, Camera, ChevronRight } from 'lucide-react';
 
-const CharityPost = ({ onBack, postId = 1 }) => {
+const CharityPost = ({ onBack, postId = 1, onCharitySelect }) => {
   const [isLiked, setIsLiked] = useState(false);
   // Mock data - in real app this would be fetched based on postId
   const postData = {
@@ -19,6 +19,18 @@ const CharityPost = ({ onBack, postId = 1 }) => {
     { id: 3, type: "Rice Bags", current: 28, target: 40, available: true },
     { id: 4, type: "Soap Bars", current: 28, target: 40, available: false }
   ];
+
+  const handleItemClick = (item) => {
+    if (item.available && item.type === "Water Bottles" && onCharitySelect) {
+      // Create mock charity data for the shopping interface
+      const charityData = {
+        id: postData.id || postId,
+        name: postData.organization || "Charity Name",
+        selectedItem: item.type
+      };
+      onCharitySelect(charityData);
+    }
+  };
 
   const familiesSupported = 4;
 
@@ -146,13 +158,20 @@ const CharityPost = ({ onBack, postId = 1 }) => {
           <div className="grid grid-cols-2 gap-4">
             {donationItems.map((item) => (
               <div key={item.id} className="relative h-32">
-                <div className={`p-4 rounded-lg border h-full flex flex-col justify-between ${item.available ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}`}>
+                <div 
+                  className={`p-4 rounded-lg border h-full flex flex-col justify-between transition-all ${
+                    item.available ? 'bg-blue-50 border-blue-200 hover:bg-blue-100 cursor-pointer' : 'bg-gray-50 border-gray-200'
+                  } ${item.type === "Water Bottles" && item.available ? 'hover:shadow-md' : ''}`}
+                  onClick={() => handleItemClick(item)}
+                >
                   <div className="flex flex-col">
                     <span className={`text-sm font-medium mb-1 ${item.available ? 'text-gray-900' : 'text-gray-500'}`}>
                       {item.type}
                     </span>
                     {item.available && (
-                      <span className="text-xs text-blue-600 mb-3">Available for donors</span>
+                      <span className="text-xs text-blue-600 mb-3">
+                        {item.type === "Water Bottles" ? "Click to shop" : "Available for donors"}
+                      </span>
                     )}
                     {!item.available && (
                       <span className="text-xs text-gray-400 mb-3">Not Available</span>

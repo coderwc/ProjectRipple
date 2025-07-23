@@ -3,7 +3,8 @@ import LandingPage from './components/shared/LandingPage';
 import AuthPage from './components/shared/AuthPage';
 import CharityApp from './components/charity/pages/CharityDashboard';
 import VendorApp from './components/vendor/VendorApp';
-import DonorApp from './components/donor/DonorApp'; // ✅ NEW LINE
+import DonorApp from './components/donor/DonorApp';
+import { CartProvider } from './components/shared/CartContext';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -35,6 +36,8 @@ function App() {
     setUserType(null);
     setShowAuth(false);
     localStorage.removeItem('rippleUser');
+    // Clear cart on logout
+    localStorage.removeItem('rippleCart');
   };
 
   const handleBackToLanding = () => {
@@ -45,24 +48,33 @@ function App() {
   // Show auth page if user selected a type but isn't logged in
   if (!user && showAuth) {
     return (
-      <AuthPage 
-        onLogin={handleLogin} 
-        userType={userType} 
-        onBack={handleBackToLanding}
-      />
+      <CartProvider>
+        <AuthPage 
+          onLogin={handleLogin} 
+          userType={userType} 
+          onBack={handleBackToLanding}
+        />
+      </CartProvider>
     );
   }
 
-  switch (userType) {
-    case 'charity':
-      return <CharityApp user={user} onLogout={handleLogout} />;
-    case 'vendor':
-      return <VendorApp user={user} onLogout={handleLogout} />;
-    case 'donor':
-      return <DonorApp user={user} onLogout={handleLogout} />; // ✅ REPLACED BLOCK
-    default:
-      return <LandingPage onSelectUserType={handleSelectUserType} />;
-  }
+  // Wrap the entire app with CartProvider for cart functionality
+  return (
+    <CartProvider>
+      {(() => {
+        switch (userType) {
+          case 'charity':
+            return <CharityApp user={user} onLogout={handleLogout} />;
+          case 'vendor':
+            return <VendorApp user={user} onLogout={handleLogout} />;
+          case 'donor':
+            return <DonorApp user={user} onLogout={handleLogout} />;
+          default:
+            return <LandingPage onSelectUserType={handleSelectUserType} />;
+        }
+      })()}
+    </CartProvider>
+  );
 }
 
 export default App;

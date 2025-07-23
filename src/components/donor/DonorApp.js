@@ -2,16 +2,17 @@ import React, { useState } from 'react';
 import DonorHome from './DonorHome';
 import CategoryFeed from './CategoryFeed';
 import CharityPost from './CharityPost';
+import AvailableVendors from './AvailableVendors';
+import VendorProducts from './VendorProducts';
+import { useCart } from '../shared/CartContext';
 
-function App() {
+function DonorApp({ user, onLogout }) {
   const [currentView, setCurrentView] = useState('home');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedPost, setSelectedPost] = useState(null);
-  
-  // Mock user data
-  const user = {
-    name: 'John Doe'
-  };
+  const [selectedCharity, setSelectedCharity] = useState(null);
+  const [selectedVendor, setSelectedVendor] = useState(null);
+  const { setCharity, clearCart } = useCart();
 
   const handleSelectCategory = (categoryName) => {
     setSelectedCategory(categoryName);
@@ -22,6 +23,8 @@ function App() {
     setCurrentView('home');
     setSelectedCategory('');
     setSelectedPost(null);
+    setSelectedCharity(null);
+    setSelectedVendor(null);
   };
 
   const handleBackToCategory = () => {
@@ -34,9 +37,39 @@ function App() {
     setCurrentView('post');
   };
 
+  // New function to handle charity selection for shopping
+  const handleCharitySelect = (charity) => {
+    setSelectedCharity(charity);
+    setCharity(charity); // Set charity in cart context
+    setCurrentView('shop');
+  };
+
+  // New function to handle vendor selection
+  const handleVendorSelect = (vendor) => {
+    setSelectedVendor(vendor);
+    setCurrentView('vendor');
+  };
+
+  // New function to go back to available vendors
+  const handleBackToVendors = () => {
+    setCurrentView('shop');
+    setSelectedVendor(null);
+  };
+
+  // New function to go to cart/shopping
+  const handleGoToCart = () => {
+    // If no charity selected, you might want to show a charity selection first
+    if (!selectedCharity) {
+      // You could show a charity selection modal or navigate to a charity list
+      alert('Please select a charity first to start shopping');
+      return;
+    }
+    setCurrentView('shop');
+  };
+
   const handleLogout = () => {
-    console.log('User logged out');
-    // Add logout logic here
+    clearCart(); // Clear cart on logout
+    onLogout(); // Call the parent logout function
   };
 
   return (
@@ -46,6 +79,8 @@ function App() {
           user={user}
           onSelectCategory={handleSelectCategory}
           onSelectPost={handleSelectPost}
+          onCharitySelect={handleCharitySelect}
+          onGoToCart={handleGoToCart}
           onLogout={handleLogout}
         />
       )}
@@ -62,10 +97,27 @@ function App() {
         <CharityPost
           postId={selectedPost}
           onBack={handleBackToCategory}
+          onCharitySelect={handleCharitySelect} // Add this to allow shopping from charity posts
+        />
+      )}
+
+      {currentView === 'shop' && (
+        <AvailableVendors
+          charity={selectedCharity}
+          onBack={handleBackToHome}
+          onSelectVendor={handleVendorSelect}
+        />
+      )}
+
+      {currentView === 'vendor' && (
+        <VendorProducts
+          vendor={selectedVendor}
+          onBack={handleBackToVendors}
+          onSelectVendor={handleVendorSelect}
         />
       )}
     </div>
   );
 }
 
-export default App;
+export default DonorApp;
