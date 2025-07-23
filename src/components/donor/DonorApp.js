@@ -4,6 +4,7 @@ import CategoryFeed from './CategoryFeed';
 import CharityPost from './CharityPost';
 import AvailableVendors from './AvailableVendors';
 import VendorProducts from './VendorProducts';
+import ShoppingCart from './Donorcomponents/ShoppingCart';
 import { useCart } from '../shared/CartContext';
 
 function DonorApp({ user, onLogout }) {
@@ -12,7 +13,8 @@ function DonorApp({ user, onLogout }) {
   const [selectedPost, setSelectedPost] = useState(null);
   const [selectedCharity, setSelectedCharity] = useState(null);
   const [selectedVendor, setSelectedVendor] = useState(null);
-  const { setCharity, clearCart } = useCart();
+  const [previousView, setPreviousView] = useState('home'); // Track previous view for cart navigation
+  const { setCharity, clearCart, getTotalItems } = useCart();
 
   const handleSelectCategory = (categoryName) => {
     setSelectedCategory(categoryName);
@@ -25,6 +27,7 @@ function DonorApp({ user, onLogout }) {
     setSelectedPost(null);
     setSelectedCharity(null);
     setSelectedVendor(null);
+    setPreviousView('home');
   };
 
   const handleBackToCategory = () => {
@@ -41,12 +44,14 @@ function DonorApp({ user, onLogout }) {
   const handleCharitySelect = (charity) => {
     setSelectedCharity(charity);
     setCharity(charity); // Set charity in cart context
+    setPreviousView(currentView); // Remember where we came from
     setCurrentView('shop');
   };
 
   // New function to handle vendor selection
   const handleVendorSelect = (vendor) => {
     setSelectedVendor(vendor);
+    setPreviousView(currentView); // Remember where we came from
     setCurrentView('vendor');
   };
 
@@ -56,15 +61,22 @@ function DonorApp({ user, onLogout }) {
     setSelectedVendor(null);
   };
 
-  // New function to go to cart/shopping
+  // Updated function to go to cart/shopping
   const handleGoToCart = () => {
-    // If no charity selected, you might want to show a charity selection first
-    if (!selectedCharity) {
-      // You could show a charity selection modal or navigate to a charity list
-      alert('Please select a charity first to start shopping');
+    // Check if there are items in cart
+    if (getTotalItems() === 0) {
+      alert('Your cart is empty. Add some items first!');
       return;
     }
-    setCurrentView('shop');
+    
+    setPreviousView(currentView); // Remember where we came from
+    setCurrentView('cart');
+  };
+
+  // New function to go back from cart
+  const handleBackFromCart = () => {
+    // Go back to the previous view or home if no previous view
+    setCurrentView(previousView || 'home');
   };
 
   const handleLogout = () => {
@@ -114,6 +126,12 @@ function DonorApp({ user, onLogout }) {
           vendor={selectedVendor}
           onBack={handleBackToVendors}
           onSelectVendor={handleVendorSelect}
+        />
+      )}
+
+      {currentView === 'cart' && (
+        <ShoppingCart
+          onGoBack={handleBackFromCart}
         />
       )}
     </div>
