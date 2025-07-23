@@ -185,26 +185,36 @@ export default function DonorHome({
         </div>
       </div>
 
-      {/* Explore Feed */}
+      {/* Explore Feed - UPDATED WITH STANDARDIZED STYLING */}
       <div className="space-y-3 pb-24">
         {exploreDrives.map((drive) => (
           <div
             key={drive.id}
-            className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm relative"
+            className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm relative"
           >
             <div 
               onClick={() => onSelectPost(drive.id)}
-              className="cursor-pointer"
+              className="cursor-pointer hover:shadow-md transition-all duration-200"
             >
-              <div className="h-20 bg-gray-200 rounded mb-2" />
-              <h3 className="text-sm font-semibold mb-1">{drive.title}</h3>
-              <p className="text-xs text-gray-500 mb-1">{drive.org}</p>
-              <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
-                <div className="flex items-center gap-1">
-                  <Droplet className="w-3 h-3 text-blue-500" />
-                  <span>Kindness Cup: {drive.progress}%</span>
+              {/* Grey placeholder - Standardized uniform size */}
+              <div className="w-full h-20 bg-gray-300 rounded-lg mb-3" />
+              
+              {/* Content section */}
+              <div className="space-y-2">
+                <h3 className="text-base font-semibold text-gray-900 leading-tight line-clamp-2">{drive.title}</h3>
+                <p className="text-sm text-blue-600 font-medium">{drive.org}</p>
+                
+                {/* Progress and days info */}
+                <div className="flex justify-between items-center text-xs">
+                  <div className="flex items-center gap-2">
+                    <Droplet className="w-4 h-4 text-blue-500" />
+                    <span className="text-blue-600 font-medium">Kindness Cup: {drive.progress}%</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-gray-500">Remaining Days</span>
+                    <span className="font-semibold text-gray-800 ml-1">{drive.daysLeft}</span>
+                  </div>
                 </div>
-                <span>{drive.daysLeft} days left</span>
               </div>
             </div>
             
