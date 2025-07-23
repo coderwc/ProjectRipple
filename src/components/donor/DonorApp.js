@@ -5,6 +5,7 @@ import CharityPost from './CharityPost';
 import AvailableVendors from './AvailableVendors';
 import VendorProducts from './VendorProducts';
 import ShoppingCart from './Donorcomponents/ShoppingCart';
+import Checkout from './Donorcomponents/Checkout';
 import { useCart } from '../shared/CartContext';
 
 function DonorApp({ user, onLogout }) {
@@ -79,6 +80,17 @@ function DonorApp({ user, onLogout }) {
     setCurrentView(previousView || 'home');
   };
 
+  // New function to go to checkout from cart
+  const handleGoToCheckout = () => {
+    setPreviousView('cart'); // Remember we came from cart
+    setCurrentView('checkout');
+  };
+
+  // New function to go back from checkout to cart
+  const handleBackFromCheckout = () => {
+    setCurrentView('cart');
+  };
+
   const handleLogout = () => {
     clearCart(); // Clear cart on logout
     onLogout(); // Call the parent logout function
@@ -132,6 +144,13 @@ function DonorApp({ user, onLogout }) {
       {currentView === 'cart' && (
         <ShoppingCart
           onGoBack={handleBackFromCart}
+          onGoToCheckout={handleGoToCheckout}
+        />
+      )}
+
+      {currentView === 'checkout' && (
+        <Checkout
+          onGoBack={handleBackFromCheckout}
         />
       )}
     </div>
