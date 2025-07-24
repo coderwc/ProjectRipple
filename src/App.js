@@ -7,6 +7,7 @@ import AuthPage from './components/shared/AuthPage';
 import CharityApp from './components/charity/pages/CharityDashboard';
 import VendorApp from './components/vendor/VendorApp';
 import DonorApp from './components/donor/DonorApp';
+import { CartProvider } from './components/shared/CartContext';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -65,19 +66,23 @@ function App() {
     setShowAuth(false);
   };
 
-  const handleUserUpdate = (updatedUserData) => {
-    setUser(updatedUserData);
-  };
+ const handleUserUpdate = (updatedUserData) => {
+  setUser(updatedUserData);
+};
 
-  const handleLogout = async () => {
-    try {
-      await auth.signOut();
-      setUser(null);
-      setUserType(null);
-      setShowAuth(false);
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
+const handleLogout = async () => {
+  try {
+    await auth.signOut();
+    setUser(null);
+    setUserType(null);
+    setShowAuth(false);
+    // Clear localStorage (from main branch)
+    localStorage.removeItem('rippleUser');
+    localStorage.removeItem('rippleCart');
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
+};
   };
 
   const handleBackToLanding = () => {
@@ -97,24 +102,31 @@ function App() {
   // Show auth page if user selected a type but isn't logged in
   if (!user && showAuth) {
     return (
-      <AuthPage 
-        onLogin={handleLogin} 
-        userType={userType} 
-        onBack={handleBackToLanding}
-      />
+      <CartProvider>
+        <AuthPage 
+          onLogin={handleLogin} 
+          userType={userType} 
+          onBack={handleBackToLanding}
+        />
+      </CartProvider>
     );
   }
 
-  switch (userType) {
-    case 'charity':
-      return <CharityApp user={user} onLogout={handleLogout} onUserUpdate={handleUserUpdate} />;
-    case 'vendor':
-      return <VendorApp user={user} onLogout={handleLogout} onUserUpdate={handleUserUpdate} />;
-    case 'donor':
-      return <DonorApp user={user} onLogout={handleLogout} onUserUpdate={handleUserUpdate} />;
-    default:
-      return <LandingPage onSelectUserType={handleSelectUserType} />;
-  }
-}
+return (
+  <CartProvider>
+    {(() => {
+      switch (userType) {
+        case 'charity':
+          return <CharityApp user={user} onLogout={handleLogout} onUserUpdate={handleUserUpdate} />;
+        case 'vendor':
+          return <VendorApp user={user} onLogout={handleLogout} onUserUpdate={handleUserUpdate} />;
+        case 'donor':
+          return <DonorApp user={user} onLogout={handleLogout} onUserUpdate={handleUserUpdate} />;
+        default:
+          return <LandingPage onSelectUserType={handleSelectUserType} />;
+      }
+    })()}
+  </CartProvider>
+);
 
 export default App;

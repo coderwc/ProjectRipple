@@ -1,33 +1,141 @@
 import React, { useState } from 'react';
 import DonorHome from './DonorHome';
+import CategoryFeed from './CategoryFeed';
+import CharityPost from './CharityPost';
+import AvailableVendors from './AvailableVendors';
+import VendorProducts from './VendorProducts';
+import ShoppingCart from './Donorcomponents/ShoppingCart';
+import { useCart } from '../shared/CartContext';
 
-const DonorApp = ({ user, onLogout }) => {
-  const [currentPage, setCurrentPage] = useState('home');
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [selectedPostId, setSelectedPostId] = useState(null);
+function DonorApp({ user, onLogout }) {
+  const [currentView, setCurrentView] = useState('home');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [selectedCharity, setSelectedCharity] = useState(null);
+  const [selectedVendor, setSelectedVendor] = useState(null);
+  const [previousView, setPreviousView] = useState('home'); // Track previous view for cart navigation
+  const { setCharity, clearCart, getTotalItems } = useCart();
 
-  const goToCategory = (category) => {
-    setSelectedCategory(category);
-    setCurrentPage('category');
+  const handleSelectCategory = (categoryName) => {
+    setSelectedCategory(categoryName);
+    setCurrentView('category');
   };
 
-  const goToPost = (postId) => {
-    setSelectedPostId(postId);
-    setCurrentPage('post');
+  const handleBackToHome = () => {
+    setCurrentView('home');
+    setSelectedCategory('');
+    setSelectedPost(null);
+    setSelectedCharity(null);
+    setSelectedVendor(null);
+    setPreviousView('home');
+  };
+
+  const handleBackToCategory = () => {
+    setCurrentView('category');
+    setSelectedPost(null);
+  };
+
+  const handleSelectPost = (postId) => {
+    setSelectedPost(postId);
+    setCurrentView('post');
+  };
+
+  // New function to handle charity selection for shopping
+  const handleCharitySelect = (charity) => {
+    setSelectedCharity(charity);
+    setCharity(charity); // Set charity in cart context
+    setPreviousView(currentView); // Remember where we came from
+    setCurrentView('shop');
+  };
+
+  // New function to handle vendor selection
+  const handleVendorSelect = (vendor) => {
+    setSelectedVendor(vendor);
+    setPreviousView(currentView); // Remember where we came from
+    setCurrentView('vendor');
+  };
+
+  // New function to go back to available vendors
+  const handleBackToVendors = () => {
+    setCurrentView('shop');
+    setSelectedVendor(null);
+  };
+
+  // Updated function to go to cart/shopping
+  const handleGoToCart = () => {
+    // Check if there are items in cart
+    if (getTotalItems() === 0) {
+      alert('Your cart is empty. Add some items first!');
+      return;
+    }
+    
+    setPreviousView(currentView); // Remember where we came from
+    setCurrentView('cart');
+  };
+
+  // New function to go back from cart
+  const handleBackFromCart = () => {
+    // Go back to the previous view or home if no previous view
+    setCurrentView(previousView || 'home');
+  };
+
+  const handleLogout = () => {
+    clearCart(); // Clear cart on logout
+    onLogout(); // Call the parent logout function
   };
 
   return (
-    <>
-      {currentPage === 'home' && (
+    <div className="App">
+      {currentView === 'home' && (
         <DonorHome
           user={user}
-          onSelectCategory={goToCategory}
-          onSelectPost={goToPost}
-          onLogout={onLogout}
+          onSelectCategory={handleSelectCategory}
+          onSelectPost={handleSelectPost}
+          onCharitySelect={handleCharitySelect}
+          onGoToCart={handleGoToCart}
+          onLogout={handleLogout}
         />
       )}
-    </>
+      
+      {currentView === 'category' && (
+        <CategoryFeed
+          categoryName={selectedCategory}
+          onBack={handleBackToHome}
+          onSelectPost={handleSelectPost}
+        />
+      )}
+      
+      {currentView === 'post' && (
+        <CharityPost
+          postId={selectedPost}
+          onBack={handleBackToCategory}
+          onCharitySelect={handleCharitySelect} // Add this to allow shopping from charity posts
+        />
+      )}
+
+      {currentView === 'shop' && (
+        <AvailableVendors
+          charity={selectedCharity}
+          onBack={handleBackToHome}
+          onSelectVendor={handleVendorSelect}
+        />
+      )}
+
+      {currentView === 'vendor' && (
+        <VendorProducts
+          vendor={selectedVendor}
+          onBack={handleBackToVendors}
+          onSelectVendor={handleVendorSelect}
+        />
+      )}
+
+      {currentView === 'cart' && (
+        <ShoppingCart
+          onGoBack={handleBackFromCart}
+        />
+      )}
+    </div>
   );
-};
+}
 
 export default DonorApp;
