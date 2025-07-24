@@ -83,7 +83,7 @@ const handleLogout = async () => {
     console.error('Logout error:', error);
   }
 };
-  };
+
 
   const handleBackToLanding = () => {
     setShowAuth(false);
@@ -128,5 +128,7 @@ return (
     })()}
   </CartProvider>
 );
+
+}
 
 export default App;
