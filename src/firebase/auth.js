@@ -6,7 +6,7 @@ import {
   GoogleAuthProvider,
   updateProfile
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from './config';
 
 // Create user account and store additional data
@@ -26,21 +26,43 @@ export const signUpUser = async (userData, userType) => {
       displayName: userData.fullName
     });
     
-    // Store additional user data in Firestore
-    const userDocData = {
-      uid: user.uid,
-      email: user.email,
-      name: userData.fullName,
-      type: userType,
-      phone: userData.phone || '',
-      location: userData.location || '',
-      socials: userData.socials || '',
-      queries: userData.queries || '',
-      createdAt: new Date().toISOString(),
-      isVerified: userType === 'donor', // Auto-verify donors, others need verification
-    };
-    
-    await setDoc(doc(db, 'users', user.uid), userDocData);
+    // Store user data in appropriate collection based on type
+    if (userType === 'charity') {
+      // Store charity data with all form fields
+      const charityDocData = {
+        uid: user.uid,
+        email: user.email,
+        name: userData.fullName,
+        type: 'charity',
+        phone: userData.phone || '',
+        location: userData.location || '',
+        socials: userData.socials || '',
+        queries: userData.queries || '',
+        tagline: '',
+        aboutUs: '',
+        focusAreas: [],
+        createdAt: new Date().toISOString(),
+        isVerified: false, // Charities need verification
+      };
+      
+      await setDoc(doc(db, 'users', user.uid), charityDocData);
+    } else {
+      // Store other user types (donors, vendors) in users collection
+      const userDocData = {
+        uid: user.uid,
+        email: user.email,
+        name: userData.fullName,
+        type: userType,
+        phone: userData.phone || '',
+        location: userData.location || '',
+        socials: userData.socials || '',
+        queries: userData.queries || '',
+        createdAt: new Date().toISOString(),
+        isVerified: userType === 'donor',
+      };
+      
+      await setDoc(doc(db, 'users', user.uid), userDocData);
+    }
     
     return {
       id: user.uid,
@@ -51,6 +73,9 @@ export const signUpUser = async (userData, userType) => {
       location: userData.location || '',
       socials: userData.socials || '',
       queries: userData.queries || '',
+      tagline: userType === 'charity' ? '' : undefined,
+      aboutUs: userType === 'charity' ? '' : undefined,
+      focusAreas: userType === 'charity' ? [] : undefined,
       isVerified: userType === 'donor'
     };
   } catch (error) {
@@ -81,6 +106,9 @@ export const signInUser = async (email, password) => {
         location: userData.location || '',
         socials: userData.socials || '',
         queries: userData.queries || '',
+        tagline: userData.tagline || '',
+        aboutUs: userData.aboutUs || '',
+        focusAreas: userData.focusAreas || [],
         isVerified: userData.isVerified || false
       };
     } else {
@@ -157,6 +185,53 @@ export const signInWithGoogle = async (userType) => {
     }
   } catch (error) {
     console.error('Google sign in error:', error);
+    throw error;
+  }
+};
+
+// Update user profile
+export const updateUserProfile = async (userId, profileData) => {
+  try {
+    const userRef = doc(db, 'users', userId);
+    
+    // Update Firebase Auth display name if name is being changed
+    if (profileData.name && auth.currentUser) {
+      await updateProfile(auth.currentUser, {
+        displayName: profileData.name
+      });
+    }
+    
+    // Update Firestore document
+    const updateData = {
+      ...profileData,
+      updatedAt: new Date().toISOString()
+    };
+    
+    await updateDoc(userRef, updateData);
+    
+    // Get updated user data
+    const updatedUserDoc = await getDoc(userRef);
+    if (updatedUserDoc.exists()) {
+      const userData = updatedUserDoc.data();
+      return {
+        id: userId,
+        email: userData.email,
+        name: userData.name,
+        type: userData.type,
+        phone: userData.phone || '',
+        location: userData.location || '',
+        socials: userData.socials || '',
+        queries: userData.queries || '',
+        tagline: userData.tagline || '',
+        aboutUs: userData.aboutUs || '',
+        focusAreas: userData.focusAreas || [],
+        isVerified: userData.isVerified || false
+      };
+    }
+    
+    throw new Error('Failed to retrieve updated user data');
+  } catch (error) {
+    console.error('Profile update error:', error);
     throw error;
   }
 };

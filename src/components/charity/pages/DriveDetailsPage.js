@@ -1,8 +1,16 @@
 import React from 'react';
-import { ArrowLeft, MapPin, Calendar, DollarSign, Users, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, DollarSign, Users, CheckCircle2, Package } from 'lucide-react';
 
 const DriveDetailsPage = ({ drive, onBack }) => {
   if (!drive) return null;
+
+  // Format items list for display
+  const formatItemsList = (items) => {
+    if (!items || items.length === 0) return [];
+    return items;
+  };
+
+  const itemsList = formatItemsList(drive.items);
 
   return (
     <div className="max-w-sm mx-auto bg-gray-50 min-h-screen">
@@ -28,7 +36,23 @@ const DriveDetailsPage = ({ drive, onBack }) => {
       {/* Content */}
       <div className="px-4 py-6 pb-24">
         {/* Drive Image */}
-        <div className="w-full h-48 bg-gray-200 rounded-lg mb-6"></div>
+        <div className="w-full h-48 bg-gray-200 rounded-lg mb-6 overflow-hidden">
+          {drive.image ? (
+            <img 
+              src={drive.image} 
+              alt={drive.name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.parentNode.style.backgroundColor = '#e5e7eb';
+              }}
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+              <Package className="w-12 h-12 text-gray-400" />
+            </div>
+          )}
+        </div>
 
         {/* Drive Title & Vendor */}
         <div className="mb-6">
@@ -39,10 +63,6 @@ const DriveDetailsPage = ({ drive, onBack }) => {
             </div>
             <div>
               <p className="font-medium text-gray-900">{drive.vendor}</p>
-              <div className="flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3 text-blue-500" />
-                <span className="text-xs text-gray-500">Verified Organization</span>
-              </div>
             </div>
           </div>
         </div>
@@ -50,31 +70,52 @@ const DriveDetailsPage = ({ drive, onBack }) => {
         {/* Key Information Cards */}
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="bg-white rounded-lg p-4 text-center">
-            <DollarSign className="w-6 h-6 text-green-600 mx-auto mb-2" />
-            <p className="text-xs text-gray-500 mb-1">Target Amount</p>
-            <p className="font-bold text-gray-900">{drive.price}</p>
+            <Calendar className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+            <p className="text-xs text-gray-500 mb-1">Deadline</p>
+            <p className="font-bold text-gray-900">{drive.expiry}</p>
           </div>
           <div className="bg-white rounded-lg p-4 text-center">
-            <Calendar className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-            <p className="text-xs text-gray-500 mb-1">Time Remaining</p>
-            <p className="font-bold text-gray-900">{drive.expiry}</p>
+            <Package className="w-6 h-6 text-green-600 mx-auto mb-2" />
+            <p className="text-xs text-gray-500 mb-1">Items Needed</p>
+            <p className="font-bold text-gray-900">{itemsList.length} Types</p>
           </div>
         </div>
 
         {/* Progress Bar */}
         <div className="bg-white rounded-lg p-4 mb-6">
           <div className="flex justify-between items-center mb-2">
-            <p className="text-sm font-medium text-gray-900">Progress</p>
-            <p className="text-sm text-gray-600">68% completed</p>
+            <p className="text-sm font-medium text-gray-900">Collection Progress</p>
+            <p className="text-sm text-gray-600">68% collected</p>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
             <div className="bg-green-500 h-2 rounded-full w-2/3"></div>
           </div>
           <div className="flex justify-between text-xs text-gray-500">
-            <span>SGD $10,540 raised</span>
+            <span>Items collected: 850+</span>
             <span>142 supporters</span>
           </div>
         </div>
+
+        {/* Items Needed Section */}
+        {itemsList.length > 0 && (
+          <div className="bg-white rounded-lg p-4 mb-6">
+            <h3 className="font-bold text-gray-900 mb-3">Items Needed</h3>
+            <div className="space-y-3">
+              {itemsList.map((item, index) => (
+                <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900">{item.name}</p>
+                    <p className="text-xs text-gray-500">{item.category || 'Essential Item'}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-blue-600">Qty: {item.quantity}</p>
+                    <p className="text-xs text-gray-500">Still needed</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Description */}
         <div className="bg-white rounded-lg p-4 mb-6">
@@ -82,7 +123,6 @@ const DriveDetailsPage = ({ drive, onBack }) => {
           <p className="text-sm text-gray-600 leading-relaxed mb-4">
             {drive.description}
           </p>
-          
         </div>
 
         {/* Location */}
