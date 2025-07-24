@@ -6,6 +6,9 @@ import AvailableVendors from './AvailableVendors';
 import VendorProducts from './VendorProducts';
 import ShoppingCart from './Donorcomponents/ShoppingCart';
 import { useCart } from '../shared/CartContext';
+import DonorsAndMessages from './DonorsAndMessages';
+import Story from './Story'; 
+import ImpactGallery from './ImpactGallery';
 
 function DonorApp({ user, onLogout }) {
   const [currentView, setCurrentView] = useState('home');
@@ -13,6 +16,7 @@ function DonorApp({ user, onLogout }) {
   const [selectedPost, setSelectedPost] = useState(null);
   const [selectedCharity, setSelectedCharity] = useState(null);
   const [selectedVendor, setSelectedVendor] = useState(null);
+  const [selectedPostData, setSelectedPostData] = useState(null);
   const [previousView, setPreviousView] = useState('home'); // Track previous view for cart navigation
   const { setCharity, clearCart, getTotalItems } = useCart();
 
@@ -84,6 +88,21 @@ function DonorApp({ user, onLogout }) {
     onLogout(); // Call the parent logout function
   };
 
+  const handleViewDonors = (postId) => {
+  setSelectedPost(postId);
+  setCurrentView('donorsAndMessages');
+};
+
+  const handleViewStory = (postId) => {
+  setSelectedPost(postId);
+  setCurrentView('story');
+};
+
+const handleViewImpactGallery = (postId) => {
+  setSelectedPost(postId);
+  setCurrentView('impactGallery');
+};
+
   return (
     <div className="App">
       {currentView === 'home' && (
@@ -106,12 +125,15 @@ function DonorApp({ user, onLogout }) {
       )}
       
       {currentView === 'post' && (
-        <CharityPost
-          postId={selectedPost}
-          onBack={handleBackToCategory}
-          onCharitySelect={handleCharitySelect} // Add this to allow shopping from charity posts
-        />
-      )}
+  <CharityPost
+  postId={selectedPost}
+  onBack={handleBackToCategory}
+  onCharitySelect={handleCharitySelect}
+  onViewDonors={handleViewDonors}
+  onViewStory={handleViewStory}
+  onViewImpactGallery={handleViewImpactGallery}
+/>
+)}
 
       {currentView === 'shop' && (
         <AvailableVendors
@@ -134,6 +156,28 @@ function DonorApp({ user, onLogout }) {
           onGoBack={handleBackFromCart}
         />
       )}
+      
+      {currentView === 'donorsAndMessages' && (
+  <DonorsAndMessages
+    postId={selectedPost}
+    onBack={() => setCurrentView('post')}
+  />
+)}
+
+{currentView === 'story' && (
+  <Story 
+    postId={selectedPost} 
+    onBack={() => setCurrentView('post')} 
+  />
+)}
+
+{currentView === 'impactGallery' && (
+  <ImpactGallery 
+    postId={selectedPost} 
+    onBack={() => setCurrentView('post')} 
+  />
+)}
+
     </div>
   );
 }
