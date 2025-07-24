@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from './firebase/config';
 import LandingPage from './components/shared/LandingPage';
 import AuthPage from './components/shared/AuthPage';
 import CharityApp from './components/charity/pages/CharityDashboard';
@@ -10,14 +13,46 @@ function App() {
   const [user, setUser] = useState(null);
   const [userType, setUserType] = useState(null);
   const [showAuth, setShowAuth] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('rippleUser');
-    if (savedUser) {
-      const userData = JSON.parse(savedUser);
-      setUser(userData);
-      setUserType(userData.type);
-    }
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            const userObj = {
+              id: firebaseUser.uid,
+              email: firebaseUser.email,
+              name: userData.name || firebaseUser.displayName,
+              type: userData.type,
+              phone: userData.phone || '',
+              location: userData.location || '',
+              socials: userData.socials || '',
+              queries: userData.queries || '',
+              isVerified: userData.isVerified || false
+            };
+            setUser(userObj);
+            setUserType(userData.type);
+          } else {
+            console.log('No user document found');
+            setUser(null);
+            setUserType(null);
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          setUser(null);
+          setUserType(null);
+        }
+      } else {
+        setUser(null);
+        setUserType(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleSelectUserType = (type) => {
@@ -28,22 +63,41 @@ function App() {
   const handleLogin = (userData) => {
     setUser(userData);
     setUserType(userData.type);
-    localStorage.setItem('rippleUser', JSON.stringify(userData));
+    setShowAuth(false);
   };
 
-  const handleLogout = () => {
+ const handleUserUpdate = (updatedUserData) => {
+  setUser(updatedUserData);
+};
+
+const handleLogout = async () => {
+  try {
+    await auth.signOut();
     setUser(null);
     setUserType(null);
     setShowAuth(false);
+    // Clear localStorage (from main branch)
     localStorage.removeItem('rippleUser');
-    // Clear cart on logout
     localStorage.removeItem('rippleCart');
-  };
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
+};
+
 
   const handleBackToLanding = () => {
     setShowAuth(false);
     setUserType(null);
   };
+
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
 
   // Show auth page if user selected a type but isn't logged in
   if (!user && showAuth) {
@@ -58,23 +112,23 @@ function App() {
     );
   }
 
-  // Wrap the entire app with CartProvider for cart functionality
-  return (
-    <CartProvider>
-      {(() => {
-        switch (userType) {
-          case 'charity':
-            return <CharityApp user={user} onLogout={handleLogout} />;
-          case 'vendor':
-            return <VendorApp user={user} onLogout={handleLogout} />;
-          case 'donor':
-            return <DonorApp user={user} onLogout={handleLogout} />;
-          default:
-            return <LandingPage onSelectUserType={handleSelectUserType} />;
-        }
-      })()}
-    </CartProvider>
-  );
+return (
+  <CartProvider>
+    {(() => {
+      switch (userType) {
+        case 'charity':
+          return <CharityApp user={user} onLogout={handleLogout} onUserUpdate={handleUserUpdate} />;
+        case 'vendor':
+          return <VendorApp user={user} onLogout={handleLogout} onUserUpdate={handleUserUpdate} />;
+        case 'donor':
+          return <DonorApp user={user} onLogout={handleLogout} onUserUpdate={handleUserUpdate} />;
+        default:
+          return <LandingPage onSelectUserType={handleSelectUserType} />;
+      }
+    })()}
+  </CartProvider>
+);
+
 }
 
 export default App;

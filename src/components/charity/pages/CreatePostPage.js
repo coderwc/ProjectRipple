@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Plus, Calendar, ChevronUp, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Plus, Calendar, ChevronUp, ChevronDown, Camera } from 'lucide-react';
 
 const CreatePostPage = ({
   selectedImage,
@@ -11,8 +11,11 @@ const CreatePostPage = ({
   onBack = () => {},
   onAddItems = () => {},
   onPostNeed = () => {},
-  onAIRecommendation = () => {}
+  onAIRecommendation = () => {},
+  onImageUpload
 }) => {
+  
+  // Add missing state variables
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const calendarRef = useRef(null);
@@ -147,6 +150,21 @@ const CreatePostPage = ({
            currentMonth.getFullYear() === selectedYear;
   };
 
+  // Fixed image upload handler
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Use the parent function if provided, otherwise handle locally
+      if (onImageUpload) {
+        onImageUpload(file);
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => setSelectedImage(e.target.result);
+        reader.readAsDataURL(file);
+      }
+    }
+  };
+
   const days = getDaysInMonth();
 
   return (
@@ -172,19 +190,12 @@ const CreatePostPage = ({
 
       {/* Form Content */}
       <div className="px-4 py-6 pb-24">
-        {/* Add Image Section */}
+        {/* Image Upload Section */}
         <div className="mb-6">
           <input 
             type="file" 
             accept="image/*" 
-            onChange={(e) => {
-              const file = e.target.files[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => setSelectedImage(e.target.result);
-                reader.readAsDataURL(file);
-              }
-            }}
+            onChange={handleImageUpload}
             className="hidden" 
             id="image-upload" 
           />
@@ -199,7 +210,7 @@ const CreatePostPage = ({
               ) : (
                 <>
                   <div className="w-16 h-16 bg-gray-400 rounded-full flex items-center justify-center mb-3">
-                    <Plus className="w-8 h-8 text-white" />
+                    <Camera className="w-8 h-8 text-white" />
                   </div>
                   <span className="text-gray-400 font-medium">Add Image</span>
                 </>

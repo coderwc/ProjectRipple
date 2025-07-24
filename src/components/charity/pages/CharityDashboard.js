@@ -7,10 +7,11 @@ import SuccessPage from './SuccessPage';
 import AIAnalysisPage from './AIAnalysisPage';
 import ProfilePage from './ProfilePage';
 import DriveDetailsPage from './DriveDetailsPage';
-import { createPost, getAIRecommendations } from '../../../api/posts';
+import { createPost, getAIRecommendations, getCharityPosts } from '../../../api/posts';
+import { deletePost } from '../../../firebase/posts';
 import { itemCategories } from '../constants/categories';
 
-const CharityDashboard = ({ user, onLogout }) => {
+const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
   // Page navigation
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [loading, setLoading] = useState(false);
@@ -38,47 +39,146 @@ const CharityDashboard = ({ user, onLogout }) => {
   const [showMore, setShowMore] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('Natural Disasters');
   const [selectedDrive, setSelectedDrive] = useState(null);
-const [ongoingDrives, setOngoingDrives] = useState([
-  {
-    id: 1,
-    name: "Emergency Food Relief",
-    vendor: "Local Food Bank",
-    description: "Providing essential food supplies to families affected by recent flooding",
-    expiry: "2 Months",
-    image: "/api/placeholder/120/100",
-    items: [
-      { name: "Canned Food", quantity: 100 },
-      { name: "Rice Bags", quantity: 50 },
-      { name: "Water Bottles", quantity: 200 }
-    ]
-  },
-  {
-    id: 2,
-    name: "Winter Clothing Drive",
-    vendor: "Community Center",
-    description: "Collecting warm clothing for homeless individuals during winter season",
-    expiry: "3 Months",
-    image: "/api/placeholder/120/100",
-    items: [
-      { name: "Winter Coats", quantity: 30 },
-      { name: "Blankets", quantity: 50 },
-      { name: "Gloves", quantity: 100 }
-    ]
-  },
-  {
-    id: 3,
-    name: "School Supplies Support",
-    vendor: "Education Foundation",
-    description: "Supporting underprivileged students with essential school materials",
-    expiry: "1 Month",
-    image: "/api/placeholder/120/100",
-    items: [
-      { name: "Notebooks", quantity: 200 },
-      { name: "Pens", quantity: 500 },
-      { name: "Backpacks", quantity: 50 }
-    ]
-  }
-]);
+
+  // Mock data as default state + Firebase posts
+  const [ongoingDrives, setOngoingDrives] = useState([
+    {
+      id: 1,
+      name: "Emergency Food Relief",
+      vendor: "Local Food Bank",
+      description: "Providing essential food supplies to families affected by recent flooding",
+      expiry: "31/12/2025",
+      image: "https://images.unsplash.com/photo-1584294232067-c97f5d99eff3?q=80&w=2776&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      items: [
+        { name: "Canned Food", quantity: 100 },
+        { name: "Rice Bags", quantity: 50 },
+        { name: "Water Bottles", quantity: 200 }
+      ]
+    },
+    {
+      id: 2,
+      name: "Winter Clothing Drive",
+      vendor: "Community Center",
+      description: "Collecting warm clothing for homeless individuals during winter season",
+      expiry: "31/12/2025",
+      image: "https://images.unsplash.com/photo-1518398046578-8cca57782e17?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      items: [
+        { name: "Winter Coats", quantity: 30 },
+        { name: "Blankets", quantity: 50 },
+        { name: "Gloves", quantity: 100 }
+      ]
+    },
+    {
+      id: 3,
+      name: "School Supplies Support",
+      vendor: "Education Foundation",
+      description: "Supporting underprivileged students with essential school materials",
+      expiry: "1/6/2025",
+      image: "https://images.unsplash.com/photo-1497486751825-1233686d5d80?w=120&h=100&fit=crop",
+      items: [
+        { name: "Notebooks", quantity: 200 },
+        { name: "Pens", quantity: 500 },
+        { name: "Backpacks", quantity: 50 }
+      ]
+    }
+  ]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
+
+  // Load user's posts on component mount and add them to the mock data
+  React.useEffect(() => {
+    const loadUserPosts = async () => {
+      if (user?.id) {
+        try {
+          setLoadingPosts(true);
+          console.log('🔍 Loading posts for user:', user.id);
+          
+          const response = await getCharityPosts(user.id);
+          console.log('📥 Loaded posts from Firebase:', response);
+          
+          if (response.success && response.posts && response.posts.length > 0) {
+            const posts = response.posts;
+            const formattedPosts = posts.map(post => ({
+              id: post.id,
+              name: post.headline,
+              vendor: post.charityName || user.name,
+              description: post.storyDescription,
+              expiry: post.deadline,
+              image: post.imageUrl || null,
+              items: post.items || [],
+              isUserPost: true
+            }));
+            
+            console.log('✅ Formatted user posts:', formattedPosts);
+            
+            // Reset to mock data first, then add user posts to front
+            setOngoingDrives(prev => {
+              // Get the mock data (last 3 items should be mock data)
+              const mockData = prev.length > 0 ? prev.filter(item => !item.isUserPost) : [
+                {
+                  id: 1,
+                  name: "Emergency Food Relief",
+                  vendor: "Local Food Bank",
+                  description: "Providing essential food supplies to families affected by recent flooding",
+                  expiry: "31/12/2025",
+                  image: "https://images.unsplash.com/photo-1584294232067-c97f5d99eff3?q=80&w=2776&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                  items: [
+                    { name: "Canned Food", quantity: 100 },
+                    { name: "Rice Bags", quantity: 50 },
+                    { name: "Water Bottles", quantity: 200 }
+                  ]
+                },
+                {
+                  id: 2,
+                  name: "Winter Clothing Drive",
+                  vendor: "Community Center",
+                  description: "Collecting warm clothing for homeless individuals during winter season",
+                  expiry: "31/12/2025",
+                  image: "https://images.unsplash.com/photo-1518398046578-8cca57782e17?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                  items: [
+                    { name: "Winter Coats", quantity: 30 },
+                    { name: "Blankets", quantity: 50 },
+                    { name: "Gloves", quantity: 100 }
+                  ]
+                },
+                {
+                  id: 3,
+                  name: "School Supplies Support",
+                  vendor: "Education Foundation",
+                  description: "Supporting underprivileged students with essential school materials",
+                  expiry: "1/6/2025",
+                  image: "https://images.unsplash.com/photo-1497486751825-1233686d5d80?w=120&h=100&fit=crop",
+                  items: [
+                    { name: "Notebooks", quantity: 200 },
+                    { name: "Pens", quantity: 500 },
+                    { name: "Backpacks", quantity: 50 }
+                  ]
+                }
+              ];
+              
+              return [...formattedPosts, ...mockData];
+            });
+          } else {
+            console.log('📭 No user posts found, showing only mock data');
+          }
+        } catch (error) {
+          console.error('❌ Error loading user posts:', error);
+        } finally {
+          setLoadingPosts(false);
+        }
+      } else {
+        setLoadingPosts(false);
+      }
+    };
+
+    loadUserPosts();
+  }, [user?.id]);
+
+  // Image upload handler
+  const handleImageUpload = (file) => {
+    if (file) {
+      setSelectedImage(URL.createObjectURL(file));
+    }
+  };
 
   // Logout handler with confirmation
   const handleLogout = () => {
@@ -88,7 +188,7 @@ const [ongoingDrives, setOngoingDrives] = useState([
     }
   };
 
-  // MISSING FUNCTIONS - ADD THESE:
+  // Add item function
   const handleAddItem = () => {
     if (!selectedItemCategory || !itemName || quantity <= 0) {
       alert('Please fill in all fields correctly!');
@@ -113,72 +213,74 @@ const [ongoingDrives, setOngoingDrives] = useState([
     setCurrentPage('createPost');
   };
 
-const handlePostNeed = async () => {
-  if (!formData.headline || !formData.storyDescription || !formData.deadline) {
-    alert('Please fill in all required fields!');
-    return;
-  }
-
-  if (addedItems.length === 0) {
-    alert('Please add at least one item to your post!');
-    return;
-  }
-
-  try {
-    setLoading(true);
-    
-    const postData = {
-      headline: formData.headline,
-      storyDescription: formData.storyDescription,
-      deadline: formData.deadline,
-      items: addedItems,
-      image: selectedImage,
-      author: user?.name || 'Anonymous',
-      location: 'Singapore',
-      charityId: user?.id || Date.now(),
-      charityName: user?.name || 'Test Charity'
-    };
-
-    // Call your API to create the post
-    const response = await createPost(postData);
-    
-    if (response.success) {
-      // 🎯 ADD THE NEW POST TO DASHBOARD
-      const newPost = {
-        id: Date.now(),
-        name: formData.headline,
-        vendor: user?.name || 'Hope Foundation',
-        description: formData.storyDescription,
-        expiry: formData.deadline,
-        image: selectedImage || "/api/placeholder/120/100",
-        items: addedItems
-      };
-      
-      // Add to the top of ongoing drives
-      setOngoingDrives([newPost, ...ongoingDrives]);
-
-      // Reset form data
-      setFormData({
-        headline: '',
-        storyDescription: '',
-        deadline: ''
-      });
-      setAddedItems([]);
-      setSelectedImage(null);
-      
-      // Navigate to success page
-      setCurrentPage('success');
-    } else {
-      throw new Error(response.error || 'Failed to create post');
+  // Post creation function with image support
+  const handlePostNeed = async () => {
+    if (!formData.headline || !formData.storyDescription || !formData.deadline) {
+      alert('Please fill in all required fields!');
+      return;
     }
-    
-  } catch (error) {
-    console.error('Error creating post:', error);
-    alert(`Failed to create post: ${error.message}`);
-  } finally {
-    setLoading(false);
-  }
-};
+
+    if (addedItems.length === 0) {
+      alert('Please add at least one item to your post!');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      const postData = {
+        headline: formData.headline,
+        storyDescription: formData.storyDescription,
+        deadline: formData.deadline,
+        items: addedItems,
+        image: selectedImage,
+        author: user?.name || 'Anonymous',
+        location: 'Singapore',
+        charityId: user?.id,
+        charityName: user?.name
+      };
+
+      // Call your API to create the post
+      const response = await createPost(postData);
+      
+      if (response.success) {
+        // Create new post for dashboard with uploaded image
+        const newPost = {
+          id: response.post.id,
+          name: formData.headline,
+          vendor: user?.name,
+          description: formData.storyDescription,
+          expiry: formData.deadline,
+          image: response.post.imageUrl || selectedImage,
+          items: addedItems,
+          isUserPost: true // Mark as user post for delete button
+        };
+        
+        // Add to the top of ongoing drives
+        setOngoingDrives([newPost, ...ongoingDrives]);
+
+        // Reset form data
+        setFormData({
+          headline: '',
+          storyDescription: '',
+          deadline: ''
+        });
+        setAddedItems([]);
+        setSelectedImage(null);
+        
+        // Navigate to success page
+        setCurrentPage('success');
+      } else {
+        throw new Error(response.error || 'Failed to create post');
+      }
+      
+    } catch (error) {
+      console.error('Error creating post:', error);
+      alert(`Failed to create post: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // AI Analysis Functions
   const analyzeArticle = async () => {
@@ -250,6 +352,31 @@ const handlePostNeed = async () => {
     setCurrentPage('driveDetails');
   };
 
+  const handleDeleteDrive = async (drive) => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete "${drive.name}"?\n\nThis action cannot be undone.`
+    );
+    
+    if (!confirmDelete) return;
+    
+    try {
+      setLoading(true);
+      
+      await deletePost(user.id, drive.id);
+      
+      // Remove from local state
+      setOngoingDrives(prev => prev.filter(d => d.id !== drive.id));
+      
+      alert('Drive deleted successfully!');
+      
+    } catch (error) {
+      console.error('Error deleting drive:', error);
+      alert(`Failed to delete drive: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Logout Icon Component
   const LogoutIcon = () => (
     <button
@@ -283,6 +410,8 @@ const handlePostNeed = async () => {
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
           onLogout={onLogout}
+          user={user}
+          onUserUpdate={onUserUpdate}
         />
       )}
       
@@ -326,6 +455,7 @@ const handlePostNeed = async () => {
           onAddItems={() => setCurrentPage('addItems')}
           onPostNeed={handlePostNeed}
           onAIRecommendation={() => setCurrentPage('aiAnalysis')}
+          onImageUpload={handleImageUpload}
         />
       )}
       
@@ -339,6 +469,9 @@ const handlePostNeed = async () => {
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
           onDriveClick={handleDriveClick}
+          onDeleteDrive={handleDeleteDrive}
+          user={user}
+          loadingPosts={loadingPosts}
         />
       )}
     </>
