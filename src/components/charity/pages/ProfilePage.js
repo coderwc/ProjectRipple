@@ -12,18 +12,9 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
     focusAreas: ["Natural Disasters", "Emergency Relief", "Community Recovery", "Disaster Preparedness", "Family Support", "Infrastructure Rebuilding"]
   };
 
-  // Load profile data from localStorage or use default
-  const [profileData, setProfileData] = useState(() => {
-    const savedProfile = localStorage.getItem('hopeFoundationProfile');
-    return savedProfile ? JSON.parse(savedProfile) : defaultProfileData;
-  });
-
+  // Load profile data from memory or use default (localStorage removed for Claude.ai compatibility)
+  const [profileData, setProfileData] = useState(defaultProfileData);
   const [tempData, setTempData] = useState({...profileData});
-
-  // Save to localStorage whenever profileData changes
-  useEffect(() => {
-    localStorage.setItem('hopeFoundationProfile', JSON.stringify(profileData));
-  }, [profileData]);
 
   const handleEdit = (field) => {
     setEditingField(field);
@@ -33,12 +24,19 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
   const handleSave = () => {
     setProfileData({...tempData});
     setEditingField(null);
-    // Data will be automatically saved to localStorage via useEffect
   };
 
   const handleCancel = () => {
     setTempData({...profileData});
     setEditingField(null);
+  };
+
+  const handleLogout = () => {
+    if (editingField) {
+      alert('Please save or discard your changes first');
+      return;
+    }
+    onLogout();
   };
 
   const addFocusArea = () => {
@@ -166,7 +164,7 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
                 <div className="flex gap-2 mt-2">
                   <button 
                     onClick={handleSave}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
                   >
                     Save
                   </button>
@@ -209,7 +207,7 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
                       />
                       <button
                         onClick={() => removeFocusArea(index)}
-                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs"
+                        className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs"
                       >
                         ×
                       </button>
@@ -226,7 +224,7 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
                 <div className="flex gap-2">
                   <button 
                     onClick={handleSave}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
                   >
                     Save
                   </button>
@@ -252,9 +250,19 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
             )}
           </div>
 
-          {/* New Logout Component */}
+          {/* Logout Button - Disabled when editing */}
           <div className="mt-6 pt-6 border-t border-gray-200">
-            <button onClick={onLogout} className="w-full bg-red-500 text-white py-3 rounded-lg font-medium hover:bg-red-600 transition">LOG OUT</button>
+            <button 
+              onClick={handleLogout} 
+              className={`w-full py-3 rounded-lg font-medium transition text-white ${
+                editingField 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+              disabled={editingField}
+            >
+              LOG OUT
+            </button>
           </div>
         </div>
       </div>

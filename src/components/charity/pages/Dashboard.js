@@ -24,7 +24,12 @@ const Dashboard = ({
     </div>
 
     {/* Header */}
-    <div className="bg-white px-4 py-6 border-b border-gray-100">
+    <div
+      className="px-4 py-6 rounded-b-3xl shadow-md"
+      style={{
+        background: 'linear-gradient(135deg, #D6EEFF 0%, #B3DFFF 50%, #99CCFF 100%)'
+      }}
+    >
       <div className="flex items-center gap-3">
         <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
           <User className="w-6 h-6 text-gray-400" />
@@ -34,7 +39,7 @@ const Dashboard = ({
             <h1 className="text-xl font-bold text-gray-900">Hope Foundation</h1>
             <CheckCircle2 className="w-5 h-5 text-blue-500" />
           </div>
-          <p className="text-sm text-gray-500">Verified Identification</p>
+          <p className="text-sm text-gray-700">Verified Identification</p>
         </div>
       </div>
     </div>
