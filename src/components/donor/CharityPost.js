@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Heart, Users, FileText, Camera, ChevronRight } from 'lucide-react';
 
-const CharityPost = ({ onBack, postId = 1, onCharitySelect }) => {
+const CharityPost = ({ 
+  onBack, 
+  postId = 1, 
+  onCharitySelect, 
+  onViewDonors, 
+  onViewStory, 
+  onViewImpactGallery // ✅ Add this here
+}) => {
   const [isLiked, setIsLiked] = useState(false);
   // Mock data - in real app this would be fetched based on postId
   const postData = {
@@ -104,27 +111,37 @@ const CharityPost = ({ onBack, postId = 1, onCharitySelect }) => {
 
         {/* Action Buttons */}
         <div className="flex gap-4">
-          <button className="flex-1 flex flex-col items-center gap-2 bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <Users className="w-5 h-5 text-blue-600" />
-            </div>
-            <span className="text-sm font-medium text-gray-900">Donors</span>
-          </button>
+          <button 
+          onClick={() => onViewDonors(postId)} // ✅ onClick goes here
+    className="flex-1 flex flex-col items-center gap-2 bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
+  >
+    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+      <Users className="w-5 h-5 text-blue-600" />
+    </div>
+    <span className="text-sm font-medium text-gray-900">Donors</span>
+  </button>
           
-          <button className="flex-1 flex flex-col items-center gap-2 bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+          <button 
+  onClick={() => onViewStory(postId)} 
+  className="flex-1 flex flex-col items-center gap-2 bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
+>
             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
               <FileText className="w-5 h-5 text-blue-600" />
             </div>
             <span className="text-sm font-medium text-gray-900">Story</span>
           </button>
-          
-          <button className="flex-1 flex flex-col items-center gap-2 bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <Camera className="w-5 h-5 text-blue-600" />
-            </div>
-            <span className="text-sm font-medium text-gray-900">Impact Gallery</span>
-          </button>
-        </div>
+
+          {/* ✅ Correct Impact Gallery Button */}
+  <button 
+    onClick={() => onViewImpactGallery(postId)} 
+    className="flex-1 flex flex-col items-center gap-2 bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
+  >
+    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+      <Camera className="w-5 h-5 text-blue-600" />
+    </div>
+    <span className="text-sm font-medium text-gray-900">Impact Gallery</span>
+  </button>
+</div>
 
         {/* Charity Information */}
         <div className="bg-white rounded-lg p-4 shadow-sm">
