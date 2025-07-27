@@ -1,61 +1,83 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Minus, Plus } from 'lucide-react';
+import {
+  getUserCartItems,
+  updateCartItemQuantity,
+  updateCartItemSelection,
+  createOrdersFromCart // ✅ Checkout logic
+} from '../../../firebase/cart';
 
+// Replace mock data with real data from firestore
 const ShoppingCart = ({ onGoBack }) => {
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: 'Dasani Water (2L)',
-      price: 2,
-      quantity: 10,
-      charity: 'Freshmart',
-      selected: true
-    },
-    {
-      id: 2,
-      name: 'Cotton Blankets',
-      price: 5.50,
-      quantity: 8,
-      charity: 'Freshmart',
-      selected: true
-    },
-    {
-      id: 3,
-      name: 'Purified Water',
-      price: 0.80,
-      quantity: 25,
-      charity: 'Fairprice',
-      selected: true
-    }
-  ]);
-
+  const [cartItems, setCartItems] = useState([]); // ← real data will load here
   const [selectAll, setSelectAll] = useState(true);
 
-  const updateQuantity = (id, change) => {
-    setCartItems(items =>
-      items.map(item =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, item.quantity + change) }
-          : item
+  useEffect(() => {
+    const fetchCart = async () => {
+      try {
+        const items = await getUserCartItems(); // from Firestore
+        setCartItems(items);
+      } catch (err) {
+        console.error('❌ Error loading cart:', err.message);
+      }
+    };
+
+    fetchCart();
+  }, []);
+ 
+//Update cart Quantity from firebae
+const updateQuantity = async (id, change) => {
+  const item = cartItems.find(i => i.id === id);
+  if (!item) return;
+
+  const newQty = Math.max(1, item.quantity + change);
+  setCartItems(items =>
+    items.map(i => i.id === id ? { ...i, quantity: newQty } : i)
+  );
+
+  try {
+    await updateCartItemQuantity(id, newQty);
+  } catch (err) {
+    console.error('❌ Failed to update quantity in Firestore:', err.message);
+  }
+};
+
+//Update cart Item selection from Firebasw
+const toggleItemSelection = async (id) => {
+  const updatedItems = cartItems.map(item =>
+    item.id === id ? { ...item, selected: !item.selected } : item
+  );
+  setCartItems(updatedItems);
+
+  const item = updatedItems.find(i => i.id === id);
+  try {
+    await updateCartItemSelection(id, item.selected);
+  } catch (err) {
+    console.error('❌ Failed to update selection in Firestore:', err.message);
+  }
+};
+
+// Toggle select all items to firebase
+  const toggleSelectAll = async () => {
+  const newSelectAll = !selectAll;
+  setSelectAll(newSelectAll);
+
+  const updatedItems = cartItems.map(item => ({
+    ...item,
+    selected: newSelectAll
+  }));
+  setCartItems(updatedItems);
+
+  try {
+    await Promise.all(
+      updatedItems.map(item =>
+        updateCartItemSelection(item.id, newSelectAll)
       )
     );
-  };
-
-  const toggleItemSelection = (id) => {
-    setCartItems(items =>
-      items.map(item =>
-        item.id === id ? { ...item, selected: !item.selected } : item
-      )
-    );
-  };
-
-  const toggleSelectAll = () => {
-    const newSelectAll = !selectAll;
-    setSelectAll(newSelectAll);
-    setCartItems(items =>
-      items.map(item => ({ ...item, selected: newSelectAll }))
-    );
-  };
+  } catch (err) {
+    console.error('❌ Failed to update select-all in Firestore:', err.message);
+  }
+};
 
   const getTotal = () => {
     return cartItems
@@ -204,9 +226,22 @@ const ShoppingCart = ({ onGoBack }) => {
             <span className="text-lg font-semibold text-gray-900">
               Total: ${getTotal()}
             </span>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
-              CHECK OUT
-            </button>
+            <button // michk, 27/7, change checkout button
+  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+  onClick={async () => {
+    try {
+      await createOrdersFromCart();
+      alert('✅ Order placed successfully!');
+      const items = await getUserCartItems();
+      setCartItems(items); // reload cart
+    } catch (err) {
+      console.error('❌ Checkout error:', err.message);
+      alert('Checkout failed. Please try again.');
+    }
+  }}
+>
+  CHECK OUT
+</button>
           </div>
         </div>
       </div>

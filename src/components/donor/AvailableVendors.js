@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ShoppingCart, Plus, ChevronDown, Filter, X, Minus } from 'lucide-react';
 import { useCart } from '../shared/CartContext';
+import { saveCartItem } from '../../firebase/cart';
 
 const AvailableVendors = ({ charity, onBack, onSelectVendor }) => {
   const { addToCart, getTotalItems } = useCart();
@@ -13,7 +14,8 @@ const AvailableVendors = ({ charity, onBack, onSelectVendor }) => {
       id: 1,
       name: "Dasani Water (2L)",
       price: 2.00,
-      vendor: "Freshmart",
+      vendor: "YpRd698LE0aZyBEHRqEM8tFZvlQ2", //temporary for testing, linked to tionghuiyigmail
+      vendorName: "Tiong Bakery",
       stock: 200,
       images: [null, null, null],
       image: null
@@ -77,11 +79,21 @@ const AvailableVendors = ({ charity, onBack, onSelectVendor }) => {
     setQuantity(1);
   };
 
-  const addToCartHandler = (product, qty = 1) => {
-    addToCart(product, qty);
-    console.log(`Added ${qty} x ${product.name} to cart`);
-    closeProductModal();
-  };
+// Mich, 27/7 ADD TO CART replace 
+
+const addToCartHandler = async (product, qty = 1) => {
+  try {
+    await saveCartItem(product, qty, charity?.id);       // Save to Firestore
+    addToCart(product, qty);                             // Sync local cart state (for badge)
+    console.log(`✅ Added ${qty} x ${product.name} for charity ${charity?.name}`);
+    closeProductModal();                                 // Close modal after success
+  } catch (err) {
+    console.error('❌ Failed to add to cart:', err.message);
+    alert('Something went wrong. Try again.');
+  }
+};
+
+//end
 
   const updateQuantity = (change) => {
     setQuantity(prev => Math.max(1, prev + change));
@@ -133,7 +145,9 @@ const AvailableVendors = ({ charity, onBack, onSelectVendor }) => {
             className="flex items-center space-x-1 hover:bg-gray-50 rounded px-1 py-1 transition-colors"
           >
             <div className="w-4 h-4 bg-gray-400 rounded-full"></div>
-            <span className="text-xs text-gray-600">{product.vendor}</span>
+            <span className="text-xs text-gray-600 truncate max-w-[100px]">
+  {product.vendorName || 'Vendor'}
+</span>
           </button>
           <button
             onClick={() => openProductModal(product)}

@@ -1,3 +1,5 @@
+import { auth } from '../../firebase/config';
+import { getUserCartItems } from '../../firebase/cart';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const CartContext = createContext();
@@ -14,28 +16,25 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [selectedCharity, setSelectedCharity] = useState(null);
 
-  // Load cart from localStorage on mount
+  //Mich, 27/7 replace to Sync Firestore cart when user logs in
   useEffect(() => {
-    const savedCart = localStorage.getItem('rippleCart');
-    if (savedCart) {
+  const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    if (user) {
       try {
-        const cartData = JSON.parse(savedCart);
-        setCartItems(cartData.items || []);
-        setSelectedCharity(cartData.charity || null);
-      } catch (error) {
-        console.error('Error loading cart from localStorage:', error);
+        const items = await getUserCartItems();
+        setCartItems(items);  // load cart items from Firestore
+        // Optionally: setSelectedCharity(...) if you store it
+      } catch (err) {
+        console.error("❌ Failed to load cart from Firestore:", err.message);
       }
+    } else {
+      setCartItems([]);
+      setSelectedCharity(null);
     }
-  }, []);
+  });
 
-  // Save cart to localStorage whenever it changes
-  useEffect(() => {
-    const cartData = {
-      items: cartItems,
-      charity: selectedCharity
-    };
-    localStorage.setItem('rippleCart', JSON.stringify(cartData));
-  }, [cartItems, selectedCharity]);
+  return () => unsubscribe();
+}, []);
 
   const addToCart = (product, quantity = 1) => {
     for (let i = 0; i < quantity; i++) {
