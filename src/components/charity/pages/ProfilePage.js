@@ -1,39 +1,86 @@
 import React, { useState, useEffect } from 'react';
 import { Edit3, Check, X, Plus, Home, User } from 'lucide-react';
+import { updateUserProfile } from '../../../firebase/auth';
 
-const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
+const ProfilePage = ({ currentPage, setCurrentPage, onLogout, user, onUserUpdate }) => {
   const [editingField, setEditingField] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   
-  // Default profile data
-  const defaultProfileData = {
-    name: "Hope Foundation",
-    tagline: "Rebuilding Lives After Disasters",
-    aboutUs: "Hope Foundation is dedicated to providing immediate relief and long-term recovery support to communities affected by natural disasters. Since 2010, we have responded to over 150 emergency situations worldwide, delivering life-saving aid to families who have lost everything to earthquakes, floods, hurricanes, and other catastrophic events. Our mission is to restore hope and dignity to disaster survivors through comprehensive relief programs.",
-    focusAreas: ["Natural Disasters", "Emergency Relief", "Community Recovery", "Disaster Preparedness", "Family Support", "Infrastructure Rebuilding"]
-  };
-
-  // Load profile data from localStorage or use default
-  const [profileData, setProfileData] = useState(() => {
-    const savedProfile = localStorage.getItem('hopeFoundationProfile');
-    return savedProfile ? JSON.parse(savedProfile) : defaultProfileData;
+  // Initialize profile data from user prop - no more mock data
+  const [profileData, setProfileData] = useState({
+    name: user?.name || '',
+    phone: user?.phone || '',
+    location: user?.location || '',
+    socials: user?.socials || '',
+    queries: user?.queries || '',
+    tagline: user?.tagline || '',
+    aboutUs: user?.aboutUs || '',
+    focusAreas: user?.focusAreas || []
   });
 
   const [tempData, setTempData] = useState({...profileData});
 
-  // Save to localStorage whenever profileData changes
+  // Update profile data when user prop changes
   useEffect(() => {
-    localStorage.setItem('hopeFoundationProfile', JSON.stringify(profileData));
-  }, [profileData]);
+    if (user) {
+      const updatedProfile = {
+        name: user.name || '',
+        phone: user.phone || '',
+        location: user.location || '',
+        socials: user.socials || '',
+        queries: user.queries || '',
+        tagline: user.tagline || '',
+        aboutUs: user.aboutUs || '',
+        focusAreas: user.focusAreas || []
+      };
+      setProfileData(updatedProfile);
+      setTempData(updatedProfile);
+    }
+  }, [user]);
 
   const handleEdit = (field) => {
     setEditingField(field);
     setTempData({...profileData});
   };
 
-  const handleSave = () => {
-    setProfileData({...tempData});
-    setEditingField(null);
-    // Data will be automatically saved to localStorage via useEffect
+  const handleSave = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setLoading(true);
+      setError('');
+      
+      // Prepare data to save to Firebase - now includes all fields
+      const updateData = {
+        name: tempData.name,
+        phone: tempData.phone,
+        location: tempData.location,
+        socials: tempData.socials,
+        queries: tempData.queries,
+        tagline: tempData.tagline,
+        aboutUs: tempData.aboutUs,
+        focusAreas: tempData.focusAreas
+      };
+      
+      // Update user profile in Firebase
+      const updatedUser = await updateUserProfile(user.id, updateData);
+      
+      // Update local state
+      setProfileData({...tempData});
+      setEditingField(null);
+      
+      // Notify parent component about user update
+      if (onUserUpdate) {
+        onUserUpdate(updatedUser);
+      }
+      
+    } catch (error) {
+      console.error('Profile save error:', error);
+      setError('Failed to save profile. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -77,12 +124,18 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
       </div>
 
       {/* Header */}
-      <div className="bg-white px-4 py-6">
+      <div className="relative bg-white px-4 py-6">
         <h1 className="text-2xl font-bold text-gray-900">NGO</h1>
       </div>
 
       {/* Profile Content */}
       <div className="px-4 pb-24">
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+            {error}
+          </div>
+        )}
+        
         <div className="bg-white rounded-3xl p-6 relative">
           {/* Profile Picture */}
           <div className="flex justify-center mb-4">
@@ -142,6 +195,104 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
                 </button>
               </div>
             )}
+          </div>
+
+          {/* Contact Information */}
+          <div className="mb-6 space-y-4">
+            <h3 className="text-lg font-bold text-gray-900">Contact Information</h3>
+            
+            {/* Phone */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              {editingField === 'phone' ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={tempData.phone}
+                    onChange={(e) => setTempData({...tempData, phone: e.target.value})}
+                    placeholder="Enter phone number"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                  <button onClick={handleSave} disabled={loading} className="text-green-600">
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button onClick={handleCancel} className="text-red-600">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                  <span className="text-gray-600 text-sm flex-1">
+                    {profileData.phone || 'Not provided'}
+                  </span>
+                  <button onClick={() => handleEdit('phone')} className="text-gray-500">
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Location */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+              {editingField === 'location' ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={tempData.location}
+                    onChange={(e) => setTempData({...tempData, location: e.target.value})}
+                    placeholder="Enter location"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                  <button onClick={handleSave} disabled={loading} className="text-green-600">
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button onClick={handleCancel} className="text-red-600">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                  <span className="text-gray-600 text-sm flex-1">
+                    {profileData.location || 'Not provided'}
+                  </span>
+                  <button onClick={() => handleEdit('location')} className="text-gray-500">
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Website/Social Media */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Website/Social Media</label>
+              {editingField === 'socials' ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={tempData.socials}
+                    onChange={(e) => setTempData({...tempData, socials: e.target.value})}
+                    placeholder="Enter website or social media links"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                  <button onClick={handleSave} disabled={loading} className="text-green-600">
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button onClick={handleCancel} className="text-red-600">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                  <span className="text-gray-600 text-sm flex-1">
+                    {profileData.socials || 'Not provided'}
+                  </span>
+                  <button onClick={() => handleEdit('socials')} className="text-gray-500">
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* About Us Section */}
@@ -251,16 +402,11 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
               </div>
             )}
           </div>
-        </div>
 
-        {/* Logout Section */}
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <button 
-            onClick={onLogout}
-            className="w-full bg-red-500 text-white py-3 rounded-lg font-medium hover:bg-red-600 transition-colors"
-          >
-            LOG OUT
-          </button>
+          {/* New Logout Component */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <button onClick={onLogout} className="w-full bg-red-500 text-white py-3 rounded-lg font-medium hover:bg-red-600 transition">LOG OUT</button>
+          </div>
         </div>
       </div>
 

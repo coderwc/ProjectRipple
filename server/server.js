@@ -15,16 +15,19 @@ const openai = new OpenAI({
 app.use(cors({
   origin: ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true,
-  methods: ['GET', 'POST'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({ 
     message: 'Charity Relief AI Backend is running!',
-    endpoints: ['GET /api/test', 'POST /api/ai-recommendation']
+    endpoints: [
+      'GET /api/test', 
+      'POST /api/ai-recommendation'
+    ]
   });
 });
 
@@ -84,14 +87,13 @@ app.post('/api/ai-recommendation', async (req, res) => {
           },
           { role: "user", content: prompt }
         ],
-        temperature: 0.1, // Lower temperature for more consistent format
+        temperature: 0.1,
         max_tokens: 1000
       });
   
       const result = response.choices[0].message.content.trim();
       console.log('🤖 Raw AI Response:', result);
   
-      // Clean the response (remove markdown if present)
       let cleanedResult = result;
       if (result.startsWith('```json')) {
         cleanedResult = result.replace(/```json\n?/, '').replace(/\n?```$/, '');
@@ -110,7 +112,6 @@ app.post('/api/ai-recommendation', async (req, res) => {
         console.error('❌ JSON Parse Error:', parseError);
         console.log('📝 Failed to parse:', cleanedResult);
         
-        // Fallback response
         res.json({
           success: true,
           analysis: {
@@ -142,8 +143,10 @@ app.post('/api/ai-recommendation', async (req, res) => {
       console.error('AI Error:', error);
       res.status(500).json({ error: 'Failed to generate recommendations' });
     }
-  });
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📡 Endpoints: GET /api/test, POST /api/ai-recommendation`);
-  });
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`📡 Endpoints: AI recommendations only`);
+  console.log(`🔥 Ready for Firebase integration`);
+});

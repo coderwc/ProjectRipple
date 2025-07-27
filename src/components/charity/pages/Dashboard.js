@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ChevronDown, Home, Plus, User, CheckCircle2 } from 'lucide-react';
 import DriveCard from '../common/DriveCard';
 import { categories } from '../constants/categories';
@@ -11,7 +11,10 @@ const Dashboard = ({
   ongoingDrives,
   currentPage,
   setCurrentPage,
-  onDriveClick
+  onDriveClick,
+  onDeleteDrive,
+  user,
+  loadingPosts
 }) => (
   <div className="max-w-sm mx-auto bg-gray-50 min-h-screen">
     {/* Status Bar */}
@@ -31,10 +34,12 @@ const Dashboard = ({
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-gray-900">Hope Foundation</h1>
-            <CheckCircle2 className="w-5 h-5 text-blue-500" />
+            <h1 className="text-xl font-bold text-gray-900">{user?.name || 'Charity Organization'}</h1>
+            {user?.isVerified && <CheckCircle2 className="w-5 h-5 text-blue-500" />}
           </div>
-          <p className="text-sm text-gray-500">Verified Identification</p>
+          <p className="text-sm text-gray-500">
+            {user?.isVerified ? 'Verified Identification' : 'Pending Verification'}
+          </p>
         </div>
       </div>
     </div>
@@ -44,19 +49,33 @@ const Dashboard = ({
       <div className="mb-8">
         <h2 className="text-xl font-bold text-gray-900 mb-4">Ongoing drives:</h2>
         
-        {ongoingDrives.slice(0, showMore ? ongoingDrives.length : 3).map(drive => (
-          <DriveCard key={drive.id} drive={drive} onClick={onDriveClick}/>
+        {loadingPosts ? (
+          <div className="text-center py-4">
+            <div className="text-gray-500 text-sm">Loading your posts...</div>
+          </div>
+        ) : null}
+        
+        {ongoingDrives.slice(0, showMore ? ongoingDrives.length : 3).map((drive) => (
+          <DriveCard 
+            key={drive.id} 
+            drive={drive} 
+            onClick={onDriveClick}
+            onDelete={onDeleteDrive}
+            showDeleteButton={drive.isUserPost === true} // Only show delete for user's posts
+          />
         ))}
         
-        <button 
-          onClick={() => setShowMore(!showMore)}
-          className="w-full flex flex-col items-center justify-center py-4 text-gray-500"
-        >
-          <span className="text-sm font-medium mb-1">
-            {showMore ? 'Show less' : 'Show more'}
-          </span>
-          <ChevronDown className={`w-5 h-5 transition-transform ${showMore ? 'rotate-180' : ''}`} />
-        </button>
+        {ongoingDrives.length > 3 && (
+          <button 
+            onClick={() => setShowMore(!showMore)}
+            className="w-full flex flex-col items-center justify-center py-4 text-gray-500"
+          >
+            <span className="text-sm font-medium mb-1">
+              {showMore ? 'Show less' : 'Show more'}
+            </span>
+            <ChevronDown className={`w-5 h-5 transition-transform ${showMore ? 'rotate-180' : ''}`} />
+          </button>
+        )}
       </div>
 
       {/* Other Raisings Section */}
