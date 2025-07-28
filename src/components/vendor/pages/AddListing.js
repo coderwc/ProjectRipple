@@ -27,6 +27,7 @@ const AddListing = ({ user, onBack }) => {
   };
 
   const handlePublish = async () => {
+
   if (!formData.name || !formData.category || !formData.price) {
     alert('Please fill in Item Name, Category, and Price.');
     return;
