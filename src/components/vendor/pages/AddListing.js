@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Camera } from 'lucide-react'; // Removed unused 'Plus'
+import { ArrowLeft, Camera } from 'lucide-react';
+import { 
+  collection, 
+  addDoc, 
+  updateDoc, 
+  doc, 
+  serverTimestamp,
+  setDoc,
+  getDoc,
+  getDocs,
+  query,
+  where 
+} from 'firebase/firestore';
+import { db, auth } from '../../../firebase/config';
 
 const AddListing = ({ listings, setListings, user, editingId, isEditing, onBack }) => {
   const [formData, setFormData] = useState({
@@ -34,31 +47,139 @@ const AddListing = ({ listings, setListings, user, editingId, isEditing, onBack 
     }
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     if (!formData.name || !formData.category || !formData.price) {
       alert('Please fill in Item Name, Category, and Price.');
       return;
     }
 
-    const productData = {
-      ...formData,
-      id: isEditing ? editingId : Date.now(),
-      vendorId: user.id,
-      vendorName: user.name,
-      createdAt: isEditing ? listings[editingId]?.createdAt : new Date().toISOString()
-    };
+    try {
+      // Debug: Check what user data we have
+      console.log('Current user object:', user);
+      console.log('User ID:', user.id);
+      console.log('User type:', user.type);
+      
+      // Check current authentication
+      const currentUser = auth.currentUser;
+      console.log('Firebase Auth currentUser:', currentUser);
+      console.log('Auth UID:', currentUser?.uid);
+      
+      // Use the authenticated user's UID
+      const vendorId = currentUser?.uid || user.id;
+      console.log('Using vendor ID:', vendorId);
+      
+      // First, ensure the vendor document exists in vendors collection
+      const vendorRef = doc(db, 'vendors', vendorId);
+      console.log('Vendor document path:', vendorRef.path);
+      
+      const vendorDoc = await getDoc(vendorRef);
+      console.log('Vendor document exists:', vendorDoc.exists());
+      
+      if (!vendorDoc.exists()) {
+        console.log('Vendor document does not exist, creating it...');
+        // Create vendor document if it doesn't exist
+        await setDoc(vendorRef, {
+          uid: vendorId,
+          email: user.email || currentUser?.email || '',
+          name: user.name || currentUser?.displayName || '',
+          phone: user.phone || '',
+          location: user.location || '',
+          socials: user.socials || '',
+          queries: user.queries || '',
+          createdAt: serverTimestamp(),
+          isVerified: false,
+          totalListings: 0,
+        });
+        console.log('Vendor document created successfully');
+      }
 
-    if (isEditing && editingId !== null) {
-      // Update existing listing
-      const updatedListings = [...listings];
-      updatedListings[editingId] = productData;
-      setListings(updatedListings);
-    } else {
-      // Add new listing
-      setListings([...listings, productData]);
+      const productData = {
+        ...formData,
+        vendorId: vendorId,
+        vendorName: user.name || currentUser?.displayName || '',
+        status: 'active'
+      };
+
+      if (isEditing && editingId !== null) {
+        // Update existing listing in BOTH locations
+        
+        // Update in vendors subcollection
+        const vendorListingRef = doc(db, 'vendors', vendorId, 'listings', editingId);
+        await updateDoc(vendorListingRef, {
+          ...productData,
+          updatedAt: serverTimestamp()
+        });
+        
+        // Update in root listings collection
+        // Find the root listing document that corresponds to this vendor listing
+        const rootListingsQuery = query(
+          collection(db, 'listings'),
+          where('vendorListingId', '==', editingId),
+          where('vendorId', '==', vendorId)
+        );
+        const rootListingsSnapshot = await getDocs(rootListingsQuery);
+        
+        if (!rootListingsSnapshot.empty) {
+          const rootListingDoc = rootListingsSnapshot.docs[0];
+          await updateDoc(doc(db, 'listings', rootListingDoc.id), {
+            ...productData,
+            updatedAt: serverTimestamp()
+          });
+          console.log('Root listing updated successfully');
+        }
+        
+        // Update local state
+        const updatedListings = listings.map(listing => 
+          listing.id === editingId ? { ...listing, ...productData } : listing
+        );
+        setListings(updatedListings);
+        
+        alert('Listing updated successfully!');
+      } else {
+        // Add new listing to Firestore in BOTH locations
+        console.log('Creating listing for vendor:', vendorId);
+        console.log('Listing data:', productData);
+        
+        // First, create in vendors subcollection
+        const vendorListingsRef = collection(db, 'vendors', vendorId, 'listings');
+        const vendorDocRef = await addDoc(vendorListingsRef, {
+          ...productData,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        
+        console.log('Vendor listing created with ID:', vendorDocRef.id);
+        
+        // Second, create in root listings collection for easy donor browsing
+        const rootListingsRef = collection(db, 'listings');
+        await addDoc(rootListingsRef, {
+          ...productData,
+          id: vendorDocRef.id, // Reference to vendor's listing ID
+          vendorListingId: vendorDocRef.id, // Backup reference
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        
+        console.log('Root listing created successfully');
+        
+        // Update local state with the new listing
+        const newListing = {
+          id: vendorDocRef.id,
+          ...productData,
+          createdAt: new Date().toISOString()
+        };
+        setListings([...listings, newListing]);
+        
+        alert('Listing published successfully!');
+      }
+
+      onBack();
+    } catch (error) {
+      console.error('Error saving listing:', error);
+      console.error('Error details:', error.message);
+      console.error('Error code:', error.code);
+      alert(`Failed to save listing: ${error.message}`);
     }
-
-    onBack();
   };
 
   return (

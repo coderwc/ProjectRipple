@@ -2,14 +2,59 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ShoppingCart, Plus, ChevronDown, Filter, X, Minus } from 'lucide-react';
 import { useCart } from '../shared/CartContext';
 import { saveCartItem } from '../../firebase/cart';
+import { 
+  collection, 
+  getDocs, 
+  query, 
+  where, 
+  orderBy, 
+  onSnapshot,
+  collectionGroup 
+} from 'firebase/firestore';
+import { db } from '../../firebase/config';
 
 const AvailableVendors = ({ charity, onBack, onSelectVendor }) => {
   const { addToCart, getTotalItems } = useCart();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock product data
-  const products = [
+  // Fetch listings from root listings collection
+  useEffect(() => {
+    const fetchListings = async () => {
+      try {
+        console.log('AvailableVendors - Fetching from root listings collection...');
+        
+        // Query root listings collection directly
+        const q = query(
+          collection(db, 'listings'),
+          where('status', '==', 'active'),
+          orderBy('createdAt', 'desc')
+        );
+        
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+          console.log('AvailableVendors - Found', querySnapshot.docs.length, 'listings');
+          const listingsData = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          setListings(listingsData);
+          setLoading(false);
+        });
+
+        return () => unsubscribe();
+      } catch (error) {
+        console.error('Error fetching listings:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchListings();
+  }, []);
+
+  // Mock fallback data for development
+  const mockProducts = [
     {
       id: 1,
       name: "Dasani Water (2L)",
@@ -66,6 +111,9 @@ const AvailableVendors = ({ charity, onBack, onSelectVendor }) => {
       image: null
     }
   ];
+
+  // Use real listings if available, otherwise fallback to mock data
+  const products = listings.length > 0 ? listings : mockProducts;
 
   const suggestedCategories = ["Blankets", "Rice Bags", "Canned Food"];
 
@@ -126,8 +174,18 @@ const addToCartHandler = async (product, qty = 1) => {
 
   const ProductCard = ({ product }) => (
     <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-      {/* Product Image Placeholder */}
-      <div className="w-full h-32 bg-gray-300 rounded-lg mb-3"></div>
+      {/* Product Image */}
+      <div className="w-full h-32 bg-gray-300 rounded-lg mb-3 overflow-hidden">
+        {product.image ? (
+          <img 
+            src={product.image} 
+            alt={product.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-300"></div>
+        )}
+      </div>
       
       {/* Product Info */}
       <div className="space-y-2">
@@ -135,19 +193,29 @@ const addToCartHandler = async (product, qty = 1) => {
           {product.name}
         </h3>
         <p className="text-lg font-semibold text-gray-900">
-          ${product.price.toFixed(2)}
+          ${parseFloat(product.price || 0).toFixed(2)}
         </p>
         
         {/* Vendor and Add Button Row */}
         <div className="flex items-center justify-between">
           <button 
-            onClick={() => onSelectVendor && onSelectVendor(product.vendor)}
+            onClick={() => {
+              console.log('AvailableVendors - Product clicked:', product);
+              const vendorData = {
+                id: product.vendorId,
+                name: product.vendorName || product.vendor,
+                vendorId: product.vendorId,
+                vendorName: product.vendorName || product.vendor
+              };
+              console.log('AvailableVendors - Vendor data passed:', vendorData);
+              onSelectVendor && onSelectVendor(vendorData);
+            }}
             className="flex items-center space-x-1 hover:bg-gray-50 rounded px-1 py-1 transition-colors"
           >
             <div className="w-4 h-4 bg-gray-400 rounded-full"></div>
             <span className="text-xs text-gray-600 truncate max-w-[100px]">
-  {product.vendorName || 'Vendor'}
-</span>
+              {product.vendorName || product.vendor || 'Vendor'}
+            </span>
           </button>
           <button
             onClick={() => openProductModal(product)}
@@ -156,6 +224,10 @@ const addToCartHandler = async (product, qty = 1) => {
             <Plus className="w-4 h-4 text-white" />
           </button>
         </div>
+        {/* Additional product info */}
+        {product.quantity && (
+          <p className="text-xs text-gray-500">Stock: {product.quantity}</p>
+        )}
       </div>
     </div>
   );
@@ -183,19 +255,31 @@ const addToCartHandler = async (product, qty = 1) => {
 
           {/* Product Image Carousel */}
           <div className="relative">
-            <div className="w-full h-64 bg-gray-300 rounded-t-2xl"></div>
+            <div className="w-full h-64 bg-gray-300 rounded-t-2xl overflow-hidden">
+              {selectedProduct.image ? (
+                <img 
+                  src={selectedProduct.image} 
+                  alt={selectedProduct.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-300"></div>
+              )}
+            </div>
             
             {/* Image Dots */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-              {selectedProduct.images.map((_, index) => (
-                <div
-                  key={index}
-                  className={`w-2 h-2 rounded-full ${
-                    index === 0 ? 'bg-gray-800' : 'bg-gray-400'
-                  }`}
-                ></div>
-              ))}
-            </div>
+            {selectedProduct.images && selectedProduct.images.length > 0 && (
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                {selectedProduct.images.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-2 h-2 rounded-full ${
+                      index === 0 ? 'bg-gray-800' : 'bg-gray-400'
+                    }`}
+                  ></div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Product Details */}
@@ -205,24 +289,48 @@ const addToCartHandler = async (product, qty = 1) => {
                 {selectedProduct.name}
               </h2>
               <p className="text-3xl font-bold text-gray-900 mb-2">
-                ${selectedProduct.price.toFixed(2)}
+                ${parseFloat(selectedProduct.price || 0).toFixed(2)}
               </p>
-              <p className="text-gray-500 mb-4">
-                Stock: {selectedProduct.stock}
+              <p className="text-gray-500 mb-2">
+                Stock: {selectedProduct.quantity || selectedProduct.stock || 'N/A'}
               </p>
+              {selectedProduct.condition && (
+                <p className="text-gray-500 mb-2">
+                  Condition: {selectedProduct.condition}
+                </p>
+              )}
+              {selectedProduct.category && (
+                <p className="text-gray-500 mb-4">
+                  Category: {selectedProduct.category}
+                </p>
+              )}
+              {selectedProduct.description && (
+                <p className="text-gray-600 mb-4 text-sm">
+                  {selectedProduct.description}
+                </p>
+              )}
               
               {/* Vendor - Now Clickable */}
               <button 
                 onClick={() => {
                   closeProductModal();
-                  onSelectVendor && onSelectVendor(selectedProduct.vendor);
+                  const vendorData = {
+                    id: selectedProduct.vendorId,
+                    name: selectedProduct.vendorName || selectedProduct.vendor,
+                    vendorId: selectedProduct.vendorId,
+                    vendorName: selectedProduct.vendorName || selectedProduct.vendor
+                  };
+                  console.log('AvailableVendors Modal - Vendor data passed:', vendorData);
+                  onSelectVendor && onSelectVendor(vendorData);
                 }}
                 className="flex items-center space-x-2 mb-6 hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors"
               >
                 <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
                   <div className="w-4 h-4 bg-gray-500 rounded-full"></div>
                 </div>
-                <span className="text-gray-600 font-medium underline">{selectedProduct.vendor}</span>
+                <span className="text-gray-600 font-medium underline">
+                  {selectedProduct.vendorName || selectedProduct.vendor}
+                </span>
               </button>
             </div>
 
@@ -244,7 +352,7 @@ const addToCartHandler = async (product, qty = 1) => {
                   <button
                     onClick={() => updateQuantity(1)}
                     className="w-12 h-12 flex items-center justify-center hover:bg-gray-50 transition-colors"
-                    disabled={quantity >= selectedProduct.stock}
+                    disabled={quantity >= (selectedProduct.quantity || selectedProduct.stock || 999)}
                   >
                     <Plus className="w-4 h-4 text-gray-600" />
                   </button>
@@ -330,12 +438,28 @@ const addToCartHandler = async (product, qty = 1) => {
           </button>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-8">
+            <p className="text-gray-500">Loading available products...</p>
+          </div>
+        )}
+
         {/* Products Grid */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          {products.map(product => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        {!loading && (
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            {products.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
+
+        {/* No Products Message */}
+        {!loading && products.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-gray-500">No products available at the moment.</p>
+          </div>
+        )}
 
         {/* Suggested Products */}
         <div className="space-y-4">
