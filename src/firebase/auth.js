@@ -46,8 +46,41 @@ export const signUpUser = async (userData, userType) => {
       };
       
       await setDoc(doc(db, 'users', user.uid), charityDocData);
+    } else if (userType === 'vendor') {
+      // Store vendor data in both users and vendors collections
+      const userDocData = {
+        uid: user.uid,
+        email: user.email,
+        name: userData.fullName,
+        type: userType,
+        phone: userData.phone || '',
+        location: userData.location || '',
+        socials: userData.socials || '',
+        queries: userData.queries || '',
+        createdAt: new Date().toISOString(),
+        isVerified: false, // Vendors need verification
+      };
+      
+      // Store in users collection for authentication
+      await setDoc(doc(db, 'users', user.uid), userDocData);
+      
+      // Also store in vendors collection for listings management
+      const vendorDocData = {
+        uid: user.uid,
+        email: user.email,
+        name: userData.fullName,
+        phone: userData.phone || '',
+        location: userData.location || '',
+        socials: userData.socials || '',
+        queries: userData.queries || '',
+        createdAt: new Date().toISOString(),
+        isVerified: false,
+        totalListings: 0,
+      };
+      
+      await setDoc(doc(db, 'vendors', user.uid), vendorDocData);
     } else {
-      // Store other user types (donors, vendors) in users collection
+      // Store other user types (donors) in users collection
       const userDocData = {
         uid: user.uid,
         email: user.email,
