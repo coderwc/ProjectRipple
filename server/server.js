@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const OpenAI = require('openai');
+const bodyParser = require('body-parser');
 require('dotenv').config();
 
 const app = express();
@@ -11,22 +12,43 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
+// Import routes
+const vendorRoutes = require('./routes/vendorRoutes');
+const charityRoutes = require('./routes/charityRoutes');
+const donorRoutes = require('./routes/donorRoutes');
+
 // Middleware
 app.use(cors({
   origin: ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json({ limit: '10mb' }));
+app.use(bodyParser.json());
+
+// Mount role-based routes
+app.use('/api/vendor', vendorRoutes);
+app.use('/api/charity', charityRoutes);
+app.use('/api/donor', donorRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({ 
-    message: 'Charity Relief AI Backend is running!',
+    message: 'Unified Charity Relief & Vendor Backend is running!',
     endpoints: [
       'GET /api/test', 
-      'POST /api/ai-recommendation'
+      'POST /api/ai-recommendation',
+      'POST /api/vendor/init',
+      'GET /api/vendor/profile',
+      'GET /api/vendor/listings',
+      'POST /api/vendor/listings',
+      'PUT /api/vendor/listings/:id',
+      'DELETE /api/vendor/listings/:id',
+      'GET /api/charity/profile',
+      'PUT /api/charity/profile',
+      'GET /api/donor/profile',
+      'PUT /api/donor/profile'
     ]
   });
 });
@@ -146,7 +168,11 @@ app.post('/api/ai-recommendation', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📡 Endpoints: AI recommendations only`);
-  console.log(`🔥 Ready for Firebase integration`);
+  console.log(`🚀 Unified server running on http://localhost:${PORT}`);
+  console.log(`📡 Available endpoints:`);
+  console.log(`   - Charity AI: POST /api/ai-recommendation`);
+  console.log(`   - Vendor API: /api/vendor/* (role-protected)`);
+  console.log(`   - Charity API: /api/charity/* (role-protected)`);
+  console.log(`   - Donor API: /api/donor/* (role-protected)`);
+  console.log(`🔥 Ready for Firebase integration with role-based access`);
 });

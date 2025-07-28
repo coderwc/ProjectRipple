@@ -106,6 +106,7 @@ export const loginUser = async (email) => {
       headers: {
         'Content-Type': 'application/json',
       },
+    
       body: JSON.stringify({ email })
     });
     
