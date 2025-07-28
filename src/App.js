@@ -14,19 +14,21 @@ function App() {
   const [userType, setUserType] = useState(null);
   const [showAuth, setShowAuth] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
+      if (firebaseUser && !isAuthenticating) {
         try {
-          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
+          // Check vendors first
+          const vendorDoc = await getDoc(doc(db, 'vendors', firebaseUser.uid));
+          if (vendorDoc.exists()) {
+            const userData = vendorDoc.data();
             const userObj = {
               id: firebaseUser.uid,
               email: firebaseUser.email,
               name: userData.name || firebaseUser.displayName,
-              type: userData.type,
+              type: 'vendor',
               phone: userData.phone || '',
               location: userData.location || '',
               socials: userData.socials || '',
@@ -34,11 +36,30 @@ function App() {
               isVerified: userData.isVerified || false
             };
             setUser(userObj);
-            setUserType(userData.type);
+            setUserType('vendor');
           } else {
-            console.log('No user document found');
-            setUser(null);
-            setUserType(null);
+            // Check users collection
+            const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+            if (userDoc.exists()) {
+              const userData = userDoc.data();
+              const userObj = {
+                id: firebaseUser.uid,
+                email: firebaseUser.email,
+                name: userData.name || firebaseUser.displayName,
+                type: userData.type,
+                phone: userData.phone || '',
+                location: userData.location || '',
+                socials: userData.socials || '',
+                queries: userData.queries || '',
+                isVerified: userData.isVerified || false
+              };
+              setUser(userObj);
+              setUserType(userData.type);
+            } else {
+              console.log('No user document found');
+              setUser(null);
+              setUserType(null);
+            }
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
@@ -47,13 +68,17 @@ function App() {
         }
       } else {
         setUser(null);
-        setUserType(null);
+        // Don't clear userType if we're showing the auth page - preserve user's selection
+        if (!showAuth) {
+          setUserType(null);
+        }
+        console.log('Auth state changed to null, showAuth:', showAuth, 'preserving userType:', userType);
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [isAuthenticating]);
 
   const handleSelectUserType = (type) => {
     setUserType(type);
@@ -101,12 +126,14 @@ const handleLogout = async () => {
 
   // Show auth page if user selected a type but isn't logged in
   if (!user && showAuth) {
+    console.log('Rendering AuthPage with userType:', userType, 'showAuth:', showAuth);
     return (
       <CartProvider>
         <AuthPage 
           onLogin={handleLogin} 
           userType={userType} 
           onBack={handleBackToLanding}
+          setIsAuthenticating={setIsAuthenticating}
         />
       </CartProvider>
     );

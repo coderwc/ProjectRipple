@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, Apple, Heart, Package, FileText } from 'lucide-react';
 import { signUpUser, signInUser, signInWithGoogle } from '../../firebase/auth';
 
-const AuthPage = ({ onLogin, userType: selectedUserType, onBack }) => {
+const AuthPage = ({ onLogin, userType: selectedUserType, onBack, setIsAuthenticating }) => {
   const [isSignIn, setIsSignIn] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -21,6 +21,11 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack }) => {
       ...formData,
       [e.target.name]: e.target.value
     });
+    
+    // Clear error when user starts typing (but only after they've made a change)
+    if (error && e.target.value.length > 0) {
+      setError('');
+    }
   };
 
   // Firebase Authentication Submit
@@ -28,6 +33,7 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack }) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+    setIsAuthenticating(true); // Block App.js auth listener
 
     try {
       let user;
@@ -38,7 +44,7 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack }) => {
           throw new Error('Please fill in all required fields');
         }
         
-        user = await signInUser(formData.email, formData.password);
+        user = await signInUser(formData.email, formData.password, selectedUserType);
       } else {
         // Sign up new user
         if (!formData.fullName || !formData.email || !formData.password) {
@@ -49,6 +55,7 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack }) => {
       }
       
       console.log(`${isSignIn ? 'Sign in' : 'Sign up'} successful:`, user);
+      setIsAuthenticating(false); // Re-enable App.js auth listener
       onLogin(user);
       
     } catch (error) {
@@ -72,6 +79,10 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack }) => {
       }
       
       setError(errorMessage);
+      
+      // Don't clear the selected user type on authentication errors
+      // The user should stay on the same interface they selected
+      setIsAuthenticating(false); // Re-enable App.js auth listener on error
     } finally {
       setIsLoading(false);
     }
@@ -81,14 +92,24 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack }) => {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     setError('');
+    setIsAuthenticating(true); // Block App.js auth listener
     
     try {
       const user = await signInWithGoogle(selectedUserType);
       console.log('Google sign in successful:', user);
+      setIsAuthenticating(false); // Re-enable App.js auth listener
       onLogin(user);
     } catch (error) {
       console.error('Google sign in error:', error);
-      setError('Google sign in failed. Please try again.');
+      
+      // Use the specific error message (including role validation errors)
+      let errorMessage = 'Google sign in failed. Please try again.';
+      if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
+      setIsAuthenticating(false); // Re-enable App.js auth listener on error
     } finally {
       setIsLoading(false);
     }
@@ -197,7 +218,7 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack }) => {
               {selectedUserType === 'charity' && <FileText className="w-4 h-4" />}
               {selectedUserType === 'donor' && <Heart className="w-4 h-4" />}
               {selectedUserType === 'vendor' && <Package className="w-4 h-4" />}
-              Signing in as {selectedUserType}
+              Signing in as {selectedUserType || 'user'}
             </div>
           </div>
 
