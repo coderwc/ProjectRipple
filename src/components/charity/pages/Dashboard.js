@@ -94,6 +94,7 @@ const Dashboard = ({
     {/* Bottom Navigation */}
     <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-white border-t border-gray-200">
       <div className="flex justify-around py-3">
+        {/* Home */}
         <button 
           onClick={() => setCurrentPage('dashboard')}
           className="flex flex-col items-center gap-1"
@@ -101,17 +102,27 @@ const Dashboard = ({
           <Home className={`w-6 h-6 ${currentPage === 'dashboard' ? 'text-gray-900' : 'text-gray-400'}`} />
           <span className={`text-xs ${currentPage === 'dashboard' ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>Home</span>
         </button>
+
+        {/* Post (updated to go to SelectPostType) */}
         <button 
-          onClick={() => setCurrentPage('createPost')}
+          onClick={() => setCurrentPage('selectPostType')}
           className="flex flex-col items-center gap-1"
         >
           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-            currentPage === 'createPost' ? 'bg-blue-600' : 'bg-gray-800'
+            currentPage === 'createPost' || currentPage === 'selectPostType' ? 'bg-blue-600' : 'bg-gray-800'
           }`}>
             <Plus className="w-5 h-5 text-white" />
           </div>
-          <span className={`text-xs font-medium ${currentPage === 'createPost' ? 'text-blue-600' : 'text-gray-600'}`}>Post</span>
+          <span className={`text-xs font-medium ${
+            currentPage === 'createPost' || currentPage === 'selectPostType'
+              ? 'text-blue-600'
+              : 'text-gray-600'
+          }`}>
+            Post
+          </span>
         </button>
+
+        {/* Profile */}
         <button 
           onClick={() => setCurrentPage('profile')}
           className="flex flex-col items-center gap-1"

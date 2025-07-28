@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Plus, Calendar, ChevronUp, ChevronDown } from 'lucide-react';
 
-const CreatePostPage = ({
+const RequestHelp = ({
   selectedImage,
   setSelectedImage,
   formData = {},
@@ -166,7 +166,7 @@ const CreatePostPage = ({
           <button onClick={onBack}>
             <ArrowLeft className="w-6 h-6 text-gray-700" />
           </button>
-          <h1 className="text-xl font-bold text-gray-900">Create A Post</h1>
+          <h1 className="text-xl font-bold text-gray-900">Request Help</h1>
         </div>
       </div>
 
@@ -392,4 +392,4 @@ const CreatePostPage = ({
   );
 };
 
-export default CreatePostPage;
+export default RequestHelp;
