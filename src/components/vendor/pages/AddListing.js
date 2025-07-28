@@ -1,20 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ArrowLeft, Camera } from 'lucide-react';
-import { 
-  collection, 
-  addDoc, 
-  updateDoc, 
-  doc, 
-  serverTimestamp,
-  setDoc,
-  getDoc,
-  getDocs,
-  query,
-  where 
-} from 'firebase/firestore';
-import { db, auth } from '../../../firebase/config';
+import axios from 'axios';
+import { auth } from '../../../firebase/config';
 
-const AddListing = ({ listings, setListings, user, editingId, isEditing, onBack }) => {
+const AddListing = ({ user, onBack }) => {
   const [formData, setFormData] = useState({
     image: null,
     name: '',
@@ -26,18 +15,8 @@ const AddListing = ({ listings, setListings, user, editingId, isEditing, onBack 
     price: 0
   });
 
-  // Load existing data if editing
-  useEffect(() => {
-    if (isEditing && editingId !== null && listings[editingId]) {
-      setFormData(listings[editingId]);
-    }
-  }, [isEditing, editingId, listings]);
-
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleImageUpload = (e) => {
@@ -48,143 +27,55 @@ const AddListing = ({ listings, setListings, user, editingId, isEditing, onBack 
   };
 
   const handlePublish = async () => {
-    if (!formData.name || !formData.category || !formData.price) {
-      alert('Please fill in Item Name, Category, and Price.');
-      return;
+
+  if (!formData.name || !formData.category || !formData.price) {
+    alert('Please fill in Item Name, Category, and Price.');
+    return;
+  }
+
+  try {
+    console.log("🧪 User object:", user); // Log user
+
+    const currentUser = auth.currentUser;
+    const token = await currentUser.getIdToken(); 
+    console.log("🔑 Token:", token); // Log token
+
+    const listingData = {
+      ...formData,
+      vendorId: user.uid,
+      vendorName: user.displayName || '',
+      createdAt: new Date().toISOString(),
+    };
+
+    const response = await axios.post(
+      'http://localhost:5001/api/vendor/listings',
+      listingData,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+
+    console.log("✅ Listing posted:", response.data);
+    alert('Listing published successfully!');
+    onBack();
+
+  } catch (error) {
+    console.error('❌ Error publishing listing:', error);
+
+    if (error.response) {
+      console.error("📦 Server responded:", error.response.data);
+    } else if (error.request) {
+      console.error("📡 No response received from server:", error.request);
+    } else {
+      console.error("⚠️ Setup error:", error.message);
     }
 
-    try {
-      // Debug: Check what user data we have
-      console.log('Current user object:', user);
-      console.log('User ID:', user.id);
-      console.log('User type:', user.type);
-      
-      // Check current authentication
-      const currentUser = auth.currentUser;
-      console.log('Firebase Auth currentUser:', currentUser);
-      console.log('Auth UID:', currentUser?.uid);
-      
-      // Use the authenticated user's UID
-      const vendorId = currentUser?.uid || user.id;
-      console.log('Using vendor ID:', vendorId);
-      
-      // First, ensure the vendor document exists in vendors collection
-      const vendorRef = doc(db, 'vendors', vendorId);
-      console.log('Vendor document path:', vendorRef.path);
-      
-      const vendorDoc = await getDoc(vendorRef);
-      console.log('Vendor document exists:', vendorDoc.exists());
-      
-      if (!vendorDoc.exists()) {
-        console.log('Vendor document does not exist, creating it...');
-        // Create vendor document if it doesn't exist
-        await setDoc(vendorRef, {
-          uid: vendorId,
-          email: user.email || currentUser?.email || '',
-          name: user.name || currentUser?.displayName || '',
-          phone: user.phone || '',
-          location: user.location || '',
-          socials: user.socials || '',
-          queries: user.queries || '',
-          createdAt: serverTimestamp(),
-          isVerified: false,
-          totalListings: 0,
-        });
-        console.log('Vendor document created successfully');
-      }
-
-      const productData = {
-        ...formData,
-        vendorId: vendorId,
-        vendorName: user.name || currentUser?.displayName || '',
-        status: 'active'
-      };
-
-      if (isEditing && editingId !== null) {
-        // Update existing listing in BOTH locations
-        
-        // Update in vendors subcollection
-        const vendorListingRef = doc(db, 'vendors', vendorId, 'listings', editingId);
-        await updateDoc(vendorListingRef, {
-          ...productData,
-          updatedAt: serverTimestamp()
-        });
-        
-        // Update in root listings collection
-        // Find the root listing document that corresponds to this vendor listing
-        const rootListingsQuery = query(
-          collection(db, 'listings'),
-          where('vendorListingId', '==', editingId),
-          where('vendorId', '==', vendorId)
-        );
-        const rootListingsSnapshot = await getDocs(rootListingsQuery);
-        
-        if (!rootListingsSnapshot.empty) {
-          const rootListingDoc = rootListingsSnapshot.docs[0];
-          await updateDoc(doc(db, 'listings', rootListingDoc.id), {
-            ...productData,
-            updatedAt: serverTimestamp()
-          });
-          console.log('Root listing updated successfully');
-        }
-        
-        // Update local state
-        const updatedListings = listings.map(listing => 
-          listing.id === editingId ? { ...listing, ...productData } : listing
-        );
-        setListings(updatedListings);
-        
-        alert('Listing updated successfully!');
-      } else {
-        // Add new listing to Firestore in BOTH locations
-        console.log('Creating listing for vendor:', vendorId);
-        console.log('Listing data:', productData);
-        
-        // First, create in vendors subcollection
-        const vendorListingsRef = collection(db, 'vendors', vendorId, 'listings');
-        const vendorDocRef = await addDoc(vendorListingsRef, {
-          ...productData,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
-        
-        console.log('Vendor listing created with ID:', vendorDocRef.id);
-        
-        // Second, create in root listings collection for easy donor browsing
-        const rootListingsRef = collection(db, 'listings');
-        await addDoc(rootListingsRef, {
-          ...productData,
-          id: vendorDocRef.id, // Reference to vendor's listing ID
-          vendorListingId: vendorDocRef.id, // Backup reference
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
-        
-        console.log('Root listing created successfully');
-        
-        // Update local state with the new listing
-        const newListing = {
-          id: vendorDocRef.id,
-          ...productData,
-          createdAt: new Date().toISOString()
-        };
-        setListings([...listings, newListing]);
-        
-        alert('Listing published successfully!');
-      }
-
-      onBack();
-    } catch (error) {
-      console.error('Error saving listing:', error);
-      console.error('Error details:', error.message);
-      console.error('Error code:', error.code);
-      alert(`Failed to save listing: ${error.message}`);
-    }
-  };
+    alert('Failed to publish listing.');
+  }
+};
 
   return (
     <div className="max-w-sm mx-auto bg-gray-50 min-h-screen">
-      {/* Status Bar */}
       <div className="flex justify-between items-center px-4 py-2 bg-white text-sm font-medium">
         <span>9:30</span>
         <div className="flex gap-1">
@@ -193,66 +84,47 @@ const AddListing = ({ listings, setListings, user, editingId, isEditing, onBack 
         </div>
       </div>
 
-      {/* Header */}
       <div className="bg-white px-4 py-4 border-b border-gray-100">
         <div className="flex items-center gap-3">
           <button onClick={onBack}>
             <ArrowLeft className="w-6 h-6 text-gray-700" />
           </button>
-          <h1 className="text-xl font-bold text-gray-900">
-            {isEditing ? 'Edit Listing' : 'Add Listing'}
-          </h1>
+          <h1 className="text-xl font-bold text-gray-900">Add Listing</h1>
         </div>
       </div>
 
-      {/* Content */}
       <div className="px-4 py-6 pb-24">
-        {/* Info Text */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
           <p className="text-sm text-blue-800">
             List your surplus goods to reduce loss while doing great help to charities around you.
           </p>
         </div>
 
-        {/* Product Listing Section */}
         <div className="mb-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Product Listing</h3>
-          
-          {/* Image Upload and Basic Info */}
+
           <div className="flex gap-4 mb-6">
-            {/* Image Upload */}
             <div className="w-24 h-24 flex-shrink-0">
               <label className="block w-full h-full bg-gray-200 rounded-lg border-2 border-dashed border-gray-300 cursor-pointer hover:border-gray-400 transition-colors overflow-hidden">
                 {formData.image ? (
-                  <img 
-                    src={formData.image} 
-                    alt="preview" 
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={formData.image} alt="preview" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <Camera className="w-6 h-6 text-gray-400" />
                   </div>
                 )}
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={handleImageUpload} 
-                  className="hidden" 
-                />
+                <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
               </label>
             </div>
 
-            {/* Basic Info */}
             <div className="flex-1 space-y-3">
-              <input 
+              <input
                 className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Item Name"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
               />
-              
-              <select 
+              <select
                 className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={formData.category}
                 onChange={(e) => handleInputChange('category', e.target.value)}
@@ -269,15 +141,10 @@ const AddListing = ({ listings, setListings, user, editingId, isEditing, onBack 
           </div>
         </div>
 
-        {/* Product Details */}
         <div className="space-y-6">
           <h3 className="text-lg font-bold text-gray-900">Product Details</h3>
-
-          {/* Expiry Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Expiry Date <span className="text-gray-400 font-normal">(optional)</span>
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Expiry Date (optional)</label>
             <input
               type="date"
               className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -286,7 +153,6 @@ const AddListing = ({ listings, setListings, user, editingId, isEditing, onBack 
             />
           </div>
 
-          {/* Item Condition */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">Item Condition</label>
             <div className="grid grid-cols-3 gap-2">
@@ -296,9 +162,7 @@ const AddListing = ({ listings, setListings, user, editingId, isEditing, onBack 
                   type="button"
                   onClick={() => handleInputChange('condition', condition)}
                   className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-                    formData.condition === condition
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                    formData.condition === condition ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
                   }`}
                 >
                   {condition}
@@ -307,11 +171,8 @@ const AddListing = ({ listings, setListings, user, editingId, isEditing, onBack 
             </div>
           </div>
 
-          {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Add a description <span className="text-gray-400 font-normal">(optional)</span>
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Add a description (optional)</label>
             <textarea
               rows="4"
               className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
@@ -321,26 +182,34 @@ const AddListing = ({ listings, setListings, user, editingId, isEditing, onBack 
             />
           </div>
 
-          {/* Quantity */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
             <input
               type="number"
               className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={formData.quantity}
-              onChange={(e) => handleInputChange('quantity', Math.max(1, parseInt(e.target.value) || 1))}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '' || /^[0-9]+$/.test(val)) {
+                  handleInputChange('quantity', val);
+                }
+              }}
               min="1"
             />
           </div>
 
-          {/* Price */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Price per product (SGD)</label>
             <input
               type="number"
               className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={formData.price}
-              onChange={(e) => handleInputChange('price', Math.max(0, parseFloat(e.target.value) || 0))}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '' || /^[0-9]*\.?[0-9]*$/.test(val)) {
+                  handleInputChange('price', val);
+                }
+              }}
               min="0"
               step="0.01"
               placeholder="0.00"
@@ -349,13 +218,12 @@ const AddListing = ({ listings, setListings, user, editingId, isEditing, onBack 
         </div>
       </div>
 
-      {/* Fixed Publish Button */}
       <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-white border-t border-gray-200 px-4 py-4">
-        <button 
+        <button
           onClick={handlePublish}
           className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-blue-700 transition-colors"
         >
-          {isEditing ? 'UPDATE LISTING' : 'PUBLISH LISTING'}
+          PUBLISH LISTING
         </button>
       </div>
     </div>

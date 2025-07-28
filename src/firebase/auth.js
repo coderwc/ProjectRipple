@@ -1,104 +1,44 @@
-// src/firebase/auth.js
-import { 
-  createUserWithEmailAndPassword, 
+import {
+  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
   updateProfile
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from './config';
 
-// Create user account and store additional data
+// 🔥 Sync with vendor backend
+const initVendorProfile = async (name, email) => {
+  const token = await auth.currentUser.getIdToken();
+
+  await fetch("http://localhost:5001/api/vendor/init", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ name, email })
+  });
+};
+
+// ✏️ Sign up
 export const signUpUser = async (userData, userType) => {
   try {
-    // Create user with email and password
     const userCredential = await createUserWithEmailAndPassword(
-      auth, 
-      userData.email, 
+      auth,
+      userData.email,
       userData.password
     );
-    
+
     const user = userCredential.user;
-    
-    // Update display name
+
     await updateProfile(user, {
       displayName: userData.fullName
     });
-    
-    // Store user data in appropriate collection based on type
-    if (userType === 'charity') {
-      // Store charity data with all form fields
-      const charityDocData = {
-        uid: user.uid,
-        email: user.email,
-        name: userData.fullName,
-        type: 'charity',
-        phone: userData.phone || '',
-        location: userData.location || '',
-        socials: userData.socials || '',
-        queries: userData.queries || '',
-        tagline: '',
-        aboutUs: '',
-        focusAreas: [],
-        createdAt: new Date().toISOString(),
-        isVerified: false, // Charities need verification
-      };
-      
-      await setDoc(doc(db, 'users', user.uid), charityDocData);
-    } else if (userType === 'vendor') {
-      // Store vendor data in both users and vendors collections
-      const userDocData = {
-        uid: user.uid,
-        email: user.email,
-        name: userData.fullName,
-        type: userType,
-        phone: userData.phone || '',
-        location: userData.location || '',
-        socials: userData.socials || '',
-        queries: userData.queries || '',
-        createdAt: new Date().toISOString(),
-        isVerified: false, // Vendors need verification
-      };
-      
-      // Store in users collection for authentication
-      await setDoc(doc(db, 'users', user.uid), userDocData);
-      
-      // Also store in vendors collection for listings management
-      const vendorDocData = {
-        uid: user.uid,
-        email: user.email,
-        name: userData.fullName,
-        phone: userData.phone || '',
-        location: userData.location || '',
-        socials: userData.socials || '',
-        queries: userData.queries || '',
-        createdAt: new Date().toISOString(),
-        isVerified: false,
-        totalListings: 0,
-      };
-      
-      await setDoc(doc(db, 'vendors', user.uid), vendorDocData);
-    } else {
-      // Store other user types (donors) in users collection
-      const userDocData = {
-        uid: user.uid,
-        email: user.email,
-        name: userData.fullName,
-        type: userType,
-        phone: userData.phone || '',
-        location: userData.location || '',
-        socials: userData.socials || '',
-        queries: userData.queries || '',
-        createdAt: new Date().toISOString(),
-        isVerified: userType === 'donor',
-      };
-      
-      await setDoc(doc(db, 'users', user.uid), userDocData);
-    }
-    
-    return {
-      id: user.uid,
+
+    const userDocData = {
+      uid: user.uid,
       email: user.email,
       name: userData.fullName,
       type: userType,
@@ -106,30 +46,55 @@ export const signUpUser = async (userData, userType) => {
       location: userData.location || '',
       socials: userData.socials || '',
       queries: userData.queries || '',
-      tagline: userType === 'charity' ? '' : undefined,
-      aboutUs: userType === 'charity' ? '' : undefined,
-      focusAreas: userType === 'charity' ? [] : undefined,
+      createdAt: new Date().toISOString(),
       isVerified: userType === 'donor'
     };
+
+    const collection = userType === 'vendor' ? 'vendors' : 'users';
+    await setDoc(doc(db, collection, user.uid), userDocData);
+
+    if (userType === 'vendor') {
+      await initVendorProfile(userData.fullName, user.email);
+    }
+
+    return { ...userDocData, id: user.uid };
   } catch (error) {
     console.error('Sign up error:', error);
     throw error;
   }
 };
 
-// Sign in user and get their data
+// ✏️ Sign in (auto-detect type from Firestore)
 export const signInUser = async (email, password) => {
   try {
-    console.log('Attempting to sign in with:', email, 'password length:', password?.length);
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    console.log('Sign in successful for user:', user.uid);
-    
-    // Get additional user data from Firestore
+
+    // ✅ Check vendors first
+    const vendorDoc = await getDoc(doc(db, 'vendors', user.uid));
+    if (vendorDoc.exists()) {
+      const userData = vendorDoc.data();
+
+      await initVendorProfile(userData.name || user.displayName, user.email);
+
+      return {
+        id: user.uid,
+        email: user.email,
+        name: userData.name || user.displayName,
+        type: 'vendor',
+        phone: userData.phone || '',
+        location: userData.location || '',
+        socials: userData.socials || '',
+        queries: userData.queries || '',
+        isVerified: userData.isVerified || false
+      };
+    }
+
+    // ✅ Else check users (donor / charity)
     const userDoc = await getDoc(doc(db, 'users', user.uid));
-    
     if (userDoc.exists()) {
       const userData = userDoc.data();
+
       return {
         id: user.uid,
         email: user.email,
@@ -139,71 +104,59 @@ export const signInUser = async (email, password) => {
         location: userData.location || '',
         socials: userData.socials || '',
         queries: userData.queries || '',
-        tagline: userData.tagline || '',
-        aboutUs: userData.aboutUs || '',
-        focusAreas: userData.focusAreas || [],
         isVerified: userData.isVerified || false
       };
-    } else {
-      // If no Firestore document exists, create basic user data
-      return {
-        id: user.uid,
-        email: user.email,
-        name: user.displayName || 'User',
-        type: 'donor', // Default type
-        phone: '',
-        location: '',
-        socials: '',
-        queries: '',
-        isVerified: false
-      };
     }
+
+    // ⚠️ Fallback (new user not in either collection)
+    return {
+      id: user.uid,
+      email: user.email,
+      name: user.displayName || 'User',
+      type: 'donor',
+      phone: '',
+      location: '',
+      socials: '',
+      queries: '',
+      isVerified: false
+    };
   } catch (error) {
     console.error('Sign in error:', error);
     throw error;
   }
 };
 
-// Google sign in
+// ✏️ Google sign-in (auto-detect collection or create new)
 export const signInWithGoogle = async (userType) => {
   try {
     const provider = new GoogleAuthProvider();
     const userCredential = await signInWithPopup(auth, provider);
     const user = userCredential.user;
-    
-    // Check if user document exists
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    
-    if (!userDoc.exists()) {
-      // Create new user document for Google sign-in
-      const userDocData = {
-        uid: user.uid,
-        email: user.email,
-        name: user.displayName,
-        type: userType,
-        phone: '',
-        location: '',
-        socials: '',
-        queries: '',
-        createdAt: new Date().toISOString(),
-        isVerified: userType === 'donor',
-      };
-      
-      await setDoc(doc(db, 'users', user.uid), userDocData);
-      
+
+    // ✅ Check if vendor
+    const vendorDoc = await getDoc(doc(db, 'vendors', user.uid));
+    if (vendorDoc.exists()) {
+      const userData = vendorDoc.data();
+      await initVendorProfile(userData.name || user.displayName, user.email);
+
       return {
         id: user.uid,
         email: user.email,
-        name: user.displayName,
-        type: userType,
-        phone: '',
-        location: '',
-        socials: '',
-        queries: '',
-        isVerified: userType === 'donor'
+        name: userData.name || user.displayName,
+        type: 'vendor',
+        phone: userData.phone || '',
+        location: userData.location || '',
+        socials: userData.socials || '',
+        queries: userData.queries || '',
+        isVerified: userData.isVerified || false
       };
-    } else {
+    }
+
+    // ✅ Check if user
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    if (userDoc.exists()) {
       const userData = userDoc.data();
+
       return {
         id: user.uid,
         email: user.email,
@@ -216,55 +169,38 @@ export const signInWithGoogle = async (userType) => {
         isVerified: userData.isVerified || false
       };
     }
+
+    // ✏️ If user not in DB, create new
+    const userDocData = {
+      uid: user.uid,
+      email: user.email,
+      name: user.displayName,
+      type: userType,
+      phone: '',
+      location: '',
+      socials: '',
+      queries: '',
+      createdAt: new Date().toISOString(),
+      isVerified: userType === 'donor'
+    };
+
+    const collection = userType === 'vendor' ? 'vendors' : 'users';
+    await setDoc(doc(db, collection, user.uid), userDocData);
+
+    if (userType === 'vendor') {
+      await initVendorProfile(user.displayName, user.email);
+    }
+
+    return { ...userDocData, id: user.uid };
   } catch (error) {
     console.error('Google sign in error:', error);
     throw error;
   }
 };
 
-// Update user profile
-export const updateUserProfile = async (userId, profileData) => {
-  try {
-    const userRef = doc(db, 'users', userId);
-    
-    // Update Firebase Auth display name if name is being changed
-    if (profileData.name && auth.currentUser) {
-      await updateProfile(auth.currentUser, {
-        displayName: profileData.name
-      });
-    }
-    
-    // Update Firestore document
-    const updateData = {
-      ...profileData,
-      updatedAt: new Date().toISOString()
-    };
-    
-    await updateDoc(userRef, updateData);
-    
-    // Get updated user data
-    const updatedUserDoc = await getDoc(userRef);
-    if (updatedUserDoc.exists()) {
-      const userData = updatedUserDoc.data();
-      return {
-        id: userId,
-        email: userData.email,
-        name: userData.name,
-        type: userData.type,
-        phone: userData.phone || '',
-        location: userData.location || '',
-        socials: userData.socials || '',
-        queries: userData.queries || '',
-        tagline: userData.tagline || '',
-        aboutUs: userData.aboutUs || '',
-        focusAreas: userData.focusAreas || [],
-        isVerified: userData.isVerified || false
-      };
-    }
-    
-    throw new Error('Failed to retrieve updated user data');
-  } catch (error) {
-    console.error('Profile update error:', error);
-    throw error;
-  }
+export const updateUserProfile = async (newData) => {
+  const user = auth.currentUser;
+  if (!user) throw new Error("No authenticated user");
+
+  await updateProfile(user, newData);
 };

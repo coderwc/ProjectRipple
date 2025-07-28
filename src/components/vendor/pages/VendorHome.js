@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   PackagePlus,
   ClipboardList,
@@ -9,6 +9,7 @@ import {
   User,
   CheckCircle2,
 } from 'lucide-react';
+import { auth } from '../../../firebase/config'; 
 
 const VendorHome = ({
   onNavigateToAdd,
@@ -19,6 +20,31 @@ const VendorHome = ({
   onNavigateToHome,
   onNavigateToProfile,
 }) => {
+  const [vendorData, setVendorData] = useState({ name: '', balance: 0 });
+
+  useEffect(() => {
+    const fetchVendorData = async () => {
+      try {
+        const token = await auth.currentUser.getIdToken();
+
+        const res = await fetch("http://localhost:5001/api/vendor/profile", {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch vendor profile");
+
+        const data = await res.json(); // expects: { name, balance }
+        setVendorData(data);
+      } catch (err) {
+        console.error("Error fetching vendor data:", err);
+      }
+    };
+
+    fetchVendorData();
+  }, []);
+
   const handleLogout = () => {
     const confirmLogout = window.confirm("Are you sure you want to log out?");
     if (confirmLogout) {
@@ -45,7 +71,7 @@ const VendorHome = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-gray-900">Freshmart</h1>
+              <h1 className="text-xl font-bold text-gray-900">{vendorData.name || "Vendor"}</h1>
               <CheckCircle2 className="w-5 h-5 text-blue-500" />
             </div>
             <p className="text-sm text-gray-500">Verified Vendor</p>
@@ -70,8 +96,8 @@ const VendorHome = ({
         >
           <PackagePlus className="w-6 h-6 text-blue-600" />
           <div className="text-left">
-            <h2 className="text-md font-semibold text-gray-900">View Products</h2>
-            <p className="text-sm text-gray-500">View and list new items to reduce waste</p>
+            <h2 className="text-md font-semibold text-gray-900">My Products</h2>
+            <p className="text-sm text-gray-500">View and list items to reduce waste</p>
           </div>
         </button>
 
@@ -81,7 +107,7 @@ const VendorHome = ({
         >
           <ClipboardList className="w-6 h-6 text-green-600" />
           <div className="text-left">
-            <h2 className="text-md font-semibold text-gray-900">View Orders</h2>
+            <h2 className="text-md font-semibold text-gray-900">My Orders</h2>
             <p className="text-sm text-gray-500">Manage shipping and status</p>
           </div>
         </button>
@@ -92,7 +118,7 @@ const VendorHome = ({
         >
           <Wallet className="w-6 h-6 text-yellow-600" />
           <div className="text-left">
-            <h2 className="text-md font-semibold text-gray-900">Wallet</h2>
+            <h2 className="text-md font-semibold text-gray-900">My Wallet</h2>
             <p className="text-sm text-gray-500">Check your balance and earnings</p>
           </div>
         </button>
@@ -109,7 +135,7 @@ const VendorHome = ({
 
           {/* Add Listing */}
           <button
-            onClick={() => onNavigateToAdd('home')} // 👈 Pass 'home' to go back to home later
+            onClick={() => onNavigateToAdd('home')}
             className="flex flex-col items-center gap-1"
           >
             <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">

@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { getVendorOrders, updateOrderStatus as updateOrderStatusInDB } from '../../../firebase/orders'; // 🔄 path may vary
-import { creditVendorWallet } from '../../../firebase/wallet';
 
 const ViewOrders = ({ onNavigateToHome }) => {
   const [orders, setOrders] = useState([]);
@@ -9,50 +7,19 @@ const ViewOrders = ({ onNavigateToHome }) => {
   const [sortBy, setSortBy] = useState('Date'); // 'Date' or 'Status'
 
   useEffect(() => {
-  const fetchOrders = async () => {
-    try {
-      const fetched = await getVendorOrders();
-      setOrders(fetched);
-    } catch (err) {
-      console.error("❌ Failed to fetch vendor orders:", err.message);
-    }
-  };
+    const mockOrders = [
+      { id: 'ORD001', customer: 'Jane Doe', item: 'Organic Apples', quantity: 3, status: 'Pending', date: '2025-07-13' },
+      { id: 'ORD002', customer: 'John Smith', item: 'Wholegrain Bread', quantity: 2, status: 'Shipped', date: '2025-07-12' },
+      { id: 'ORD003', customer: 'Ali Lim', item: 'Bananas', quantity: 6, status: 'Completed', date: '2025-07-10' },
+    ];
+    setOrders(mockOrders);
+  }, []);
 
-  fetchOrders();
-}, []);
-
-const updateOrderStatus = async (id, newStatus) => {
-  try {
-    const order = orders.find(o => o.id === id);
-    if (!order) throw new Error("Order not found");
-
-    // ✅ LOG before update
-    console.log("Calling updateOrderStatusInDB with:", {
-      id,
-      newStatus,
-      vendorId: order.vendorId
-    });
-
-    // ✅ Call update with vendorId
-    await updateOrderStatusInDB(id, newStatus, order.vendorId);
-
-    // 💸 Credit wallet if needed
-    if (newStatus === 'Shipped' || newStatus === 'Completed') {
-      const total = order.items.reduce(
-        (sum, item) => sum + item.price * item.quantity, 0
-      );
-      await creditVendorWallet(order.vendorId, total);
-    }
-
-    // ✅ Update local state
+  const updateOrderStatus = (id, newStatus) => {
     setOrders((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, status: newStatus } : o))
+      prev.map((order) => (order.id === id ? { ...order, status: newStatus } : order))
     );
-  } catch (err) {
-    console.error(`❌ Failed to update order ${id}:`, err.message);
-    alert("Failed to update order. Try again.");
-  }
-};
+  };
 
   const statusOrder = {
     Pending: 1,
@@ -141,12 +108,8 @@ const updateOrderStatus = async (id, newStatus) => {
                     {order.status}
                 </span>
               </div>
-              <p className="text-sm text-gray-600"><strong>Items:</strong></p>
-<ul className="ml-4 list-disc text-sm text-gray-600">
-  {order.items?.map((item, idx) => (
-    <li key={idx}>{item.name} × {item.quantity}</li>
-  ))}
-</ul>
+              <p className="text-sm text-gray-600"><strong>Item:</strong> {order.item}</p>
+              <p className="text-sm text-gray-600"><strong>Qty:</strong> {order.quantity}</p>
               <p className="text-sm text-gray-600"><strong>Customer:</strong> {order.customer}</p>
               <p className="text-xs text-gray-400 text-right">{order.date}</p>
 
@@ -176,4 +139,3 @@ const updateOrderStatus = async (id, newStatus) => {
 };
 
 export default ViewOrders;
-

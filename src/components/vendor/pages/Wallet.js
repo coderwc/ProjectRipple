@@ -1,45 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { getVendorWallet, withdrawFromWallet } from '../../../firebase/wallet'; // Adjust path as needed
 
-const Wallet = ({ onNavigateToHome }) => {
-  const [balance, setBalance] = useState(0);
-  const [history, setHistory] = useState([]);
-  const vendorName = 'Freshmart'; // or fetch vendor name if dynamic
-
-  useEffect(() => {
-    const fetchWallet = async () => {
-      try {
-        const data = await getVendorWallet();
-        setBalance(data.balance);
-        setHistory(data.history);
-      } catch (err) {
-        console.error("❌ Failed to load wallet:", err.message);
-      }
-    };
-
-    fetchWallet();
-  }, []);
-
-  const handleWithdraw = async () => {
+const Wallet = ({ 
+  onNavigateToHome, 
+  vendorName = 'Freshmart', 
+  balance = 250.0, 
+  onWithdraw, 
+  history = [] 
+}) => {
+  const handleWithdraw = () => {
     const amountStr = prompt('Enter amount to withdraw:');
     const amount = parseFloat(amountStr);
-
     if (isNaN(amount) || amount <= 0) {
       alert('Please enter a valid amount.');
-      return;
-    }
-
-    const success = await withdrawFromWallet(amount);
-    if (success) {
-      alert('✅ Withdrawal successful.');
-      setBalance(prev => prev - amount);
-      setHistory(prev => [
-        ...prev,
-        { amount, date: new Date().toISOString() }
-      ]);
-    } else {
-      alert('❌ Withdrawal failed. Check your balance.');
+    } else if (!onWithdraw(amount)) {
+      alert('Withdrawal failed. Check your balance.');
     }
   };
 

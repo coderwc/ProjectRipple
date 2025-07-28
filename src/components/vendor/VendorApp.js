@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import VendorHome from './pages/VendorHome';
 import MyListings from './pages/MyListings';
 import AddListing from './pages/AddListing';
+import EditListing from './pages/EditListing';
 import ViewOrders from './pages/ViewOrders';
 import Wallet from './pages/Wallet';
 import ProfilePage from './pages/ProfilePage';
@@ -108,15 +109,23 @@ const VendorApp = ({ user, onLogout }) => {
         />
       )}
 
-      {(currentPage === 'addListing' || currentPage === 'editListing') && (
+      {currentPage === 'addListing' && (
         <AddListing
           listings={listings}
           setListings={setListings}
           user={user}
-          editingId={editingId}
-          isEditing={currentPage === 'editListing'}
-          onBack={handleBackFromAddOrEdit} // NEW LOGIC
+          editingId={null}
+          isEditing={false}
+          onBack={handleBackFromAddOrEdit}
           onNavigateToHome={navigateToHome}
+        />
+      )}
+
+      {currentPage === 'editListing' && (
+        <EditListing
+          user={user}
+          listingId={editingId}
+          onBack={handleBackFromAddOrEdit}
         />
       )}
 
