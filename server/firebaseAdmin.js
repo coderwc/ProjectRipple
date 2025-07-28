@@ -52,16 +52,13 @@ const verifyRole = (requiredRole) => {
         userDoc = await db.collection('users').doc(uid).get();
       }
 
-      if (!userDoc.exists()) {
+      if (!userDoc.exists) {
         return res.status(403).json({ error: "User not found" });
       }
 
       const userData = userDoc.data();
       
-      // For vendors, they should be in vendors collection
-      if (requiredRole === 'vendor' && userDoc.ref.parent.id !== 'vendors') {
-        return res.status(403).json({ error: "Access denied: Vendor role required" });
-      }
+      // For vendors, existence in vendors collection is already confirmed above
       
       // For charity/donor, check the type field
       if (requiredRole !== 'vendor' && userData.type !== requiredRole) {

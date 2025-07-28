@@ -27,7 +27,21 @@ router.get("/profile", async (req, res) => {
     const doc = await vendorRef.get();
 
     if (!doc.exists) return res.status(404).json({ error: "Vendor not found" });
-    res.json(doc.data());
+    
+    const vendorData = doc.data();
+    
+    // Return vendor profile with company name
+    res.json({
+      name: vendorData.name || "Company", // Company name
+      email: vendorData.email || "",
+      balance: vendorData.balance || 0,
+      listings: vendorData.listings || 0,
+      phone: vendorData.phone || "",
+      location: vendorData.location || "",
+      socials: vendorData.socials || "",
+      queries: vendorData.queries || "",
+      isVerified: vendorData.isVerified || false
+    });
   } catch (error) {
     console.error("❌ Error fetching vendor profile:", error);
     res.status(500).json({ error: "Failed to fetch vendor profile" });
