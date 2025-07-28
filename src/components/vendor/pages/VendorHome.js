@@ -36,6 +36,7 @@ const VendorHome = ({
         if (!res.ok) throw new Error("Failed to fetch vendor profile");
 
         const data = await res.json(); // expects: { name, balance }
+        console.log('Vendor profile data:', data); // Debug: see what we get from API
         setVendorData(data);
       } catch (err) {
         console.error("Error fetching vendor data:", err);
