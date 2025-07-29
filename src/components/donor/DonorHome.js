@@ -90,6 +90,13 @@ export default function DonorHome({
 }) {
   const { getTotalItems } = useCart();
 
+  const handleLogout = () => {
+    const confirmLogout = window.confirm("Are you sure you want to log out?");
+    if (confirmLogout) {
+      onLogout();
+    }
+  };
+
   const handleShopForCharity = (charityData, event) => {
     event.stopPropagation(); // Prevent triggering the post selection
     onCharitySelect(charityData);
@@ -128,7 +135,7 @@ export default function DonorHome({
           
           {/* Logout Button */}
           <button
-            onClick={onLogout}
+            onClick={handleLogout}
             className="text-gray-500 hover:text-red-600 transition-colors"
             title="Logout"
           >
