@@ -9,7 +9,7 @@ import {
   User,
   CheckCircle2,
 } from 'lucide-react';
-import { auth } from '../../../firebase/config'; 
+import { auth } from '../../../firebase/config';
 
 const VendorHome = ({
   onNavigateToAdd,
@@ -35,8 +35,8 @@ const VendorHome = ({
 
         if (!res.ok) throw new Error("Failed to fetch vendor profile");
 
-        const data = await res.json(); // expects: { name, balance }
-        console.log('Vendor profile data:', data); // Debug: see what we get from API
+        const data = await res.json();
+        console.log('Vendor profile data:', data);
         setVendorData(data);
       } catch (err) {
         console.error("Error fetching vendor data:", err);
@@ -54,9 +54,9 @@ const VendorHome = ({
   };
 
   return (
-    <div className="max-w-sm mx-auto min-h-screen bg-gray-50 relative">
+    <div className="max-w-sm mx-auto min-h-screen bg-gradient-to-b from-blue-200 via-blue-100 to-white relative">
       {/* Status Bar */}
-      <div className="flex justify-between items-center px-4 py-2 bg-white text-sm font-medium">
+      <div className="flex justify-between items-center px-4 py-2 bg-white text-sm font-medium text-gray-700">
         <span>9:30</span>
         <div className="flex gap-1">
           <div className="w-4 h-2 bg-black rounded-sm"></div>
@@ -65,14 +65,14 @@ const VendorHome = ({
       </div>
 
       {/* Header */}
-      <div className="relative bg-white px-4 py-6 border-b border-gray-100">
+      <div className="relative bg-white px-4 py-6 border-b border-gray-100 shadow-md">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-            <User className="w-6 h-6 text-gray-400" />
+          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+            <User className="w-6 h-6 text-blue-700" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-gray-900">{vendorData.name || "Vendor"}</h1>
+              <h1 className="text-xl font-bold text-blue-800">{vendorData.name || "Vendor"}</h1>
               <CheckCircle2 className="w-5 h-5 text-blue-500" />
             </div>
             <p className="text-sm text-gray-500">Verified Vendor</p>
@@ -81,9 +81,7 @@ const VendorHome = ({
 
         <button
           onClick={handleLogout}
-          className="absolute top-6 right-4 text-gray-500 hover:text-red-600 transition-colors"
-          aria-label="Log out"
-          title="Logout"
+          className="absolute top-6 right-4 text-gray-400 hover:text-red-500 transition-colors"
         >
           <LogOut className="w-5 h-5" />
         </button>
@@ -93,7 +91,7 @@ const VendorHome = ({
       <div className="px-4 py-6 space-y-4 pb-24">
         <button
           onClick={onNavigateToListings}
-          className="w-full flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:bg-gray-100 transition-colors"
+          className="w-full flex items-center gap-4 p-4 bg-white border border-blue-200 rounded-xl shadow hover:bg-blue-50 transition-colors"
         >
           <PackagePlus className="w-6 h-6 text-blue-600" />
           <div className="text-left">
@@ -104,9 +102,9 @@ const VendorHome = ({
 
         <button
           onClick={onNavigateToOrders}
-          className="w-full flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:bg-gray-100 transition-colors"
+          className="w-full flex items-center gap-4 p-4 bg-white border border-blue-200 rounded-xl shadow hover:bg-blue-50 transition-colors"
         >
-          <ClipboardList className="w-6 h-6 text-green-600" />
+          <ClipboardList className="w-6 h-6 text-sky-600" />
           <div className="text-left">
             <h2 className="text-md font-semibold text-gray-900">My Orders</h2>
             <p className="text-sm text-gray-500">Manage shipping and status</p>
@@ -115,9 +113,9 @@ const VendorHome = ({
 
         <button
           onClick={onNavigateToWallet}
-          className="w-full flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:bg-gray-100 transition-colors"
+          className="w-full flex items-center gap-4 p-4 bg-white border border-blue-200 rounded-xl shadow hover:bg-blue-50 transition-colors"
         >
-          <Wallet className="w-6 h-6 text-yellow-600" />
+          <Wallet className="w-6 h-6 text-cyan-700" />
           <div className="text-left">
             <h2 className="text-md font-semibold text-gray-900">My Wallet</h2>
             <p className="text-sm text-gray-500">Check your balance and earnings</p>
@@ -126,34 +124,30 @@ const VendorHome = ({
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-white border-t border-gray-200">
+      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-white border-t border-gray-200 shadow-inner">
         <div className="flex justify-around py-3">
-          {/* Home */}
           <button onClick={onNavigateToHome} className="flex flex-col items-center gap-1">
-            <Home className="w-6 h-6 text-gray-900" />
-            <span className="text-xs text-gray-900 font-medium">Home</span>
+            <Home className="w-6 h-6 text-blue-700" />
+            <span className="text-xs text-blue-700 font-medium">Home</span>
           </button>
 
-          {/* Add Listing */}
           <button
             onClick={() => onNavigateToAdd('home')}
             className="flex flex-col items-center gap-1"
           >
-            <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-blue-300 flex items-center justify-center">
               <Plus className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xs font-medium text-gray-600">Add Listing</span>
+            <span className="text-xs font-medium text-blue-300">Add Listing</span>
           </button>
 
-          {/* Profile */}
           <button onClick={onNavigateToProfile} className="flex flex-col items-center gap-1">
-            <User className="w-6 h-6 text-gray-400" />
-            <span className="text-xs text-gray-400">Profile</span>
+            <User className="w-6 h-6 text-blue-300" />
+            <span className="text-xs text-blue-300">Profile</span>
           </button>
         </div>
       </div>
 
-      {/* Padding to avoid overlap */}
       <div className="h-20" />
     </div>
   );

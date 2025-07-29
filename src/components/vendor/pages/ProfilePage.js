@@ -95,32 +95,40 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
     setTempData({ ...tempData, focusAreas: updated });
   };
 
+  const handleLogout = () => {
+    const confirmLogout = window.confirm("Are you sure you want to log out?");
+    if (confirmLogout) {
+      onLogout();
+    }
+  };
+
   if (loading || !profileData) return <div className="text-center py-10">Loading...</div>;
 
   return (
-    <div className="max-w-sm mx-auto min-h-screen bg-gray-50">
+    <div className="max-w-sm mx-auto min-h-screen bg-gradient-to-b from-blue-200 via-blue-100 to-white relative">
       {/* Status Bar */}
-      <div className="flex justify-between items-center px-4 py-2 bg-white text-sm font-medium">
+      <div className="flex justify-between items-center px-4 py-2 bg-white text-sm font-medium text-gray-700">
         <span>9:30</span>
         <div className="flex gap-1">
-          <div className="w-4 h-2 bg-black rounded-sm" />
-          <div className="w-4 h-2 bg-black rounded-sm" />
+          <div className="w-4 h-2 bg-black rounded-sm"></div>
+          <div className="w-4 h-2 bg-black rounded-sm"></div>
         </div>
       </div>
 
       {/* Header */}
-      <div className="bg-white px-4 py-6">
-        <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
+      <div className="bg-white px-4 py-6 border-b border-gray-100 shadow-md">
+        <h1 className="text-2xl font-bold text-blue-800">Profile</h1>
+        <p className="text-sm text-gray-500 mt-1">Manage your account details</p>
       </div>
 
-      {/* Profile Image Upload */}
+      {/* Profile Image */}
       <div className="flex justify-center mb-4 relative">
         <label htmlFor="profileImageUpload" className="cursor-pointer">
-          <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center border-4 border-white -mt-12 overflow-hidden">
+          <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center border-4 border-white -mt-12 overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
             {profileData.imageUrl ? (
               <img src={profileData.imageUrl} alt="Profile" className="w-full h-full object-cover" />
             ) : (
-              <User className="w-12 h-12 text-gray-400" />
+              <User className="w-12 h-12 text-blue-700" />
             )}
           </div>
           <input
@@ -134,101 +142,142 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
       </div>
 
       {/* Profile Content */}
-      <div className="px-4 pb-24">
+      <div className="px-4 py-6 space-y-4 pb-24">
         {/* Name */}
-        <div className="text-center mb-2">
+        <div className="bg-white border border-blue-200 rounded-xl shadow p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-md font-semibold text-gray-900">Vendor Details</h3>
+            {editingField !== 'name' && (
+              <Edit3 
+                onClick={() => handleEdit('name')} 
+                className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-600 transition-colors" 
+              />
+            )}
+          </div>
           {editingField === 'name' ? (
-            <div className="flex justify-center items-center gap-2">
+            <div className="flex items-center gap-2">
               <input
                 type="text"
                 value={tempData.name}
                 onChange={(e) => setTempData({ ...tempData, name: e.target.value })}
-                className="text-xl font-bold text-center bg-blue-50 border border-blue-200 rounded px-2 py-1"
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <Check onClick={handleSave} className="w-4 h-4 text-green-600 cursor-pointer" />
-              <X onClick={handleCancel} className="w-4 h-4 text-red-600 cursor-pointer" />
+              <Check 
+                onClick={handleSave} 
+                className="w-5 h-5 text-green-600 cursor-pointer hover:text-green-700" 
+              />
+              <X 
+                onClick={handleCancel} 
+                className="w-5 h-5 text-red-600 cursor-pointer hover:text-red-700" 
+              />
             </div>
           ) : (
-            <div className="flex justify-center items-center gap-2">
-              <h2 className="text-xl font-bold text-gray-900">{profileData.name}</h2>
-              <Edit3 onClick={() => handleEdit('name')} className="w-4 h-4 text-gray-500 cursor-pointer" />
+            <div>
+              <p className="text-gray-700 font-medium">{profileData.name}</p>
+              <p className="text-sm text-gray-500">{profileData.email}</p>
             </div>
           )}
         </div>
 
-        {/* Email */}
-        <p className="text-sm text-center text-gray-500 mb-4">{profileData.email}</p>
-
         {/* Location */}
-        <div className="mb-4 text-center">
+        <div className="bg-white border border-blue-200 rounded-xl shadow p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-md font-semibold text-gray-900">Location</h3>
+            {editingField !== 'location' && (
+              <Edit3 
+                onClick={() => handleEdit('location')} 
+                className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-600 transition-colors" 
+              />
+            )}
+          </div>
           {editingField === 'location' ? (
-            <div className="flex justify-center items-center gap-2">
+            <div className="flex items-center gap-2">
               <input
                 type="text"
                 value={tempData.location || ""}
                 onChange={(e) => setTempData({ ...tempData, location: e.target.value })}
-                className="text-sm text-center bg-blue-50 border border-blue-200 rounded px-2 py-1"
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter your location"
               />
-              <Check onClick={handleSave} className="w-4 h-4 text-green-600 cursor-pointer" />
-              <X onClick={handleCancel} className="w-4 h-4 text-red-600 cursor-pointer" />
+              <Check 
+                onClick={handleSave} 
+                className="w-5 h-5 text-green-600 cursor-pointer hover:text-green-700" 
+              />
+              <X 
+                onClick={handleCancel} 
+                className="w-5 h-5 text-red-600 cursor-pointer hover:text-red-700" 
+              />
             </div>
           ) : (
-            <div className="flex justify-center items-center gap-2">
-              <p className="text-sm text-gray-600">{profileData.location || "No address"}</p>
-              <Edit3 onClick={() => handleEdit('location')} className="w-4 h-4 text-gray-500 cursor-pointer" />
-            </div>
+            <p className="text-sm text-gray-500">{profileData.location || "No location specified"}</p>
           )}
         </div>
 
-        {/* Socials */}
-        <div className="mb-6 text-center">
+        {/* Website */}
+        <div className="bg-white border border-blue-200 rounded-xl shadow p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-md font-semibold text-gray-900">Website</h3>
+            {editingField !== 'socials' && (
+              <Edit3 
+                onClick={() => handleEdit('socials')} 
+                className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-600 transition-colors" 
+              />
+            )}
+          </div>
           {editingField === 'socials' ? (
-            <div className="flex justify-center items-center gap-2">
+            <div className="flex items-center gap-2">
               <input
                 type="text"
                 value={tempData.socials || ""}
                 onChange={(e) => setTempData({ ...tempData, socials: e.target.value })}
-                className="text-sm text-center bg-blue-50 border border-blue-200 rounded px-2 py-1"
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter website URL"
               />
-              <Check onClick={handleSave} className="w-4 h-4 text-green-600 cursor-pointer" />
-              <X onClick={handleCancel} className="w-4 h-4 text-red-600 cursor-pointer" />
+              <Check 
+                onClick={handleSave} 
+                className="w-5 h-5 text-green-600 cursor-pointer hover:text-green-700" 
+              />
+              <X 
+                onClick={handleCancel} 
+                className="w-5 h-5 text-red-600 cursor-pointer hover:text-red-700" 
+              />
             </div>
           ) : (
-            <div className="flex justify-center items-center gap-2">
-              <a
-                href={profileData.socials || "#"}
-                target="_blank"
-                rel="noreferrer"
-                className="text-sm text-blue-600 underline"
-              >
-                {profileData.socials || "No website"}
-              </a>
-              <Edit3 onClick={() => handleEdit('socials')} className="w-4 h-4 text-gray-500 cursor-pointer" />
-            </div>
+            <a
+              href={profileData.socials || "#"}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+            >
+              {profileData.socials || "No website specified"}
+            </a>
           )}
         </div>
 
         {/* Focus Areas */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-lg font-semibold text-gray-900">Our Focus</h3>
+        <div className="bg-white border border-blue-200 rounded-xl shadow p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-md font-semibold text-gray-900">Focus Areas</h3>
             {editingField !== 'focusAreas' && (
-              <Edit3 onClick={() => handleEdit('focusAreas')} className="w-4 h-4 text-gray-500 cursor-pointer" />
+              <Edit3 
+                onClick={() => handleEdit('focusAreas')} 
+                className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-600 transition-colors" 
+              />
             )}
           </div>
           {editingField === 'focusAreas' ? (
-            <>
-              <div className="flex flex-wrap gap-2 mb-2">
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2">
                 {(tempData.focusAreas || []).map((area, index) => (
                   <div key={index} className="relative">
                     <input
                       value={area}
                       onChange={(e) => updateFocusArea(index, e.target.value)}
-                      className="bg-blue-50 border border-blue-200 rounded-full px-3 py-1 text-xs"
+                      className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <button
                       onClick={() => removeFocusArea(index)}
-                      className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center"
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center hover:bg-red-600"
                     >
                       ×
                     </button>
@@ -236,53 +285,73 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
                 ))}
                 <button
                   onClick={addFocusArea}
-                  className="bg-gray-200 text-gray-600 border border-dashed border-gray-400 rounded-full px-3 py-1 text-xs flex items-center gap-1"
+                  className="border-2 border-dashed border-blue-300 text-blue-600 rounded-lg px-3 py-1 text-sm flex items-center gap-1 hover:border-blue-400 hover:text-blue-700 transition-colors"
                 >
                   <Plus className="w-3 h-3" />
-                  Add
+                  Add Focus Area
                 </button>
               </div>
               <div className="flex gap-2">
-                <button onClick={handleSave} className="bg-green-600 text-white px-3 py-1 rounded text-sm">Save</button>
-                <button onClick={handleCancel} className="bg-gray-400 text-white px-3 py-1 rounded text-sm">Cancel</button>
+                <button 
+                  onClick={handleSave} 
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Save Changes
+                </button>
+                <button 
+                  onClick={handleCancel} 
+                  className="bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-500 transition-colors"
+                >
+                  Cancel
+                </button>
               </div>
-            </>
+            </div>
           ) : (
             <div className="flex flex-wrap gap-2">
               {(profileData.focusAreas || []).map((area, index) => (
-                <span key={index} className="bg-gray-100 text-gray-700 rounded-full px-3 py-1 text-xs">{area}</span>
+                <span 
+                  key={index} 
+                  className="bg-blue-50 text-blue-700 border border-blue-200 rounded-lg px-3 py-1 text-sm"
+                >
+                  {area}
+                </span>
               ))}
             </div>
           )}
         </div>
 
-        {/* Logout */}
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <button onClick={onLogout} className="w-full bg-red-500 text-white py-3 rounded-lg font-medium hover:bg-red-600 transition">LOG OUT</button>
-        </div>
+        {/* Logout Button */}
+        <button 
+          onClick={handleLogout} 
+          className="w-full bg-red-500 text-white py-3 rounded-xl font-medium hover:bg-red-600 transition-colors shadow"
+        >
+          LOG OUT
+        </button>
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-white border-t border-gray-200">
+      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-white border-t border-gray-200 shadow-inner">
         <div className="flex justify-around py-3">
           <button onClick={() => setCurrentPage('home')} className="flex flex-col items-center gap-1">
-            <Home className="w-6 h-6 text-gray-400" />
-            <span className="text-xs text-gray-400">Home</span>
+            <Home className="w-6 h-6 text-blue-300" />
+            <span className="text-xs text-blue-300">Home</span>
           </button>
           <button onClick={() => setCurrentPage('addListing')} className="flex flex-col items-center gap-1">
-            <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-blue-300 rounded-full flex items-center justify-center">
               <Plus className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xs text-gray-600">Add Listing</span>
+            <span className="text-xs text-blue-300 font-medium">Add Listing</span>
           </button>
           <button onClick={() => setCurrentPage('profile')} className="flex flex-col items-center gap-1">
-            <User className="w-6 h-6 text-gray-900" />
-            <span className="text-xs text-gray-900 font-medium">Profile</span>
+            <User className="w-6 h-6 text-blue-700" />
+            <span className="text-xs text-blue-700 font-medium">Profile</span>
           </button>
         </div>
       </div>
+
+      <div className="h-20" />
     </div>
   );
-};
+}
 
 export default ProfilePage;
