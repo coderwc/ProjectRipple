@@ -97,19 +97,12 @@ export default function DonorHome({
 
   return (
     <div className="max-w-sm mx-auto p-4 bg-gray-50 min-h-screen relative">
-      {/* Logout Button */}
-      <button
-        onClick={onLogout}
-        className="absolute top-4 right-4 text-gray-500 hover:text-red-600 transition-colors"
-        title="Logout"
-      >
-        <LogOut className="w-5 h-5" />
-      </button>
-
       {/* Top Bar */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex items-center mb-4">
         <div className="w-10 h-10 bg-gray-300 rounded-full" />
-        <div className="flex-1 mx-3 relative">
+        
+        {/* Lengthened Search Bar - Shifted Left */}
+        <div className="flex-1 mx-2 mr-4 relative">
           <Search className="absolute left-2 top-2.5 text-gray-400 w-4 h-4" />
           <input
             type="text"
@@ -118,18 +111,30 @@ export default function DonorHome({
           />
         </div>
         
-        {/* Shopping Cart Icon with Badge */}
-        <button 
-          onClick={onGoToCart}
-          className="relative text-gray-600 hover:text-blue-600 transition-colors"
-        >
-          <ShoppingCart className="w-6 h-6" />
-          {getTotalItems() > 0 && (
-            <span className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-              {getTotalItems()}
-            </span>
-          )}
-        </button>
+        {/* Cart and Logout Buttons Side by Side */}
+        <div className="flex items-center space-x-3">
+          {/* Shopping Cart Icon with Badge */}
+          <button 
+            onClick={onGoToCart}
+            className="relative text-gray-600 hover:text-blue-600 transition-colors"
+          >
+            <ShoppingCart className="w-6 h-6" />
+            {getTotalItems() > 0 && (
+              <span className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                {getTotalItems()}
+              </span>
+            )}
+          </button>
+          
+          {/* Logout Button */}
+          <button
+            onClick={onLogout}
+            className="text-gray-500 hover:text-red-600 transition-colors"
+            title="Logout"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Category Grid */}
