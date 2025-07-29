@@ -79,8 +79,8 @@ const AddListing = ({ user, onBack }) => {
 };
 
   return (
-    <div className="max-w-sm mx-auto bg-gray-50 min-h-screen">
-      <div className="flex justify-between items-center px-4 py-2 bg-white text-sm font-medium">
+    <div className="max-w-sm mx-auto bg-gradient-to-b from-blue-200 via-blue-100 to-white min-h-screen">
+      <div className="flex justify-between items-center px-4 py-2 bg-white text-sm font-medium text-gray-700">
         <span>9:30</span>
         <div className="flex gap-1">
           <div className="w-4 h-2 bg-black rounded-sm"></div>
@@ -88,12 +88,12 @@ const AddListing = ({ user, onBack }) => {
         </div>
       </div>
 
-      <div className="bg-white px-4 py-4 border-b border-gray-100">
+      <div className="bg-white px-4 py-4 border-b border-gray-100 shadow-md">
         <div className="flex items-center gap-3">
           <button onClick={onBack}>
-            <ArrowLeft className="w-6 h-6 text-gray-700" />
+            <ArrowLeft className="w-6 h-6 text-blue-700" />
           </button>
-          <h1 className="text-xl font-bold text-gray-900">Add Listing</h1>
+          <h1 className="text-xl font-bold text-blue-800">Add Listing</h1>
         </div>
       </div>
 
@@ -105,16 +105,16 @@ const AddListing = ({ user, onBack }) => {
         </div>
 
         <div className="mb-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Product Listing</h3>
+          <h3 className="text-lg font-bold text-blue-800 mb-4">Product Listing</h3>
 
           <div className="flex gap-4 mb-6">
             <div className="w-24 h-24 flex-shrink-0">
-              <label className="block w-full h-full bg-gray-200 rounded-lg border-2 border-dashed border-gray-300 cursor-pointer hover:border-gray-400 transition-colors overflow-hidden">
+              <label className="block w-full h-full bg-blue-50 rounded-lg border-2 border-dashed border-blue-300 cursor-pointer hover:border-blue-400 transition-colors overflow-hidden">
                 {formData.image ? (
                   <img src={formData.image} alt="preview" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <Camera className="w-6 h-6 text-gray-400" />
+                    <Camera className="w-6 h-6 text-blue-400" />
                   </div>
                 )}
                 <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
@@ -123,13 +123,13 @@ const AddListing = ({ user, onBack }) => {
 
             <div className="flex-1 space-y-3">
               <input
-                className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 bg-white border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Item Name"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
               />
               <select
-                className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 bg-white border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={formData.category}
                 onChange={(e) => handleInputChange('category', e.target.value)}
               >
@@ -146,27 +146,27 @@ const AddListing = ({ user, onBack }) => {
         </div>
 
         <div className="space-y-6">
-          <h3 className="text-lg font-bold text-gray-900">Product Details</h3>
+          <h3 className="text-lg font-bold text-blue-800">Product Details</h3>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Expiry Date (optional)</label>
+            <label className="block text-sm font-medium text-blue-700 mb-2">Expiry Date (optional)</label>
             <input
               type="date"
-              className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 bg-white border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={formData.expiryDate}
               onChange={(e) => handleInputChange('expiryDate', e.target.value)}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">Item Condition</label>
+            <label className="block text-sm font-medium text-blue-700 mb-3">Item Condition</label>
             <div className="grid grid-cols-3 gap-2">
-              {['New', 'Used', 'Defect'].map((condition) => (
+              {['New', 'Used', 'B-Grade'].map((condition) => (
                 <button
                   key={condition}
                   type="button"
                   onClick={() => handleInputChange('condition', condition)}
                   className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-                    formData.condition === condition ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                    formData.condition === condition ? 'bg-blue-600 text-white' : 'bg-white border border-blue-200 text-blue-700 hover:bg-blue-50'
                   }`}
                 >
                   {condition}
@@ -176,10 +176,10 @@ const AddListing = ({ user, onBack }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Add a description (optional)</label>
+            <label className="block text-sm font-medium text-blue-700 mb-2">Add a description (optional)</label>
             <textarea
               rows="4"
-              className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full p-3 bg-white border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               placeholder="Provide more details about your product…"
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
@@ -187,10 +187,10 @@ const AddListing = ({ user, onBack }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
+            <label className="block text-sm font-medium text-blue-700 mb-2">Quantity</label>
             <input
               type="number"
-              className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 bg-white border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={formData.quantity}
               onChange={(e) => {
                 const val = e.target.value;
@@ -203,10 +203,10 @@ const AddListing = ({ user, onBack }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Price per product (SGD)</label>
+            <label className="block text-sm font-medium text-blue-700 mb-2">Price per product (SGD)</label>
             <input
               type="number"
-              className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 bg-white border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={formData.price}
               onChange={(e) => {
                 const val = e.target.value;
@@ -222,7 +222,7 @@ const AddListing = ({ user, onBack }) => {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-white border-t border-gray-200 px-4 py-4">
+      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-white border-t border-blue-200 px-4 py-4">
         <button
           onClick={handlePublish}
           className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-blue-700 transition-colors"
