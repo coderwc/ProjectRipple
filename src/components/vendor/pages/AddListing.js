@@ -42,10 +42,13 @@ const AddListing = ({ user, onBack }) => {
 
     const listingData = {
       ...formData,
-      vendorId: user.uid,
-      vendorName: user.displayName || '',
+      vendorId: user.id || user.uid,
+      vendorName: user.name || user.displayName || '',
+      status: 'active',
       createdAt: new Date().toISOString(),
     };
+
+    console.log("📦 Listing data being sent:", listingData);
 
     const response = await axios.post(
       'http://localhost:5001/api/vendor/listings',
@@ -55,7 +58,8 @@ const AddListing = ({ user, onBack }) => {
       }
     );
 
-    console.log("✅ Listing posted:", response.data);
+    console.log("✅ Listing posted successfully:", response.data);
+    console.log("🔍 Saved to Firestore path: vendors/" + (user.id || user.uid) + "/listings/" + response.data.id);
     alert('Listing published successfully!');
     onBack();
 
