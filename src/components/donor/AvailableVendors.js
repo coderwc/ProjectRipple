@@ -20,26 +20,106 @@ const AvailableVendors = ({ charity, onBack, onSelectVendor }) => {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch listings from root listings collection
+  // Fetch listings from all vendor subcollections
   useEffect(() => {
     const fetchListings = async () => {
       try {
-        console.log('AvailableVendors - Fetching from root listings collection...');
+        console.log('AvailableVendors - Fetching from vendor subcollections...');
         
-        // Query root listings collection directly
-        const q = query(
-          collection(db, 'listings'),
-          where('status', '==', 'active'),
-          orderBy('createdAt', 'desc')
+        console.log('AvailableVendors - Starting to fetch vendor listings...');
+        
+        // Try direct query to your specific vendor first
+        console.log('🔍 Testing direct query to your vendor...');
+        const yourVendorQuery = query(
+          collection(db, 'vendors', 'KzfgytI8wSWYsN4l0rgZyOYBVi93', 'listings')
         );
         
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
-          console.log('AvailableVendors - Found', querySnapshot.docs.length, 'listings');
-          const listingsData = querySnapshot.docs.map(doc => ({
+        const yourVendorSnapshot = await getDocs(yourVendorQuery);
+        console.log('🎯 Direct query to your vendor found:', yourVendorSnapshot.docs.length, 'listings');
+        yourVendorSnapshot.docs.forEach(doc => {
+          console.log('📋 Your direct listing:', {
             id: doc.id,
-            ...doc.data()
-          }));
+            data: doc.data()
+          });
+        });
+        
+        // Also try the collectionGroup query
+        console.log('🔍 AvailableVendors - Starting Firestore collectionGroup query...');
+        const q = query(
+          collectionGroup(db, 'listings')
+          // Removed where and orderBy to avoid index requirement - will filter in code
+        );
+        console.log('📋 AvailableVendors - Query will fetch ALL active listings from ALL vendors');
+        console.log('📋 AvailableVendors - Query created, attaching listener...');
+        
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+          console.log('AvailableVendors - Found', querySnapshot.docs.length, 'total listings from vendors');
+          console.log('🔍 Raw Firestore documents:', querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            path: doc.ref.path,
+            data: doc.data()
+          })));
+          
+          // Specifically look for your vendor's listings
+          const yourVendorListings = querySnapshot.docs.filter(doc => 
+            doc.ref.path.includes('KzfgytI8wSWYsN4l0rgZyOYBVi93')
+          );
+          console.log('🎯 Your vendor listings found:', yourVendorListings.length);
+          yourVendorListings.forEach(doc => {
+            console.log('📋 Your listing:', {
+              id: doc.id,
+              path: doc.ref.path,
+              data: doc.data()
+            });
+          });
+          const allListings = querySnapshot.docs.map(doc => {
+            const data = { id: doc.id, ...doc.data() };
+            
+            console.log('📄 Listing found:', { 
+              id: data.id, 
+              name: data.name, 
+              vendorName: data.vendorName, 
+              vendorId: data.vendorId,
+              status: data.status
+            });
+            
+            // Ensure vendorName fallback if still missing (should be rare now with server fix)
+            if (!data.vendorName || data.vendorName === '') {
+              data.vendorName = data.vendor || 'Unknown Vendor';
+            }
+            
+            return data;
+          });
+          
+          // Show all listings - don't filter by status
+          const listingsData = allListings;
+          console.log('🎯 Active listings after filtering:', listingsData.length);
+          console.log('🔍 Looking for "water very yummy" from "Gomgom"...');
+          const gomgomListing = listingsData.find(listing => 
+            listing.name && listing.name.toLowerCase().includes('water very yummy')
+          );
+          if (gomgomListing) {
+            console.log('✅ Found Gomgom listing:', gomgomListing);
+          } else {
+            console.log('❌ Gomgom listing not found in active listings');
+            console.log('📋 All active listing names:');
+            listingsData.forEach((listing, index) => {
+              console.log(`${index + 1}. Name: "${listing.name}" | Vendor: "${listing.vendorName}" | Status: "${listing.status}"`);
+            });
+          }
+          
+          // Additional debug info
+          if (listingsData.length === 0) {
+            console.log('❌ No vendor listings found in Firestore. Using mock data.');
+          } else {
+            console.log('✅ Using real vendor listings from Firestore.');
+          }
+          
           setListings(listingsData);
+          setLoading(false);
+        }, (error) => {
+          console.error('🚨 AvailableVendors - Firestore query error:', error);
+          console.log('❌ Falling back to mock data due to error');
           setLoading(false);
         });
 
@@ -112,8 +192,15 @@ const AvailableVendors = ({ charity, onBack, onSelectVendor }) => {
     }
   ];
 
-  // Use real listings if available, otherwise fallback to mock data
-  const products = listings.length > 0 ? listings : mockProducts;
+  // Always use real listings from Firestore - no fallback to mock data
+  const products = listings;
+  
+  console.log('🛍️ AvailableVendors - Total products to display:', products.length);
+  console.log('📦 AvailableVendors - Products:', products.map(p => ({ id: p.id, name: p.name, vendor: p.vendorName || p.vendor })));
+  
+  if (products.length === 0) {
+    console.log('❌ No real listings found - check Firestore data');
+  }
 
   const suggestedCategories = ["Blankets", "Rice Bags", "Canned Food"];
 
@@ -214,7 +301,7 @@ const addToCartHandler = async (product, qty = 1) => {
           >
             <div className="w-4 h-4 bg-gray-400 rounded-full"></div>
             <span className="text-xs text-gray-600 truncate max-w-[100px]">
-              {product.vendorName || product.vendor || 'Vendor'}
+              {product.vendorName || product.vendor || 'Unknown Vendor'}
             </span>
           </button>
           <button
@@ -329,7 +416,7 @@ const addToCartHandler = async (product, qty = 1) => {
                   <div className="w-4 h-4 bg-gray-500 rounded-full"></div>
                 </div>
                 <span className="text-gray-600 font-medium underline">
-                  {selectedProduct.vendorName || selectedProduct.vendor}
+                  {selectedProduct.vendorName || selectedProduct.vendor || 'Unknown Vendor'}
                 </span>
               </button>
             </div>
@@ -448,8 +535,8 @@ const addToCartHandler = async (product, qty = 1) => {
         {/* Products Grid */}
         {!loading && (
           <div className="grid grid-cols-2 gap-4 mb-8">
-            {products.map(product => (
-              <ProductCard key={product.id} product={product} />
+            {products.map((product, index) => (
+              <ProductCard key={`${product.id}-${index}`} product={product} />
             ))}
           </div>
         )}
