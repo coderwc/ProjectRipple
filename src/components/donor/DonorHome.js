@@ -17,7 +17,7 @@ import {
   Package
 } from 'lucide-react';
 import { useCart } from '../shared/CartContext';
-import { getPostsAPI } from '../../api/posts';
+import { getLatestCharityPosts } from '../../firebase/posts';
 
 // ✅ category array can remain here
 const categories = [
@@ -47,7 +47,7 @@ export default function DonorHome({
   useEffect(() => {
   const fetchExploreDrives = async () => {
     try {
-      const response = await getPostsAPI();
+      const response = await getLatestCharityPosts(8); // limit to 8 latest posts
       console.log('📦 Response from getPostsAPI:', response); // ✅ Debug log
 
       if (response.success && response.posts) {
@@ -263,3 +263,4 @@ export default function DonorHome({
     </div>
   );
 }
+

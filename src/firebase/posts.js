@@ -10,7 +10,8 @@ import {
   query, 
   where, 
   orderBy,
-  serverTimestamp
+  serverTimestamp,
+  limit
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage, auth } from './config'; // ← Added auth import
@@ -83,7 +84,6 @@ export const createPost = async (postData) => {
       charityId: postData.charityId || user.uid,
       charityName: postData.charityName || user.displayName || 'Anonymous Charity',
       headline: postData.headline,
-      category: postData.category || '',
       storyDescription: postData.storyDescription,
       deadline: postData.deadline || '',
       items: postData.items || [],
@@ -285,5 +285,37 @@ export const deletePost = async (charityId, postId) => {
   } catch (error) {
     console.error('❌ Post deletion error:', error);
     throw new Error(`Failed to delete post: ${error.message}`);
+  }
+};
+
+// Get the latest public posts from all charities (Explore section)
+export const getLatestCharityPosts = async (limitCount = 8) => {
+  try {
+    const postsRef = collection(db, 'charities');
+    const q = query(
+      postsRef,
+      where('status', '==', 'active'),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    );
+
+    const querySnapshot = await getDocs(q);
+    const posts = [];
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      posts.push({
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt
+      });
+    });
+
+    console.log(`📦 Loaded ${posts.length} posts for Explore section`);
+    return { success: true, posts };
+  } catch (error) {
+    console.error('❌ Error fetching latest charity posts:', error);
+    return { success: false, error: error.message };
   }
 };
