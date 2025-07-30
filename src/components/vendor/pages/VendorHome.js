@@ -106,7 +106,7 @@ const VendorHome = ({
         >
           <ClipboardList className="w-6 h-6 text-sky-600" />
           <div className="text-left">
-            <h2 className="text-md font-semibold text-gray-900">My Orders</h2>
+            <h2 className="text-md font-semibold text--900">My Orders</h2>
             <p className="text-sm text-gray-500">Manage shipping and status</p>
           </div>
         </button>

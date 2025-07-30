@@ -159,7 +159,7 @@ const EditListing = ({ user, listingId, onBack }) => {
           <div>
             <label className="block text-sm font-medium text-blue-700 mb-3">Item Condition</label>
             <div className="grid grid-cols-3 gap-2">
-              {['New', 'Used', 'B-Grade'].map((condition) => (
+              {['New', 'Used', 'Imperfect'].map((condition) => (
                 <button
                   key={condition}
                   type="button"
