@@ -1,17 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Heart, Users, FileText, Camera, ChevronRight } from 'lucide-react';
 import { getDoc, doc } from 'firebase/firestore';
-import { db } from '../../firebase/config'; // adjust this path if needed
+import { db } from '../../firebase/config';
 
-const CharityPost = ({ 
-  onBack, 
-  postId, 
-  onCharitySelect, 
-  onViewDonors, 
-  onViewStory, 
-  onViewImpactGallery 
+const CharityPost = ({
+  onBack,
+  postId,
+  onCharitySelect,
+  onViewDonors,
+  onViewStory,
+  onViewImpactGallery
 }) => {
   const [postData, setPostData] = useState(null);
+  const [transformedItems, setTransformedItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
 
@@ -21,7 +22,17 @@ const CharityPost = ({
         const docRef = doc(db, 'charities', postId);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          setPostData(docSnap.data());
+          const rawData = docSnap.data();
+          setPostData(rawData);
+
+          const formatted = rawData.items?.map((item) => ({
+            type: item.name || 'Unknown',
+            current: 0, // Placeholder for now
+            target: item.quantity || 0,
+            available: item.quantity > 0
+          })) || [];
+
+          setTransformedItems(formatted);
         } else {
           console.warn('❌ No post found with ID:', postId);
         }
@@ -51,7 +62,6 @@ const CharityPost = ({
     donationsReceived,
     deadline,
     imageUrl,
-    items = [],
     storyDescription
   } = postData;
 
@@ -63,7 +73,7 @@ const CharityPost = ({
     return diff > 0 ? diff : 0;
   })();
 
-  const familiesSupported = 4; // Placeholder or dynamic in future
+  const familiesSupported = 4; // Placeholder
 
   const handleItemClick = (item) => {
     if (item.available && onCharitySelect) {
@@ -189,7 +199,7 @@ const CharityPost = ({
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            {items.map((item, index) => (
+            {transformedItems.map((item, index) => (
               <div key={index} className="relative h-32">
                 <div
                   className={`p-4 rounded-lg border h-full flex flex-col justify-between transition-all ${
