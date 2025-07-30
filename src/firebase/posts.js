@@ -83,6 +83,7 @@ export const createPost = async (postData) => {
       charityId: postData.charityId || user.uid,
       charityName: postData.charityName || user.displayName || 'Anonymous Charity',
       headline: postData.headline,
+      category: postData.category || '',
       storyDescription: postData.storyDescription,
       deadline: postData.deadline || '',
       items: postData.items || [],
