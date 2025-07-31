@@ -75,9 +75,9 @@ function DonorApp({ user, onLogout }) {
     setSelectedVendor(null);
   };
 
-  // New function to go back from available vendors to previous view
+  // New function to go back from available vendors to charity post
   const handleBackFromVendors = () => {
-    setCurrentView(previousView || 'home');
+    setCurrentView('post'); // Go back to charity post
     setSelectedVendor(null);
     setSelectedItemFilter(null); // Clear filter when going back
   };
@@ -169,22 +169,27 @@ const handleViewImpactGallery = (postId) => {
           itemFilter={selectedItemFilter}
           onBack={handleBackFromVendors}
           onSelectVendor={handleVendorProfile}
+          onGoToCart={handleGoToCart}
         />
       )}
 
       {currentView === 'vendor' && (
         <VendorProducts
           vendor={selectedVendor}
+          charity={selectedCharity}
           onBack={handleBackToVendors}
           onSelectVendor={handleVendorProfile}
+          onGoToCart={handleGoToCart}
         />
       )}
 
       {currentView === 'vendorProfile' && (
         <VendorProducts
           vendor={selectedVendor}
+          charity={selectedCharity}
           onBack={() => setCurrentView(previousView || 'shop')}
           onSelectVendor={handleVendorProfile}
+          onGoToCart={handleGoToCart}
           isProfile={true}
         />
       )}

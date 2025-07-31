@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Minus, Plus } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, Trash2 } from 'lucide-react';
 import {
   getUserCartItems,
   updateCartItemQuantity,
   updateCartItemSelection,
+  deleteCartItem,
   createOrdersFromCart // ✅ Checkout logic
 } from '../../../firebase/cart';
+import { useCart } from '../../shared/CartContext';
 
 // Replace mock data with real data from firestore
 const ShoppingCart = ({ onGoBack }) => {
+  const { removeFromCart } = useCart();
   const [cartItems, setCartItems] = useState([]); // ← real data will load here
   const [selectAll, setSelectAll] = useState(true);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -57,6 +61,22 @@ const toggleItemSelection = async (id) => {
   }
 };
 
+// Delete cart item from Firebase and update both local and context state
+const deleteItem = async (id) => {
+  try {
+    // Remove from Firestore and context
+    await removeFromCart(id);
+    
+    // Remove from local state
+    setCartItems(items => items.filter(item => item.id !== id));
+    
+    console.log('✅ Item deleted successfully');
+  } catch (err) {
+    console.error('❌ Failed to delete item:', err.message);
+    alert('Failed to delete item. Please try again.');
+  }
+};
+
 // Toggle select all items to firebase
   const toggleSelectAll = async () => {
   const newSelectAll = !selectAll;
@@ -90,12 +110,13 @@ const toggleItemSelection = async (id) => {
     return cartItems.filter(item => item.selected).length;
   };
 
-  // Group items by charity
+  // Group items by vendor
   const groupedItems = cartItems.reduce((groups, item) => {
-    if (!groups[item.charity]) {
-      groups[item.charity] = [];
+    const vendorName = item.vendor || item.vendorName || 'Unknown Vendor';
+    if (!groups[vendorName]) {
+      groups[vendorName] = [];
     }
-    groups[item.charity].push(item);
+    groups[vendorName].push(item);
     return groups;
   }, {});
 
@@ -129,9 +150,9 @@ const toggleItemSelection = async (id) => {
 
       {/* Cart Content */}
       <div className="px-4 space-y-6 pb-32">
-        {Object.entries(groupedItems).map(([charity, items]) => (
-          <div key={charity} className="space-y-4">
-            {/* Charity Header */}
+        {Object.entries(groupedItems).map(([vendorName, items]) => (
+          <div key={vendorName} className="space-y-4">
+            {/* Vendor Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <input
@@ -147,27 +168,51 @@ const toggleItemSelection = async (id) => {
                   }}
                   className="w-4 h-4 text-blue-600 rounded border-gray-300"
                 />
-                <span className="text-base font-medium text-gray-900">{charity}</span>
+                <span className="text-base font-medium text-gray-900">{vendorName}</span>
               </div>
-              <button className="text-blue-600 hover:text-blue-700 transition-colors text-sm">
-                Edit
+              <button 
+                onClick={() => setIsEditMode(!isEditMode)}
+                className="text-blue-600 hover:text-blue-700 transition-colors text-sm"
+              >
+                {isEditMode ? 'Done' : 'Edit'}
               </button>
             </div>
 
-            {/* Items in this charity */}
+            {/* Items from this vendor */}
             <div className="space-y-3">
               {items.map((item) => (
                 <div key={item.id} className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
                   <div className="flex items-start space-x-3">
-                    <input
-                      type="checkbox"
-                      checked={item.selected}
-                      onChange={() => toggleItemSelection(item.id)}
-                      className="w-4 h-4 text-blue-600 rounded border-gray-300 mt-2"
-                    />
+                    {!isEditMode && (
+                      <input
+                        type="checkbox"
+                        checked={item.selected}
+                        onChange={() => toggleItemSelection(item.id)}
+                        className="w-4 h-4 text-blue-600 rounded border-gray-300 mt-2"
+                      />
+                    )}
                     
-                    {/* Product Image Placeholder */}
-                    <div className="w-20 h-20 bg-gray-300 rounded-lg flex-shrink-0" />
+                    {isEditMode && (
+                      <button
+                        onClick={() => deleteItem(item.id)}
+                        className="w-8 h-8 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white transition-colors mt-1"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                    
+                    {/* Product Image */}
+                    <div className="w-20 h-20 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden">
+                      {item.image ? (
+                        <img 
+                          src={item.image} 
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-300"></div>
+                      )}
+                    </div>
                     
                     {/* Product Details */}
                     <div className="flex-1 space-y-3">
@@ -181,26 +226,35 @@ const toggleItemSelection = async (id) => {
                       </div>
                       
                       {/* Quantity Controls */}
-                      <div className="flex items-center space-x-3">
-                        <div className="flex items-center border border-gray-300 rounded-lg">
-                          <button
-                            onClick={() => updateQuantity(item.id, -1)}
-                            className="w-10 h-10 flex items-center justify-center hover:bg-gray-50 transition-colors rounded-l-lg"
-                            disabled={item.quantity <= 1}
-                          >
-                            <Minus className="w-4 h-4 text-gray-600" />
-                          </button>
-                          <span className="w-12 h-10 flex items-center justify-center bg-gray-50 text-base font-medium border-l border-r border-gray-300">
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() => updateQuantity(item.id, 1)}
-                            className="w-10 h-10 flex items-center justify-center hover:bg-gray-50 transition-colors rounded-r-lg"
-                          >
-                            <Plus className="w-4 h-4 text-gray-600" />
-                          </button>
+                      {!isEditMode && (
+                        <div className="flex items-center space-x-3">
+                          <div className="flex items-center border border-gray-300 rounded-lg">
+                            <button
+                              onClick={() => updateQuantity(item.id, -1)}
+                              className="w-10 h-10 flex items-center justify-center hover:bg-gray-50 transition-colors rounded-l-lg"
+                              disabled={item.quantity <= 1}
+                            >
+                              <Minus className="w-4 h-4 text-gray-600" />
+                            </button>
+                            <span className="w-12 h-10 flex items-center justify-center bg-gray-50 text-base font-medium border-l border-r border-gray-300">
+                              {item.quantity}
+                            </span>
+                            <button
+                              onClick={() => updateQuantity(item.id, 1)}
+                              className="w-10 h-10 flex items-center justify-center hover:bg-gray-50 transition-colors rounded-r-lg"
+                            >
+                              <Plus className="w-4 h-4 text-gray-600" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                      )}
+                      
+                      {/* Display quantity when in edit mode */}
+                      {isEditMode && (
+                        <div className="text-gray-600 text-sm">
+                          Quantity: {item.quantity}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

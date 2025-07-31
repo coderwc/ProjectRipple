@@ -16,6 +16,16 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [selectedCharity, setSelectedCharity] = useState(null);
 
+  // Function to reload cart from Firestore
+  const reloadCart = async () => {
+    try {
+      const items = await getUserCartItems();
+      setCartItems(items);
+    } catch (err) {
+      console.error("❌ Failed to reload cart:", err.message);
+    }
+  };
+
   //Mich, 27/7 replace to Sync Firestore cart when user logs in
   useEffect(() => {
   const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -40,14 +50,25 @@ export const CartProvider = ({ children }) => {
     for (let i = 0; i < quantity; i++) {
       setCartItems(prev => [...prev, { 
         ...product, 
+        quantity: 1, // Each individual item has quantity 1
         uniqueId: `${product.id}-${Date.now()}-${Math.random()}`,
         addedAt: new Date().toISOString()
       }]);
     }
   };
 
-  const removeFromCart = (uniqueId) => {
-    setCartItems(prev => prev.filter(item => item.uniqueId !== uniqueId));
+  const removeFromCart = async (cartItemId) => {
+    try {
+      // Remove from Firestore
+      const { deleteCartItem } = await import('../../firebase/cart');
+      await deleteCartItem(cartItemId);
+      
+      // Remove from local state
+      setCartItems(prev => prev.filter(item => item.id !== cartItemId));
+    } catch (err) {
+      console.error("❌ Failed to remove from cart:", err.message);
+      throw err;
+    }
   };
 
   const updateCartItemQuantity = (uniqueId, newQuantity) => {
@@ -113,7 +134,8 @@ export const CartProvider = ({ children }) => {
       getTotalPrice,
       getTotalItems,
       getUniqueProducts,
-      setCharity
+      setCharity,
+      reloadCart
     }}>
       {children}
     </CartContext.Provider>
