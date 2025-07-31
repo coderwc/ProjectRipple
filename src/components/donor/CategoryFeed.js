@@ -20,7 +20,10 @@ useEffect(() => {
       const fetchedPosts = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
+        console.log('📄 Post found in charities collection:', doc.id, data);
+        console.log(`🔍 Category comparison: "${data.category}" vs "${categoryName}"`);
         const matchedCategory = (data.category || '').toLowerCase() === categoryName.toLowerCase();
+        console.log(`🎯 Category match result: ${matchedCategory}`);
         if (matchedCategory) {
           fetchedPosts.push({
             id: doc.id,

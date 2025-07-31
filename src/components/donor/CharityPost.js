@@ -9,7 +9,8 @@ const CharityPost = ({
   onCharitySelect,
   onViewDonors,
   onViewStory,
-  onViewImpactGallery
+  onViewImpactGallery,
+  onViewCharityProfile
 }) => {
   const [postData, setPostData] = useState(null);
   const [transformedItems, setTransformedItems] = useState([]);
@@ -19,10 +20,12 @@ const CharityPost = ({
   useEffect(() => {
     const fetchPost = async () => {
       try {
+        console.log('🔍 Fetching post with ID:', postId);
         const docRef = doc(db, 'charities', postId);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const rawData = docSnap.data();
+          console.log('✅ Post data retrieved:', rawData);
           setPostData(rawData);
 
           const formatted = rawData.items?.map((item) => ({
@@ -53,12 +56,20 @@ const CharityPost = ({
   }
 
   if (!postData) {
-    return <div className="text-center mt-8 text-sm text-red-500">Post not found.</div>;
+    return (
+      <div className="text-center mt-8 p-4">
+        <div className="text-sm text-red-500 mb-2">Post not found.</div>
+        <div className="text-xs text-gray-500">PostID: {postId}</div>
+        <div className="text-xs text-gray-500">Check browser console for details</div>
+      </div>
+    );
   }
 
   const {
     headline,
     charityName,
+    charityId,
+    authorId,
     donationsReceived,
     deadline,
     imageUrl,
@@ -185,7 +196,14 @@ const CharityPost = ({
         {/* Charity Info Section */}
         <div className="bg-white rounded-lg p-4 shadow-sm">
           <h3 className="font-medium text-gray-900 mb-3">Charity Information:</h3>
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
+          <button 
+            onClick={() => {
+              const actualCharityId = charityId || authorId;
+              console.log('🏢 Charity Profile Click - PostID:', postId, 'CharityID:', actualCharityId, 'CharityName:', charityName);
+              onViewCharityProfile?.(actualCharityId, charityName);
+            }}
+            className="w-full flex items-center justify-between py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors rounded"
+          >
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-gray-300 rounded-full" />
               <div>
@@ -194,7 +212,7 @@ const CharityPost = ({
               </div>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
-          </div>
+          </button>
           <p className="text-xs text-gray-500 mt-3 leading-4">{storyDescription}</p>
         </div>
 

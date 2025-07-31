@@ -17,7 +17,9 @@ const CharityProfile = ({ charityId, onBack }) => {
 
       try {
         setLoading(true);
+        console.log('🔍 Fetching charity profile for ID:', charityId);
         const response = await getCharityProfile(charityId);
+        console.log('📥 Charity profile response:', response);
         
         if (response.success) {
           setCharityData(response.charity);

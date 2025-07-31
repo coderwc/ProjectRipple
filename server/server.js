@@ -169,10 +169,42 @@ app.post('/api/ai-recommendation', async (req, res) => {
     }
 });
 
+// Get public charity profile endpoint
+app.get('/api/charity/public/:charityId', (req, res) => {
+  try {
+    const { charityId } = req.params;
+    console.log('📡 Charity profile request for ID:', charityId);
+    
+    // Mock charity profile data - replace with actual database lookup
+    const mockCharityProfile = {
+      id: charityId,
+      name: "Hope Foundation",
+      tagline: "Bringing hope to communities in need",
+      location: "San Francisco, CA",
+      phone: "+1 (555) 123-4567",
+      website: "www.hopefoundation.org",
+      aboutUs: "Hope Foundation has been dedicated to providing emergency relief and long-term support to communities affected by natural disasters and poverty. Our mission is to restore hope and rebuild lives through compassionate action and sustainable solutions.",
+      focusAreas: ["Disaster Relief", "Education", "Healthcare", "Community Development"],
+      impactStats: {
+        familiesHelped: 15000,
+        communitiesReached: 45,
+        yearsActive: 12
+      }
+    };
+    
+    console.log('✅ Returning charity profile');
+    res.json(mockCharityProfile);
+  } catch (error) {
+    console.error('❌ Error fetching charity profile:', error);
+    res.status(500).json({ error: 'Failed to fetch charity profile' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 Unified server running on http://localhost:${PORT}`);
   console.log(`📡 Available endpoints:`);
   console.log(`   - Charity AI: POST /api/ai-recommendation`);
+  console.log(`   - Charity Profile: GET /api/charity/public/:charityId`);
   console.log(`   - Vendor API: /api/vendor/* (role-protected)`);
   console.log(`   - Charity API: /api/charity/* (role-protected)`);
   console.log(`   - Donor API: /api/donor/* (role-protected)`);

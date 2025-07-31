@@ -2,7 +2,7 @@
 import { createPost as createPostFirebase, getPosts, getPostsByCharity } from '../firebase/posts';
 import { createDonation, getDonationsByPost } from '../firebase/donations';
 
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = 'http://localhost:3001/api';
 
 // Create a new post - now uses Firebase
 export const createPost = async (postData) => {
