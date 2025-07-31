@@ -82,6 +82,7 @@ export const getAIRecommendations = async (description, headline, location) => {
 // Get public charity profile by ID
 export const getCharityProfile = async (charityId) => {
   try {
+    console.log('🔍 Fetching charity profile from API for ID:', charityId);
     const response = await fetch(`${API_BASE_URL}/charity/public/${charityId}`, {
       method: 'GET',
       headers: {
@@ -89,14 +90,17 @@ export const getCharityProfile = async (charityId) => {
       }
     });
     
+    console.log('📡 API Response status:', response.status);
+    
     if (!response.ok) {
       throw new Error('Failed to fetch charity profile');
     }
     
     const result = await response.json();
+    console.log('✅ API Response data:', result);
     return { success: true, charity: result };
   } catch (error) {
-    console.error('Error fetching charity profile:', error);
+    console.error('❌ Error fetching charity profile:', error);
     return { success: false, error: error.message };
   }
 };
