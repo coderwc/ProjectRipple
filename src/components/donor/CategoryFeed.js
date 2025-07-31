@@ -1,68 +1,65 @@
+import { useEffect, useState } from 'react';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../../firebase/config'; // adjust this path to your actual config file
+
 import React from 'react';
 import { ArrowLeft, SlidersHorizontal, ArrowUpDown, Heart } from 'lucide-react';
 
 const CategoryFeed = ({ onBack, onSelectPost, categoryName = "Natural Disasters" }) => {
   // Generate different content based on category
-  const getCategoryNews = (category) => {
-    switch (category) {
-      case 'Natural Disasters':
-        return [
-          { id: 1, headline: "Emergency Earthquake Relief Fund", source: "NBC News", kindness: "Kindness Cap: 75% Full", remainingDays: 28, progress: 75 },
-          { id: 2, headline: "Flood Relief Supplies", source: "Relief International", kindness: "Kindness Cap: 85% Full", remainingDays: 15, progress: 85 },
-          { id: 3, headline: "Hurricane Recovery Aid", source: "Red Cross", kindness: "Kindness Cap: 62% Full", remainingDays: 35, progress: 62 }
-        ];
-      case 'Animals':
-        return [
-          { id: 4, headline: "Animal Rescue Fund", source: "PawSafe", kindness: "Kindness Cap: 61% Full", remainingDays: 22, progress: 61 },
-          { id: 5, headline: "Wildlife Sanctuary Support", source: "Animal Welfare", kindness: "Kindness Cap: 78% Full", remainingDays: 18, progress: 78 },
-          { id: 6, headline: "Street Dog Vaccination Drive", source: "Pet Care NGO", kindness: "Kindness Cap: 45% Full", remainingDays: 30, progress: 45 }
-        ];
-      case 'Education':
-        return [
-          { id: 7, headline: "Books for Kids", source: "EduFuture", kindness: "Kindness Cap: 45% Full", remainingDays: 12, progress: 45 },
-          { id: 8, headline: "School Building Project", source: "Teach for All", kindness: "Kindness Cap: 67% Full", remainingDays: 25, progress: 67 },
-          { id: 9, headline: "Digital Learning Initiative", source: "Tech4Education", kindness: "Kindness Cap: 52% Full", remainingDays: 40, progress: 52 }
-        ];
-      case 'Medical':
-        return [
-          { id: 10, headline: "Medical Camp Aid", source: "CureMore", kindness: "Kindness Cap: 73% Full", remainingDays: 28, progress: 73 },
-          { id: 11, headline: "Cancer Treatment Fund", source: "Hope Foundation", kindness: "Kindness Cap: 89% Full", remainingDays: 10, progress: 89 },
-          { id: 12, headline: "Rural Health Centers", source: "Health First", kindness: "Kindness Cap: 38% Full", remainingDays: 45, progress: 38 }
-        ];
-      case 'Sustainability':
-        return [
-          { id: 13, headline: "Clean Energy Initiative", source: "Green Future", kindness: "Kindness Cap: 65% Full", remainingDays: 30, progress: 65 },
-          { id: 14, headline: "Plastic-Free Ocean Project", source: "Ocean Clean", kindness: "Kindness Cap: 72% Full", remainingDays: 22, progress: 72 },
-          { id: 15, headline: "Tree Planting Drive", source: "Earth Savers", kindness: "Kindness Cap: 48% Full", remainingDays: 35, progress: 48 }
-        ];
-      case 'Non-profit':
-        return [
-          { id: 16, headline: "Community Kitchen Support", source: "Feed the Hungry", kindness: "Kindness Cap: 83% Full", remainingDays: 12, progress: 83 },
-          { id: 17, headline: "Homeless Shelter Fund", source: "Shelter First", kindness: "Kindness Cap: 56% Full", remainingDays: 28, progress: 56 },
-          { id: 18, headline: "Youth Skill Development", source: "Skill Up", kindness: "Kindness Cap: 41% Full", remainingDays: 40, progress: 41 }
-        ];
-      case 'Orphanage':
-        return [
-          { id: 19, headline: "New Shelter Homes", source: "SafeHaven", kindness: "Kindness Cap: 35% Full", remainingDays: 20, progress: 35 },
-          { id: 20, headline: "Educational Supplies for Kids", source: "Hope for Children", kindness: "Kindness Cap: 67% Full", remainingDays: 25, progress: 67 },
-          { id: 21, headline: "Nutrition Program", source: "Child Care NGO", kindness: "Kindness Cap: 79% Full", remainingDays: 18, progress: 79 }
-        ];
-      case 'Infrastructure':
-        return [
-          { id: 22, headline: "Clean Water Pipeline", source: "Water for All", kindness: "Kindness Cap: 58% Full", remainingDays: 45, progress: 58 },
-          { id: 23, headline: "Rural Road Development", source: "Build Together", kindness: "Kindness Cap: 43% Full", remainingDays: 60, progress: 43 },
-          { id: 24, headline: "Solar Power Installation", source: "Power Up", kindness: "Kindness Cap: 71% Full", remainingDays: 30, progress: 71 }
-        ];
-      default:
-        return [
-          { id: 25, headline: "Community Support Initiative", source: "Local NGO", kindness: "Kindness Cap: 55% Full", remainingDays: 20, progress: 55 },
-          { id: 26, headline: "Social Welfare Program", source: "Helping Hands", kindness: "Kindness Cap: 70% Full", remainingDays: 15, progress: 70 },
-          { id: 27, headline: "Youth Development Project", source: "Future Leaders", kindness: "Kindness Cap: 42% Full", remainingDays: 35, progress: 42 }
-        ];
+  const [posts, setPosts] = useState([]);
+const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+  const fetchPosts = async () => {
+    setLoading(true);
+    try {
+      const q = query(collection(db, 'charities'), where('status', '==', 'active'));
+      const querySnapshot = await getDocs(q);
+
+      const fetchedPosts = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const matchedCategory = (data.category || '').toLowerCase() === categoryName.toLowerCase();
+        if (matchedCategory) {
+          fetchedPosts.push({
+            id: doc.id,
+            headline: data.headline,
+            source: data.charityName,
+            progress: data.donationsReceived || 0, // You might want to calculate %
+            kindness: `Kindness Cap: ${data.donationsReceived || 0}% Full`,
+            remainingDays: calculateRemainingDays(data.deadline),
+          });
+        }
+      });
+
+      setPosts(fetchedPosts);
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const newsItems = getCategoryNews(categoryName);
+  fetchPosts();
+}, [categoryName]);
+
+const calculateRemainingDays = (deadlineStr) => {
+  try {
+    const [day, month, year] = deadlineStr.split('/').map(Number);
+    const deadline = new Date(year, month - 1, day);
+    const now = new Date();
+    const diff = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? diff : 0;
+  } catch (e) {
+    return 0;
+  }
+};
+
+  const newsItems = posts;
+
+  if (loading) return <p className="text-center mt-10">Loading posts...</p>;
+if (posts.length === 0) return <p className="text-center mt-10">No posts found in this category.</p>;
 
   return (
     <div className="max-w-sm mx-auto p-4 bg-gray-50 min-h-screen relative">
