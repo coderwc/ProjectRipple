@@ -1,45 +1,141 @@
+// src/components/vendor/frontend/ViewOrders.js
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
+import { db, auth } from '../../../firebase/config';
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  updateDoc,
+  doc,
+  serverTimestamp,
+  getDoc
+} from 'firebase/firestore';
 
 const ViewOrders = ({ onNavigateToHome }) => {
   const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState('All');
-  const [sortBy, setSortBy] = useState('Date'); // 'Date' or 'Status'
+  const [sortBy, setSortBy] = useState('Date');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const generateOrderDisplayId = (orderId, index) => {
+    const orderNumber = (index + 1).toString().padStart(4, '0');
+    return `ORDER${orderNumber}`;
+  };
 
   useEffect(() => {
-    const mockOrders = [
-      { id: 'ORD001', customer: 'Jane Doe', item: 'Organic Apples', quantity: 3, status: 'Pending', date: '2025-07-13' },
-      { id: 'ORD002', customer: 'John Smith', item: 'Wholegrain Bread', quantity: 2, status: 'Shipped', date: '2025-07-12' },
-      { id: 'ORD003', customer: 'Ali Lim', item: 'Bananas', quantity: 6, status: 'Completed', date: '2025-07-10' },
-    ];
-    setOrders(mockOrders);
+    const user = auth.currentUser;
+    if (!user) {
+      setError('User not authenticated');
+      setLoading(false);
+      return;
+    }
+
+    const fetchVendorDataAndOrders = async () => {
+      try {
+        const vendorDoc = await getDoc(doc(db, 'vendors', user.uid));
+        if (!vendorDoc.exists()) {
+          setError('Vendor profile not found');
+          setLoading(false);
+          return;
+        }
+
+        const vendorData = vendorDoc.data();
+        const vendorName = vendorData.name;
+
+        const ordersRef = collection(db, 'orders');
+        const q = query(ordersRef, where('vendorId', '==', vendorName));
+
+        const unsubscribe = onSnapshot(
+          q,
+          async (snapshot) => {
+            const ordersData = snapshot.docs.map((doc, index) => {
+              const data = doc.data();
+              return {
+                id: doc.id,
+                ...data,
+                displayId: generateOrderDisplayId(doc.id, index),
+                charityName: data.charityName || 'Unknown Charity',
+                vendorId: data.vendorId || '',
+                date: data.createdAt?.toDate().toISOString().split('T')[0] || 'N/A',
+                timestamp: data.createdAt?.toDate() || new Date(0),
+                totalItems: data.items?.reduce((sum, item) => sum + item.quantity, 0) || 0,
+                firstItemName: data.items?.[0]?.name || 'Unknown Item',
+                itemCount: data.items?.length || 0
+              };
+            });
+
+            setOrders(ordersData);
+            setLoading(false);
+          },
+          (err) => {
+            console.error('Error fetching orders:', err);
+            setError('Failed to load orders');
+            setLoading(false);
+          }
+        );
+
+        return unsubscribe;
+      } catch (error) {
+        console.error('Error setting up orders listener:', error);
+        setError('Failed to initialize orders');
+        setLoading(false);
+      }
+    };
+
+    let unsubscribe;
+    fetchVendorDataAndOrders().then((unsub) => {
+      unsubscribe = unsub;
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
-  const updateOrderStatus = (id, newStatus) => {
-    setOrders((prev) =>
-      prev.map((order) => (order.id === id ? { ...order, status: newStatus } : order))
-    );
+  const updateOrderStatus = async (orderId, newStatus, items, vendorId) => {
+    try {
+      if (newStatus === 'Shipped') {
+        for (const item of items) {
+          const listingRef = doc(db, 'vendors', vendorId, 'listings', item.productId);
+          const listingSnap = await getDoc(listingRef);
+          if (listingSnap.exists()) {
+            const currentQty = listingSnap.data().quantity || 0;
+            const newQty = Math.max(0, currentQty - item.quantity);
+            await updateDoc(listingRef, { quantity: newQty });
+          }
+        }
+      }
+
+      await updateDoc(doc(db, 'orders', orderId), {
+        status: newStatus,
+        updatedAt: serverTimestamp()
+      });
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      alert('Failed to update order status');
+    }
   };
 
   const statusOrder = {
     Pending: 1,
     Shipped: 2,
     Completed: 3,
-    Cancelled: 4,
+    Cancelled: 4
   };
-  
+
   const filteredOrders = orders
     .filter((order) => (filter === 'All' ? true : order.status === filter))
     .sort((a, b) => {
-      if (sortBy === 'Date') return new Date(b.date) - new Date(a.date);
+      if (sortBy === 'Date') return b.timestamp - a.timestamp;
       if (sortBy === 'Status') return statusOrder[a.status] - statusOrder[b.status];
       return 0;
     });
 
   return (
     <div className="max-w-sm mx-auto min-h-screen bg-gray-50">
-
-      {/* Status Bar */}
       <div className="flex justify-between items-center px-4 py-2 bg-white text-sm font-medium">
         <span>9:30</span>
         <div className="flex gap-1">
@@ -48,18 +144,21 @@ const ViewOrders = ({ onNavigateToHome }) => {
         </div>
       </div>
 
-      {/* Header */}
       <div className="relative bg-white px-4 py-6 border-b border-gray-100">
         <button onClick={onNavigateToHome} className="absolute left-4 top-6 text-gray-600 hover:text-gray-900">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-left pl-12 text-lg font-bold text-gray-900">View Orders</h1>
+        <h1 className="text-left pl-12 text-lg font-bold text-gray-900">
+          View Orders
+          <span className="text-sm font-normal text-gray-500 ml-2">
+            ({filteredOrders.length} {filteredOrders.length === 1 ? 'order' : 'orders'})
+          </span>
+        </h1>
       </div>
 
-      {/* Filters */}
       <div className="px-4 pt-6">
         <div className="flex flex-wrap gap-2">
-        {['All', 'Pending', 'Shipped', 'Completed', 'Cancelled'].map((status) => (
+          {['All', 'Pending', 'Shipped', 'Completed', 'Cancelled'].map((status) => (
             <button
               key={status}
               className={`px-3 py-1 text-sm rounded-full border ${
@@ -85,48 +184,74 @@ const ViewOrders = ({ onNavigateToHome }) => {
         </div>
       </div>
 
-      {/* Orders */}
       <div className="px-4 py-6 space-y-4">
         {filteredOrders.length === 0 ? (
-          <p className="text-sm text-gray-500">No orders found.</p>
+          <div className="text-center py-8">
+            <p className="text-sm text-gray-500">
+              {filter === 'All' ? 'No orders found.' : `No ${filter.toLowerCase()} orders found.`}
+            </p>
+          </div>
         ) : (
           filteredOrders.map((order) => (
             <div key={order.id} className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-sm font-medium text-gray-800">#{order.id}</span>
-                <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-gray-800">#{order.displayId}</span>
+                <span
+                  className={`text-xs font-semibold px-2 py-1 rounded-full ${
                     order.status === 'Pending'
-                        ? 'bg-yellow-100 text-yellow-700'
-                        : order.status === 'Shipped'
-                        ? 'bg-blue-100 text-blue-700'
-                        : order.status === 'Completed'
-                        ? 'bg-green-100 text-green-700'
-                        : order.status === 'Cancelled'
-                        ? 'bg-red-100 text-red-700'
-                        : ''
-                }`}>
-                    {order.status}
+                      ? 'bg-yellow-100 text-yellow-700'
+                      : order.status === 'Shipped'
+                      ? 'bg-blue-100 text-blue-700'
+                      : order.status === 'Completed'
+                      ? 'bg-green-100 text-green-700'
+                      : order.status === 'Cancelled'
+                      ? 'bg-red-100 text-red-700'
+                      : 'bg-gray-100 text-gray-700'
+                  }`}
+                >
+                  {order.status}
                 </span>
               </div>
-              <p className="text-sm text-gray-600"><strong>Item:</strong> {order.item}</p>
-              <p className="text-sm text-gray-600"><strong>Qty:</strong> {order.quantity}</p>
-              <p className="text-sm text-gray-600"><strong>Customer:</strong> {order.customer}</p>
-              <p className="text-xs text-gray-400 text-right">{order.date}</p>
 
-              {/* Action buttons */}
+              <div className="space-y-1 mb-2">
+                {order.items?.map((item, index) => (
+                  <div key={index} className="flex justify-between text-sm">
+                    <span className="text-gray-700">{item.name}</span>
+                    <span className="text-gray-600">×{item.quantity}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="text-xs text-gray-500 space-y-1">
+                <p><strong>Total Items:</strong> {order.totalItems}</p>
+                <p><strong>Charity:</strong> {order.charityName}</p>
+                <p><strong>Order Date:</strong> {order.date}</p>
+              </div>
+
               {order.status === 'Pending' && (
-                <div className="mt-2 flex gap-2">
+                <div className="mt-3 flex gap-2">
                   <button
-                    className="text-xs px-2 py-1 bg-blue-500 text-white rounded"
-                    onClick={() => updateOrderStatus(order.id, 'Shipped')}
+                    className="text-xs px-3 py-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                    onClick={() => updateOrderStatus(order.id, 'Shipped', order.items, order.vendorId)}
                   >
                     Mark as Shipped
                   </button>
                   <button
-                    className="text-xs px-2 py-1 bg-red-500 text-white rounded"
+                    className="text-xs px-3 py-1.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
                     onClick={() => updateOrderStatus(order.id, 'Cancelled')}
                   >
                     Cancel Order
+                  </button>
+                </div>
+              )}
+
+              {order.status === 'Shipped' && (
+                <div className="mt-3">
+                  <button
+                    className="text-xs px-3 py-1.5 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                    onClick={() => updateOrderStatus(order.id, 'Completed')}
+                  >
+                    Mark as Completed
                   </button>
                 </div>
               )}

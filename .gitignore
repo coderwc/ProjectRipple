@@ -118,3 +118,4 @@ build/Release
 
 # VSCode Extension Test
 .vscode-test
+node_modules/

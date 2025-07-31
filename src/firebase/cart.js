@@ -9,19 +9,17 @@ import {
   query,
   doc,
   serverTimestamp,
-  where // ✅ THIS IS NEEDED HERE
+  where,
+  getDoc
 } from 'firebase/firestore';
 
 // ✅ Save item to cart (new or update)
-export const saveCartItem = async (product, quantity, charityId) => {
+export const saveCartItem = async (product, quantity, charityId, charityName) => {
   const user = auth.currentUser;
   if (!user) throw new Error('User not signed in');
 
-  // Validate required fields
-  if (!product) throw new Error('Product is required');
-  if (!product.id) throw new Error('Product ID is required');
-  if (!product.name) throw new Error('Product name is required');
-  if (!charityId) throw new Error('Charity ID is required');
+  if (!product || !product.id || !product.name || !charityId)
+    throw new Error('Missing required fields');
 
   const cartRef = collection(db, 'cart');
   const q = query(
@@ -47,9 +45,10 @@ export const saveCartItem = async (product, quantity, charityId) => {
       productId: product.id,
       name: product.name,
       price: product.price || 0,
-      image: product.image || null, // Add product image
+      image: product.image || null,
       vendor: product.vendor || product.vendorName || 'Unknown Vendor',
       charityId: charityId,
+      charityName: charityName || product.charityName || 'Unknown Charity',
       quantity: quantity,
       selected: true,
       createdAt: serverTimestamp()
@@ -94,7 +93,7 @@ export const deleteCartItem = async (cartItemId) => {
   await deleteDoc(doc(db, 'cart', cartItemId));
 };
 
-// ✅ Clear all cart items for current user (after checkout)
+// ✅ Clear all cart items for current user
 export const clearUserCart = async () => {
   const user = auth.currentUser;
   if (!user) return;
@@ -109,9 +108,7 @@ export const clearUserCart = async () => {
   await Promise.all(deletions);
 };
 
-//----------------------------------------Checkout----------------------------------------
-
-// ✅ Create Orders on Checkout
+// ✅ Create Orders on Checkout + reduce stock
 export const createOrdersFromCart = async () => {
   const user = auth.currentUser;
   if (!user) throw new Error("User not signed in");
@@ -133,6 +130,8 @@ export const createOrdersFromCart = async () => {
 
   const batchCreates = Object.entries(grouped).map(async ([key, items]) => {
     const [charityId, vendorId] = key.split('|');
+    const charityName = items[0].charityName || 'Unknown Charity';
+
     const orderItems = items.map(item => ({
       productId: item.productId,
       name: item.name,
@@ -140,9 +139,22 @@ export const createOrdersFromCart = async () => {
       price: item.price,
     }));
 
+    // ✅ Reduce stock from listings
+    for (const item of items) {
+      const listingRef = doc(db, 'vendors', vendorId, 'listings', item.productId);
+      const listingSnap = await getDoc(listingRef);
+      if (listingSnap.exists()) {
+        const currentQty = listingSnap.data().quantity || 0;
+        const newQty = Math.max(0, currentQty - item.quantity);
+        await updateDoc(listingRef, { quantity: newQty });
+      }
+    }
+
+    // ✅ Create order
     return addDoc(ordersRef, {
       donorId: user.uid,
       charityId,
+      charityName,
       vendorId,
       items: orderItems,
       status: 'Pending',
@@ -151,6 +163,5 @@ export const createOrdersFromCart = async () => {
   });
 
   await Promise.all(batchCreates);
-
-  await clearUserCart(); // clear cart after checkout
+  await clearUserCart();
 };

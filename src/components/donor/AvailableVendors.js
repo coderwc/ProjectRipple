@@ -256,7 +256,7 @@ const AvailableVendors = ({ charity, itemFilter, onBack, onSelectVendor, onGoToC
 const addToCartHandler = async (product, qty = 1) => {
   try {
     // Save to Firestore
-    await saveCartItem(product, qty, charity?.id);
+    await saveCartItem(product, qty, charity?.id, charity?.name || 'Unknown Charity');
     
     // Reload cart from Firestore to ensure accurate count
     await reloadCart();

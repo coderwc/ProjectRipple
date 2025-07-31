@@ -20,17 +20,14 @@ useEffect(() => {
       const fetchedPosts = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        console.log('📄 Post found in charities collection:', doc.id, data);
-        console.log(`🔍 Category comparison: "${data.category}" vs "${categoryName}"`);
         const matchedCategory = (data.category || '').toLowerCase() === categoryName.toLowerCase();
-        console.log(`🎯 Category match result: ${matchedCategory}`);
         if (matchedCategory) {
           fetchedPosts.push({
             id: doc.id,
             headline: data.headline,
             source: data.charityName,
             progress: data.donationsReceived || 0, // You might want to calculate %
-            kindness: `Kindness Cup: ${data.donationsReceived || 0}% Full`,
+            kindness: `Kindness Cap: ${data.donationsReceived || 0}% Full`,
             remainingDays: calculateRemainingDays(data.deadline),
           });
         }
@@ -60,9 +57,6 @@ const calculateRemainingDays = (deadlineStr) => {
 };
 
   const newsItems = posts;
-
-  if (loading) return <p className="text-center mt-10">Loading posts...</p>;
-if (posts.length === 0) return <p className="text-center mt-10">No posts found in this category.</p>;
 
   return (
     <div className="max-w-sm mx-auto p-4 bg-gray-50 min-h-screen relative">
