@@ -73,8 +73,6 @@ const CharityPost = ({
     return diff > 0 ? diff : 0;
   })();
 
-  const familiesSupported = 4; // Placeholder
-
   const handleItemClick = (item) => {
     if (item.available && onCharitySelect) {
       const charityData = {
@@ -88,6 +86,15 @@ const CharityPost = ({
 
   return (
     <div className="max-w-sm mx-auto p-4 bg-gray-50 min-h-screen relative">
+      {/* Status Bar */}
+      <div className="bg-white px-4 py-2 flex justify-between items-center text-sm text-gray-600 -mx-4">
+        <span>9:30</span>
+        <div className="flex items-center gap-1">
+          <div className="w-4 h-2 bg-black rounded-sm"></div>
+          <div className="w-1 h-1 bg-black rounded-full"></div>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="bg-white px-4 py-4 border-b border-gray-200 -mx-4 mb-4">
         <div className="flex items-center justify-between">
@@ -127,7 +134,7 @@ const CharityPost = ({
 
           <div className="space-y-2">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-blue-600">Kindness Cap: {donationsReceived}%</span>
+              <span className="text-blue-600">Kindness Cup: {donationsReceived}%</span>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-blue-500 rounded" />
                 <span className="text-gray-500 text-xs">{remainingDays} More Days</span>
@@ -203,7 +210,7 @@ const CharityPost = ({
               <div key={index} className="relative h-32">
                 <div
                   className={`p-4 rounded-lg border h-full flex flex-col justify-between transition-all ${
-                    item.available ? 'bg-blue-50 border-blue-200 hover:bg-blue-100 cursor-pointer' : 'bg-gray-50 border-gray-200'
+                    item.available ? 'bg-blue-50 border-blue-200 hover:bg-blue-100 cursor-pointer hover:shadow-md' : 'bg-gray-50 border-gray-200'
                   }`}
                   onClick={() => handleItemClick(item)}
                 >
@@ -211,9 +218,14 @@ const CharityPost = ({
                     <span className={`text-sm font-medium mb-1 ${item.available ? 'text-gray-900' : 'text-gray-500'}`}>
                       {item.type}
                     </span>
-                    <span className={`text-xs mb-3 ${item.available ? 'text-blue-600' : 'text-gray-400'}`}>
-                      {item.available ? 'Available for donors' : 'Not Available'}
-                    </span>
+                    {item.available && (
+                      <span className="text-xs text-blue-600 mb-3">
+                        Click to shop
+                      </span>
+                    )}
+                    {!item.available && (
+                      <span className="text-xs text-gray-400 mb-3">Not Available</span>
+                    )}
                   </div>
                   <div>
                     <div className="text-lg font-bold text-gray-900 mb-2">{item.current}/{item.target}</div>
@@ -227,20 +239,6 @@ const CharityPost = ({
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* Support Stats */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-4 text-white">
-          <p className="text-sm opacity-90 mb-2">So Far, We're Supporting</p>
-          <div className="flex items-center gap-4">
-            <div className="bg-white bg-opacity-20 rounded-lg p-3 min-w-0">
-              <div className="text-2xl font-bold">{familiesSupported}</div>
-            </div>
-            <div>
-              <div className="text-lg font-semibold">FAMILIES</div>
-              <div className="text-sm opacity-90">In Need</div>
-            </div>
           </div>
         </div>
       </div>

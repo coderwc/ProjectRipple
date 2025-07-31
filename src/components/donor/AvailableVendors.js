@@ -13,7 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 
-const AvailableVendors = ({ charity, onBack, onSelectVendor }) => {
+const AvailableVendors = ({ charity, itemFilter, onBack, onSelectVendor }) => {
   const { addToCart, getTotalItems } = useCart();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
@@ -192,8 +192,45 @@ const AvailableVendors = ({ charity, onBack, onSelectVendor }) => {
     }
   ];
 
+  // Filter products based on itemFilter if provided
+  const filterProducts = (products, filter) => {
+    if (!filter) return products;
+    
+    return products.filter(product => {
+      const productName = product.name?.toLowerCase() || '';
+      const productCategory = product.category?.toLowerCase() || '';
+      const filterLower = filter.toLowerCase();
+      
+      // First check if the product category directly matches the filter
+      const categoryMappings = {
+        'water bottles': ['water', 'drinks', 'beverages'],
+        'blankets': ['blankets', 'bedding'],
+        'first aid kits': ['medical', 'health', 'first aid'],
+        'clothing': ['clothing', 'clothes', 'apparel']
+      };
+      
+      const categoryTerms = categoryMappings[filterLower] || [];
+      const categoryMatch = categoryTerms.some(term => productCategory.includes(term));
+      
+      // If category matches, return true immediately
+      if (categoryMatch) return true;
+      
+      // Otherwise, fall back to name-based filtering
+      const nameSearchTerms = {
+        'water bottles': ['water', 'bottle', 'drink', 'beverage', 'dasani', 'evian', 'fiji', 'mineral', 'purified'],
+        'blankets': ['blanket', 'cover', 'bedding', 'warm'],
+        'first aid kits': ['first aid', 'medical', 'kit', 'bandage', 'medicine', 'health'],
+        'clothing': ['clothes', 'shirt', 'pants', 'jacket', 'apparel', 'wear', 'socks', 'sock', 'underwear', 'dress', 'skirt', 'shorts', 'sweater', 'hoodie', 'jeans']
+      };
+      
+      const searchTerms = nameSearchTerms[filterLower] || [filterLower];
+      
+      return searchTerms.some(term => productName.includes(term));
+    });
+  };
+
   // Always use real listings from Firestore - no fallback to mock data
-  const products = listings;
+  const products = filterProducts(listings, itemFilter);
   
   console.log('🛍️ AvailableVendors - Total products to display:', products.length);
   console.log('📦 AvailableVendors - Products:', products.map(p => ({ id: p.id, name: p.name, vendor: p.vendorName || p.vendor })));
@@ -508,8 +545,20 @@ const addToCartHandler = async (product, qty = 1) => {
       <div className="space-y-6">
         {/* Shop from available vendors title */}
         <h2 className="text-xl font-medium text-gray-900 mb-4">
-          Shop from available vendors:
+          {itemFilter ? `Shop for ${itemFilter}:` : 'Shop from available vendors:'}
         </h2>
+        
+        {/* Filter indicator */}
+        {itemFilter && (
+          <div className="bg-blue-100 border border-blue-200 rounded-lg p-3 mb-4">
+            <p className="text-sm text-blue-800">
+              <span className="font-medium">Filtering by:</span> {itemFilter}
+            </p>
+            <p className="text-xs text-blue-600 mt-1">
+              Showing products that match your selection from the charity post
+            </p>
+          </div>
+        )}
 
         {/* Sort and Filter */}
         <div className="flex justify-end items-center space-x-4 mb-6">
@@ -544,7 +593,17 @@ const addToCartHandler = async (product, qty = 1) => {
         {/* No Products Message */}
         {!loading && products.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-gray-500">No products available at the moment.</p>
+            <p className="text-gray-500">
+              {itemFilter 
+                ? `No ${itemFilter.toLowerCase()} available at the moment.`
+                : 'No products available at the moment.'
+              }
+            </p>
+            {itemFilter && (
+              <p className="text-sm text-gray-400 mt-2">
+                Try browsing all products by going back and shopping without a filter.
+              </p>
+            )}
           </div>
         )}
 
