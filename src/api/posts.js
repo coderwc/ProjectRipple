@@ -79,6 +79,50 @@ export const getAIRecommendations = async (description, headline, location) => {
   }
 };
 
+// Get public charity profile by ID
+export const getCharityProfile = async (charityId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/charity/public/${charityId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch charity profile');
+    }
+    
+    const result = await response.json();
+    return { success: true, charity: result };
+  } catch (error) {
+    console.error('Error fetching charity profile:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Get post details by ID
+export const getPostDetails = async (postId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/donor/posts/${postId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch post details');
+    }
+    
+    const result = await response.json();
+    return { success: true, post: result };
+  } catch (error) {
+    console.error('Error fetching post details:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 // User registration - now handled by Firebase Auth (you can remove these if using Firebase auth completely)
 export const registerUser = async (userData) => {
   try {

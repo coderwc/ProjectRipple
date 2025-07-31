@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import DonorHome from './DonorHome';
 import CategoryFeed from './CategoryFeed';
 import CharityPost from './CharityPost';
+import CharityProfile from './CharityProfile';
 import AvailableVendors from './AvailableVendors';
 import VendorProducts from './VendorProducts';
 import ShoppingCart from './Donorcomponents/ShoppingCart';
@@ -16,6 +17,7 @@ function DonorApp({ user, onLogout }) {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedPost, setSelectedPost] = useState(null);
   const [selectedCharity, setSelectedCharity] = useState(null);
+  const [selectedCharityId, setSelectedCharityId] = useState(null);
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [selectedPostData, setSelectedPostData] = useState(null);
   const [previousView, setPreviousView] = useState('home'); // Track previous view for cart navigation
@@ -122,6 +124,12 @@ const handleViewImpactGallery = (postId) => {
   setCurrentView('impactGallery');
 };
 
+const handleViewCharityProfile = (charityId) => {
+  setSelectedCharityId(charityId);
+  setPreviousView(currentView);
+  setCurrentView('charityProfile');
+};
+
   return (
     <div className="App">
       {currentView === 'home' && (
@@ -151,6 +159,7 @@ const handleViewImpactGallery = (postId) => {
   onViewDonors={handleViewDonors}
   onViewStory={handleViewStory}
   onViewImpactGallery={handleViewImpactGallery}
+  onViewCharityProfile={handleViewCharityProfile}
 />
 )}
 
@@ -210,6 +219,13 @@ const handleViewImpactGallery = (postId) => {
   <ImpactGallery 
     postId={selectedPost} 
     onBack={() => setCurrentView('post')} 
+  />
+)}
+
+{currentView === 'charityProfile' && (
+  <CharityProfile 
+    charityId={selectedCharityId} 
+    onBack={() => setCurrentView(previousView || 'post')} 
   />
 )}
 

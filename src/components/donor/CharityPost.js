@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Heart, Users, FileText, Camera, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Heart, Users, FileText, Camera, ChevronRight, Loader } from 'lucide-react';
+import { getPostDetails } from '../../api/posts';
 
 const CharityPost = ({ 
   onBack, 
@@ -7,31 +8,87 @@ const CharityPost = ({
   onCharitySelect, 
   onViewDonors, 
   onViewStory, 
-  onViewImpactGallery // ✅ Add this here
+  onViewImpactGallery,
+  onViewCharityProfile
 }) => {
   const [isLiked, setIsLiked] = useState(false);
-  // Mock data - in real app this would be fetched based on postId
-  const postData = {
-    headline: "Emergency Earthquake Relief Fund",
-    organization: "Disaster Relief NGO",
-    kindnessCap: "78% Full",
-    remainingDays: 40,
-    progress: 78,
-    image: "/api/placeholder/400/200"
-  };
+  const [postData, setPostData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const donationItems = [
-    { id: 1, type: "Water Bottles", current: 28, target: 40, available: true },
-    { id: 2, type: "Blankets", current: 15, target: 20, available: true },
-    { id: 3, type: "Rice Bags", current: 28, target: 40, available: true },
-    { id: 4, type: "Soap Bars", current: 28, target: 40, available: false }
-  ];
+  useEffect(() => {
+    const fetchPostData = async () => {
+      if (!postId) {
+        setError("No post ID provided");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await getPostDetails(postId);
+        
+        if (response.success) {
+          setPostData(response.post);
+          setError(null);
+        } else {
+          setError(response.error || "Failed to load post");
+        }
+      } catch (err) {
+        console.error("Error fetching post data:", err);
+        setError("Failed to load post");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPostData();
+  }, [postId]);
+
+  if (loading) {
+    return (
+      <div className="max-w-sm mx-auto bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader className="w-8 h-8 animate-spin text-blue-600" />
+          <p className="text-gray-600">Loading post...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !postData) {
+    return (
+      <div className="max-w-sm mx-auto bg-gray-50 min-h-screen">
+        {/* Header */}
+        <div className="bg-white px-4 py-4 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <button onClick={onBack} className="p-1 hover:bg-gray-100 rounded">
+              <ArrowLeft className="w-6 h-6 text-gray-700" />
+            </button>
+            <span className="text-lg font-medium text-gray-900">Charity Post</span>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">{error}</p>
+            <button 
+              onClick={onBack}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleItemClick = (item) => {
     if (item.available && item.type === "Water Bottles" && onCharitySelect) {
-      // Create mock charity data for the shopping interface
+      // Create charity data for the shopping interface
       const charityData = {
-        id: postData.id || postId,
+        id: postData.charityId || postId,
         name: postData.organization || "Charity Name",
         selectedItem: item.type
       };
@@ -73,8 +130,8 @@ const CharityPost = ({
           {/* Organization info */}
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-900">Charity Name</span>
-              <div className="w-2 h-2 bg-black rounded-full"></div>
+              <span className="text-sm font-medium text-gray-900">{postData.organization}</span>
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
             </div>
             <button 
               onClick={() => setIsLiked(!isLiked)}
@@ -86,8 +143,8 @@ const CharityPost = ({
             </button>
           </div>
 
-          <h2 className="font-semibold text-gray-900 mb-1">Headline Here</h2>
-          <p className="text-sm text-blue-600 mb-3">Donated</p>
+          <h2 className="font-semibold text-gray-900 mb-1">{postData.headline}</h2>
+          <p className="text-sm text-blue-600 mb-3">{postData.description}</p>
 
           {/* Progress info */}
           <div className="space-y-2">
@@ -95,7 +152,7 @@ const CharityPost = ({
               <span className="text-blue-600">Kindness Cap: {postData.kindnessCap}</span>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                <span className="text-gray-500 text-xs">xxx More Days</span>
+                <span className="text-gray-500 text-xs">{postData.remainingDays} More Days</span>
               </div>
             </div>
             
@@ -147,21 +204,23 @@ const CharityPost = ({
         <div className="bg-white rounded-lg p-4 shadow-sm">
           <h3 className="font-medium text-gray-900 mb-3">Charity Information:</h3>
           
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
+          <button 
+            onClick={() => onViewCharityProfile && onViewCharityProfile(postData.charityId)}
+            className="w-full flex items-center justify-between py-3 border-b border-gray-100 hover:bg-gray-50 rounded-lg transition-colors"
+          >
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
               <div>
-                <p className="font-medium text-gray-900 text-sm">Charity Name</p>
-                <div className="w-2 h-2 bg-black rounded-full mt-1"></div>
+                <p className="font-medium text-gray-900 text-sm">{postData.organization}</p>
+                <div className="w-2 h-2 bg-green-500 rounded-full mt-1"></div>
               </div>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
-          </div>
+          </button>
           
           <p className="text-xs text-gray-500 mt-3 leading-4">
-            Lorem Ipsum Dolor sit Amet Consectetur Lectus elitta, 
-            Sed do eiusmod Tempor Incididunt ut labore et dolore magna 
-            aliqua, lorem ipsum
+            Click above to view the full charity profile with contact information, 
+            mission details, and impact statistics.
           </p>
         </div>
 
