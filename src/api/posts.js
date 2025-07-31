@@ -2,7 +2,7 @@
 import { createPost as createPostFirebase, getPosts, getPostsByCharity } from '../firebase/posts';
 import { createDonation, getDonationsByPost } from '../firebase/donations';
 
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = 'http://localhost:3001/api';
 
 // Create a new post - now uses Firebase
 export const createPost = async (postData) => {
@@ -76,6 +76,54 @@ export const getAIRecommendations = async (description, headline, location) => {
   } catch (error) {
     console.error('Error getting AI recommendations:', error);
     throw error;
+  }
+};
+
+// Get public charity profile by ID
+export const getCharityProfile = async (charityId) => {
+  try {
+    console.log('🔍 Fetching charity profile from API for ID:', charityId);
+    const response = await fetch(`${API_BASE_URL}/charity/public/${charityId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    
+    console.log('📡 API Response status:', response.status);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch charity profile');
+    }
+    
+    const result = await response.json();
+    console.log('✅ API Response data:', result);
+    return { success: true, charity: result };
+  } catch (error) {
+    console.error('❌ Error fetching charity profile:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Get post details by ID
+export const getPostDetails = async (postId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/donor/posts/${postId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch post details');
+    }
+    
+    const result = await response.json();
+    return { success: true, post: result };
+  } catch (error) {
+    console.error('Error fetching post details:', error);
+    return { success: false, error: error.message };
   }
 };
 
