@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Edit3, Check, X, Plus, Home, User } from 'lucide-react';
+import { Edit3, Check, X, Plus, Home, User, Camera } from 'lucide-react';
 import { auth, db } from '../../../firebase/config';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -10,6 +10,7 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
   const [profileData, setProfileData] = useState(null);
   const [tempData, setTempData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [imageUploading, setImageUploading] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -61,19 +62,84 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
     const file = e.target.files[0];
     if (!file) return;
 
+    // Validate file
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      alert('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      alert('Image size must be less than 5MB');
+      return;
+    }
+
+    setImageUploading(true);
+
     try {
       const user = auth.currentUser;
-      const storageRef = ref(storage, `profileImages/${user.uid}`);
-      await uploadBytes(storageRef, file);
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
 
+      // Create unique filename for profile image
+      const timestamp = Date.now();
+      const fileExtension = file.name.split('.').pop();
+      const fileName = `profile_${timestamp}.${fileExtension}`;
+      
+      // Create storage reference for profile images
+      const storageRef = ref(storage, `profileImages/${user.uid}/${fileName}`);
+      
+      console.log("📤 Uploading profile image to Firebase Storage...");
+      console.log("📍 Path:", `profileImages/${user.uid}/${fileName}`);
+
+      // Upload file with metadata
+      const metadata = {
+        contentType: file.type,
+        customMetadata: {
+          uploadedBy: user.uid,
+          uploadedAt: new Date().toISOString(),
+          originalName: file.name,
+          type: 'profile-image'
+        }
+      };
+
+      // Upload the file
+      const uploadResult = await uploadBytes(storageRef, file, metadata);
+      console.log("✅ Profile image upload successful:", uploadResult);
+
+      // Get download URL
       const downloadURL = await getDownloadURL(storageRef);
+      console.log("🔗 Profile image URL:", downloadURL);
+
+      // Update Firestore with new image URL
       const docRef = doc(db, "vendors", user.uid);
       await updateDoc(docRef, { imageUrl: downloadURL });
 
+      // Update local state
       setProfileData((prev) => ({ ...prev, imageUrl: downloadURL }));
       setTempData((prev) => ({ ...prev, imageUrl: downloadURL }));
-    } catch (err) {
-      console.error("Error uploading image:", err);
+
+      console.log("✅ Profile image updated successfully");
+
+    } catch (error) {
+      console.error("❌ Error uploading profile image:", error);
+      
+      let errorMessage = "Failed to upload profile image. ";
+      
+      if (error.code === 'storage/unauthorized') {
+        errorMessage += "You don't have permission to upload. Please check your authentication.";
+      } else if (error.code === 'storage/canceled') {
+        errorMessage += "Upload was cancelled.";
+      } else if (error.code === 'storage/unknown') {
+        errorMessage += "An unknown error occurred. Please try again.";
+      } else {
+        errorMessage += "Please try again.";
+      }
+      
+      alert(errorMessage);
+    } finally {
+      setImageUploading(false);
     }
   };
 
@@ -118,49 +184,102 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
       {/* Header */}
       <div className="bg-white px-4 py-6 border-b border-gray-100 shadow-md">
         <h1 className="text-2xl font-bold text-blue-800">Profile</h1>
-        <p className="text-sm text-gray-500 mt-1">Manage your account details</p>
+        <p className="text-sm text-gray-500 mt-1">Manage account</p>
       </div>
 
       {/* Profile Image */}
       <div className="flex justify-center mb-4 relative">
-        <label htmlFor="profileImageUpload" className="cursor-pointer">
-          <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center border-4 border-white -mt-12 overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
-            {profileData.imageUrl ? (
-              <img src={profileData.imageUrl} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              <User className="w-12 h-12 text-blue-700" />
-            )}
+        <label htmlFor="profileImageUpload" className="cursor-pointer group">
+          <div className="relative">
+            <div className={`w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center border-4 border-white -mt-12 overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105 ${imageUploading ? 'pointer-events-none' : ''}`}>
+              {profileData.imageUrl ? (
+                <img src={profileData.imageUrl} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-12 h-12 text-blue-700" />
+              )}
+              {imageUploading && (
+                <div className="absolute inset-0 bg-blue-100 bg-opacity-75 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                </div>
+              )}
+            </div>
+            
+            {/* Camera Icon Overlay */}
+            <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+              <Camera className="w-4 h-4 text-white" />
+            </div>
           </div>
+          
           <input
             id="profileImageUpload"
             type="file"
             accept="image/*"
             onChange={handleImageUpload}
             className="hidden"
+            disabled={imageUploading}
           />
         </label>
       </div>
 
+      {/* Upload Status */}
+      {imageUploading && (
+        <div className="text-center mb-4">
+          <p className="text-sm text-blue-600">Uploading profile image...</p>
+        </div>
+      )}
+
+      {/* Vendor Name */}
+      <div className="text-center mb-2">
+        {editingField === 'name' ? (
+          <div className="flex items-center justify-center gap-2">
+            <input
+              type="text"
+              value={tempData.name}
+              onChange={(e) => setTempData({ ...tempData, name: e.target.value })}
+              className="text-xl font-bold text-center bg-white border border-blue-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter vendor/company name"
+            />
+            <Check 
+              onClick={handleSave} 
+              className="w-5 h-5 text-green-600 cursor-pointer hover:text-green-700" 
+            />
+            <X 
+              onClick={handleCancel} 
+              className="w-5 h-5 text-red-600 cursor-pointer hover:text-red-700" 
+            />
+          </div>
+        ) : (
+          <div className="flex items-center justify-center gap-2">
+            <h2 className="text-xl font-bold text-gray-900">{profileData.name}</h2>
+            <Edit3 
+              onClick={() => handleEdit('name')} 
+              className="w-4 h-4 text-gray-500 cursor-pointer hover:text-blue-600 transition-colors" 
+            />
+          </div>
+        )}
+      </div>
+
       {/* Profile Content */}
       <div className="px-4 py-6 space-y-4 pb-24">
-        {/* Name */}
+        {/* Email */}
         <div className="bg-white border border-blue-200 rounded-xl shadow p-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-md font-semibold text-gray-900">Vendor Details</h3>
-            {editingField !== 'name' && (
+            <h3 className="text-md font-semibold text-gray-900">Email</h3>
+            {editingField !== 'email' && (
               <Edit3 
-                onClick={() => handleEdit('name')} 
+                onClick={() => handleEdit('email')} 
                 className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-600 transition-colors" 
               />
             )}
           </div>
-          {editingField === 'name' ? (
+          {editingField === 'email' ? (
             <div className="flex items-center gap-2">
               <input
-                type="text"
-                value={tempData.name}
-                onChange={(e) => setTempData({ ...tempData, name: e.target.value })}
+                type="email"
+                value={tempData.email || ""}
+                onChange={(e) => setTempData({ ...tempData, email: e.target.value })}
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter email address"
               />
               <Check 
                 onClick={handleSave} 
@@ -172,10 +291,7 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
               />
             </div>
           ) : (
-            <div>
-              <p className="text-gray-700 font-medium">{profileData.name}</p>
-              <p className="text-sm text-gray-500">{profileData.email}</p>
-            </div>
+            <p className="text-sm text-gray-500">{profileData.email}</p>
           )}
         </div>
 
@@ -197,7 +313,7 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
                 value={tempData.location || ""}
                 onChange={(e) => setTempData({ ...tempData, location: e.target.value })}
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter your location"
+                placeholder="Enter your business location"
               />
               <Check 
                 onClick={handleSave} 
@@ -231,7 +347,7 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
                 value={tempData.socials || ""}
                 onChange={(e) => setTempData({ ...tempData, socials: e.target.value })}
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter website URL"
+                placeholder="Enter company website URL"
               />
               <Check 
                 onClick={handleSave} 
@@ -269,15 +385,16 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2">
                 {(tempData.focusAreas || []).map((area, index) => (
-                  <div key={index} className="relative">
+                  <div key={index} className="relative group">
                     <input
                       value={area}
                       onChange={(e) => updateFocusArea(index, e.target.value)}
                       className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Focus area"
                     />
                     <button
                       onClick={() => removeFocusArea(index)}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center hover:bg-red-600"
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       ×
                     </button>
