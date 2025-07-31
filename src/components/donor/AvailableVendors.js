@@ -13,8 +13,8 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 
-const AvailableVendors = ({ charity, itemFilter, onBack, onSelectVendor }) => {
-  const { addToCart, getTotalItems } = useCart();
+const AvailableVendors = ({ charity, itemFilter, onBack, onSelectVendor, onGoToCart }) => {
+  const { addToCart, getTotalItems, reloadCart } = useCart();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [listings, setListings] = useState([]);
@@ -255,13 +255,16 @@ const AvailableVendors = ({ charity, itemFilter, onBack, onSelectVendor }) => {
 
 const addToCartHandler = async (product, qty = 1) => {
   try {
-    await saveCartItem(product, qty, charity?.id);       // Save to Firestore
-    addToCart(product, qty);                             // Sync local cart state (for badge)
-    console.log(`✅ Added ${qty} x ${product.name} for charity ${charity?.name}`);
+    // Save to Firestore
+    await saveCartItem(product, qty, charity?.id);
+    
+    // Reload cart from Firestore to ensure accurate count
+    await reloadCart();
+    
     closeProductModal();                                 // Close modal after success
   } catch (err) {
     console.error('❌ Failed to add to cart:', err.message);
-    alert('Something went wrong. Try again.');
+    alert(`Something went wrong: ${err.message}`);
   }
 };
 
@@ -530,7 +533,7 @@ const addToCartHandler = async (product, qty = 1) => {
               </div>
             </div>
           </div>
-          <button className="p-1 relative">
+          <button className="p-1 relative" onClick={onGoToCart}>
             <ShoppingCart className="w-6 h-6 text-gray-700" />
             {getTotalItems() > 0 && (
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
