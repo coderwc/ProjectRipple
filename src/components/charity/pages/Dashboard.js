@@ -14,7 +14,9 @@ const Dashboard = ({
   onDriveClick,
   onDeleteDrive,
   user,
-  loadingPosts
+  loadingPosts,
+  impactPosts,
+  onImpactPostClick
 }) => (
   <div className="max-w-sm mx-auto bg-gray-50 min-h-screen">
     {/* Status Bar */}
@@ -78,6 +80,57 @@ const Dashboard = ({
         )}
       </div>
 
+      {/* Recent Impact Posts Section */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gray-900">Recent Impact:</h2>
+          {impactPosts && impactPosts.length > 0 && (
+            <button
+              onClick={() => setCurrentPage('impactGallery')}
+              className="text-blue-600 text-sm font-medium hover:text-blue-700 transition-colors"
+            >
+              View All
+            </button>
+          )}
+        </div>
+        
+        {impactPosts && impactPosts.length > 0 ? (
+          <div className="grid grid-cols-2 gap-3">
+            {impactPosts.slice(0, 4).map((post) => (
+              <button
+                key={post.id}
+                onClick={() => onImpactPostClick && onImpactPostClick(post)}
+                className="bg-white rounded-lg p-3 shadow-sm border border-gray-100 hover:shadow-md transition-shadow text-left"
+              >
+                {post.images && post.images.length > 0 && (
+                  <img
+                    src={post.images[0]}
+                    alt="Impact"
+                    className="w-full h-20 object-cover rounded-md mb-2"
+                  />
+                )}
+                <p className="text-xs text-gray-600 line-clamp-2 mb-1">
+                  {post.caption || 'Impact shared'}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {post.drive}
+                </p>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg p-6 text-center border border-gray-100">
+            <p className="text-gray-500 text-sm mb-2">No impact posts yet</p>
+            <button
+              onClick={() => setCurrentPage('selectPostType')}
+              className="text-blue-600 text-sm font-medium hover:text-blue-700 transition-colors"
+            >
+              Share your first impact
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Other Raisings Section */}
       <div className="mb-8">
         <h2 className="text-xl font-bold text-gray-900 mb-4">Other Raisings :</h2>
@@ -116,15 +169,15 @@ const Dashboard = ({
           <span className={`text-xs ${currentPage === 'dashboard' ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>Home</span>
         </button>
         <button 
-          onClick={() => setCurrentPage('createPost')}
+          onClick={() => setCurrentPage('selectPostType')}
           className="flex flex-col items-center gap-1"
         >
           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-            currentPage === 'createPost' ? 'bg-blue-600' : 'bg-gray-800'
+            currentPage === 'selectPostType' ? 'bg-blue-600' : 'bg-gray-800'
           }`}>
             <Plus className="w-5 h-5 text-white" />
           </div>
-          <span className={`text-xs font-medium ${currentPage === 'createPost' ? 'text-blue-600' : 'text-gray-600'}`}>Post</span>
+          <span className={`text-xs font-medium ${currentPage === 'selectPostType' ? 'text-blue-600' : 'text-gray-600'}`}>Post</span>
         </button>
         <button 
           onClick={() => setCurrentPage('profile')}

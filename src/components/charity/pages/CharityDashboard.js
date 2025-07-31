@@ -7,8 +7,11 @@ import SuccessPage from './SuccessPage';
 import AIAnalysisPage from './AIAnalysisPage';
 import ProfilePage from './ProfilePage';
 import DriveDetailsPage from './DriveDetailsPage';
+import SelectPostType from './SelectPostType';
+import ImpactPostDrafting from './ImpactPostDrafting';
+import ImpactGallery from './ImpactGallery';
 import { createPost, getAIRecommendations, getCharityPosts } from '../../../api/posts';
-import { deletePost } from '../../../firebase/posts';
+import { deletePost, createImpactPost, getImpactPosts } from '../../../firebase/posts';
 import { itemCategories } from '../constants/categories';
 
 const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
@@ -39,6 +42,10 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
   const [showMore, setShowMore] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('Natural Disasters');
   const [selectedDrive, setSelectedDrive] = useState(null);
+
+  // Impact posts state
+  const [impactPosts, setImpactPosts] = useState([]);
+  const [selectedImpactPost, setSelectedImpactPost] = useState(null);
 
   // Mock data as default state + Firebase posts
   const [ongoingDrives, setOngoingDrives] = useState([
@@ -84,17 +91,29 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
   ]);
   const [loadingPosts, setLoadingPosts] = useState(true);
 
-  // Load user's posts on component mount and add them to the mock data
+  // Load user's posts and impact posts on component mount
   React.useEffect(() => {
-    const loadUserPosts = async () => {
+    const loadUserData = async () => {
       if (user?.id) {
         try {
           setLoadingPosts(true);
           console.log('🔍 Loading posts for user:', user.id);
           
+          // Load fundraising posts
           const response = await getCharityPosts(user.id);
           console.log('📥 Loaded posts from Firebase:', response);
           
+          // Load impact posts
+          const impactResponse = await getImpactPosts(user.id);
+          console.log('📥 Loaded impact posts from Firebase:', impactResponse);
+          
+          // Process impact posts (keep separate from drives)
+          if (impactResponse.success && impactResponse.impacts) {
+            setImpactPosts(impactResponse.impacts);
+            console.log('✅ Loaded impact posts:', impactResponse.impacts);
+          }
+          
+          // Process fundraising posts only (not impact posts)
           if (response.success && response.posts && response.posts.length > 0) {
             const posts = response.posts;
             const formattedPosts = posts.map(post => ({
@@ -170,7 +189,7 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
       }
     };
 
-    loadUserPosts();
+    loadUserData();
   }, [user?.id]);
 
   // Image upload handler
@@ -209,8 +228,8 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
     setItemName('');
     setQuantity(0);
     
-    // Go back to create post page
-    setCurrentPage('createPost');
+    // Go back to create post page  
+    setCurrentPage('RequestHelp');
   };
 
   // Post creation function with image support
@@ -283,6 +302,80 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
     }
   };
 
+  // Handle impact post creation (Firebase for text, local for images)
+  const handleImpactPost = async (postData) => {
+    try {
+      setLoading(true);
+      
+      const impactData = {
+        images: postData.images || [],
+        caption: postData.caption || '',
+        drive: postData.drive || '',
+        location: postData.location || '',
+        charityId: user?.id,
+        charityName: user?.name
+      };
+      
+      // Always save text to Firebase and images locally (due to CORS issues)
+      const response = await createImpactPost(impactData);
+      
+      if (response.success) {
+        // Firebase text save successful - combine with local images
+        const newImpactPost = {
+          ...response.impact,
+          author: user?.name || 'Anonymous',
+          timestamp: response.impact.createdAt,
+          images: postData.images?.map(img => img.url) || [], // Always use local images
+          syncedToFirebase: true
+        };
+        
+        setImpactPosts([newImpactPost, ...impactPosts]);
+        console.log('✅ Impact post text saved to Firebase, images stored locally');
+        
+      } else {
+        // Firebase save failed - complete local fallback
+        console.log('⚠️ Firebase save failed, using complete local fallback');
+        const localImpactPost = {
+          id: Date.now(),
+          caption: postData.caption || '',
+          drive: postData.drive || '',
+          location: postData.location || '',
+          author: user?.name || 'Anonymous',
+          timestamp: new Date().toISOString(),
+          images: postData.images?.map(img => img.url) || [],
+          localOnly: true // Mark as completely local-only
+        };
+        
+        setImpactPosts([localImpactPost, ...impactPosts]);
+        console.log('✅ Impact post saved completely locally');
+      }
+      
+      // Navigate to success page
+      setCurrentPage('success');
+      
+    } catch (error) {
+      console.error('Error creating impact post:', error);
+      
+      // Complete fallback - save everything locally
+      const fallbackPost = {
+        id: Date.now(),
+        caption: postData.caption || '',
+        drive: postData.drive || '',
+        location: postData.location || '',
+        author: user?.name || 'Anonymous',
+        timestamp: new Date().toISOString(),
+        images: postData.images?.map(img => img.url) || [],
+        localOnly: true
+      };
+      
+      setImpactPosts([fallbackPost, ...impactPosts]);
+      setCurrentPage('success');
+      console.log('✅ Impact post saved locally (complete fallback)');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // AI Analysis Functions
   const analyzeArticle = async () => {
     if (!articleText.trim()) {
@@ -340,7 +433,7 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
     });
 
     setAddedItems([...addedItems, ...convertedItems]);
-    setCurrentPage('createPost');
+    setCurrentPage('RequestHelp');
 
     // Reset AI state
     setArticleText('');
@@ -351,6 +444,11 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
   const handleDriveClick = (drive) => {
     setSelectedDrive(drive);
     setCurrentPage('driveDetails');
+  };
+
+  const handleImpactPostClick = (post) => {
+    setSelectedImpactPost(post);
+    setCurrentPage('impactGallery');
   };
 
   const handleDeleteDrive = async (drive) => {
@@ -416,16 +514,42 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
         />
       )}
       
-      {currentPage === 'aiAnalysis' && (
+{currentPage === 'aiAnalysis' && (
         <AIAnalysisPage
           articleText={articleText}
           setArticleText={setArticleText}
           aiAnalysis={aiAnalysis}
           generatedItems={generatedItems}
           setGeneratedItems={setGeneratedItems}
-          onBack={() => setCurrentPage('createPost')}
+          onBack={() => setCurrentPage('RequestHelp')}
           onAnalyze={analyzeArticle}
           onUseItems={useGeneratedItems}
+        />
+      )}
+
+      {currentPage === 'selectPostType' && (
+        <SelectPostType
+          setCurrentPage={setCurrentPage}
+          onBack={() => setCurrentPage('dashboard')}
+        />
+      )}
+
+      {currentPage === 'ImpactPostDrafting' && (
+        <ImpactPostDrafting
+          onBack={() => setCurrentPage('selectPostType')}
+          onShare={handleImpactPost}
+          availableDrives={ongoingDrives.map(drive => drive.name)}
+        />
+      )}
+
+      {currentPage === 'impactGallery' && (
+        <ImpactGallery
+          impactPosts={impactPosts}
+          selectedPost={selectedImpactPost}
+          onBack={() => {
+            setSelectedImpactPost(null);
+            setCurrentPage('dashboard');
+          }}
         />
       )}
       
@@ -437,14 +561,14 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
           setItemName={setItemName}
           quantity={quantity}
           setQuantity={setQuantity}
-          onBack={() => setCurrentPage('createPost')}
+          onBack={() => setCurrentPage('RequestHelp')}
           onAddItem={handleAddItem}
           onPostNeed={handlePostNeed}
           itemCategories={itemCategories}
         />
       )}
       
-      {currentPage === 'createPost' && (
+      {currentPage === 'RequestHelp' && (
         <CreatePostPage
           selectedImage={selectedImage}
           setSelectedImage={setSelectedImage}
@@ -452,7 +576,7 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
           setFormData={setFormData}
           addedItems={addedItems}
           setAddedItems={setAddedItems}
-          onBack={() => setCurrentPage('dashboard')}
+          onBack={() => setCurrentPage('selectPostType')}
           onAddItems={() => setCurrentPage('addItems')}
           onPostNeed={handlePostNeed}
           onAIRecommendation={() => setCurrentPage('aiAnalysis')}
@@ -473,6 +597,8 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
           onDeleteDrive={handleDeleteDrive}
           user={user}
           loadingPosts={loadingPosts}
+          impactPosts={impactPosts}
+          onImpactPostClick={handleImpactPostClick}
         />
       )}
     </>
