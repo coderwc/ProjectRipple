@@ -17,6 +17,12 @@ export const saveCartItem = async (product, quantity, charityId) => {
   const user = auth.currentUser;
   if (!user) throw new Error('User not signed in');
 
+  // Validate required fields
+  if (!product) throw new Error('Product is required');
+  if (!product.id) throw new Error('Product ID is required');
+  if (!product.name) throw new Error('Product name is required');
+  if (!charityId) throw new Error('Charity ID is required');
+
   const cartRef = collection(db, 'cart');
   const q = query(
     cartRef,
@@ -36,17 +42,20 @@ export const saveCartItem = async (product, quantity, charityId) => {
     });
   } else {
     // New cart item
-    await addDoc(cartRef, {
+    const cartData = {
       donorId: user.uid,
       productId: product.id,
       name: product.name,
-      price: product.price,
-      vendor: product.vendor,
+      price: product.price || 0,
+      image: product.image || null, // Add product image
+      vendor: product.vendor || product.vendorName || 'Unknown Vendor',
       charityId: charityId,
       quantity: quantity,
       selected: true,
       createdAt: serverTimestamp()
-    });
+    };
+    
+    await addDoc(cartRef, cartData);
   }
 };
 
@@ -78,6 +87,11 @@ export const updateCartItemSelection = async (cartItemId, isSelected) => {
     selected: isSelected,
     updatedAt: serverTimestamp()
   });
+};
+
+// ✅ Delete a specific cart item
+export const deleteCartItem = async (cartItemId) => {
+  await deleteDoc(doc(db, 'cart', cartItemId));
 };
 
 // ✅ Clear all cart items for current user (after checkout)
