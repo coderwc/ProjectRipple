@@ -53,8 +53,18 @@ router.post("/listings", async (req, res) => {
   try {
     const vendorId = req.user.uid;
     const {
-      name, category, price, quantity, expiryDate, condition, description, image
+      name, category, price, quantity, expiryDate, condition, description, image, vendorName, status
     } = req.body;
+
+    // Fetch vendor profile to get the actual vendor name
+    const vendorRef = db.collection("vendors").doc(vendorId);
+    const vendorDoc = await vendorRef.get();
+    
+    let actualVendorName = vendorName || "";
+    if (vendorDoc.exists) {
+      const vendorData = vendorDoc.data();
+      actualVendorName = vendorData.name || vendorName || "Unknown Vendor";
+    }
 
     const newListing = {
       name,
@@ -65,10 +75,15 @@ router.post("/listings", async (req, res) => {
       condition: condition || "New",
       description: description || "",
       image: image || "",
+      vendorId,
+      vendorName: actualVendorName,
+      status: status || "active",
       createdAt: new Date().toISOString()
     };
 
     const docRef = await db.collection("vendors").doc(vendorId).collection("listings").add(newListing);
+    console.log(`✅ Listing saved to: vendors/${vendorId}/listings/${docRef.id}`);
+    console.log("📦 Listing data:", newListing);
     res.status(200).json({ id: docRef.id, ...newListing });
   } catch (error) {
     console.error("❌ Error adding listing:", error);

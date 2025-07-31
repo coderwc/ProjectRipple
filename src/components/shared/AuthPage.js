@@ -185,21 +185,21 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack, setIsAuthentica
   const content = getUserTypeContent();
 
   return (
-    <div className="max-w-sm mx-auto bg-gray-50 min-h-screen">
+    <div className="max-w-sm mx-auto bg-gradient-to-b from-blue-200 via-blue-100 to-white min-h-screen">
       <div className="bg-white w-full p-8 relative min-h-screen">
         <button 
           onClick={handleBackClick}
-          className="absolute top-6 left-6 p-2 hover:bg-gray-100 rounded-full transition-colors"
+          className="absolute top-6 left-6 p-2 hover:bg-blue-50 rounded-full transition-colors"
           disabled={isLoading}
         >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
+          <ArrowLeft className="w-5 h-5 text-blue-600" />
         </button>
 
         <div className="text-center mb-8 pt-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-blue-800 mb-2">
             {isSignIn ? 'Sign In' : 'Sign Up'}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-blue-600">
             {isSignIn ? content.signInWelcome : content.signUpDescription}
           </p>
         </div>
@@ -225,7 +225,7 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack, setIsAuthentica
           {/* Full Name - Show for sign up */}
           {!isSignIn && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-blue-700 mb-2">
                 {selectedUserType === 'charity' ? 'Organization Name' : 
                  selectedUserType === 'vendor' ? 'Company Name' : 'Full Name'} *
               </label>
@@ -239,14 +239,14 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack, setIsAuthentica
                   selectedUserType === 'vendor' ? 'Your Company Name' : 'Your Full Name'
                 }
                 required={!isSignIn}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition-all"
+                className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
               />
             </div>
           )}
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-blue-700 mb-2">
               Email Address *
             </label>
             <input
@@ -256,13 +256,13 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack, setIsAuthentica
               onChange={handleInputChange}
               placeholder="your.email@example.com"
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition-all"
+              className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
             />
           </div>
 
           {/* Password - Show for both sign in and sign up */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-blue-700 mb-2">
               Password *
             </label>
             <input
@@ -272,13 +272,13 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack, setIsAuthentica
               onChange={handleInputChange}
               placeholder={isSignIn ? "Enter your password" : "Create a password"}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition-all"
+              className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
             />
             {isSignIn && (
               <div className="text-right mt-2">
                 <button
                   type="button"
-                  className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                  className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
                 >
                   Reset Password?
                 </button>
@@ -290,7 +290,7 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack, setIsAuthentica
           {!isSignIn && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-blue-700 mb-2">
                   Phone Number
                 </label>
                 <input
@@ -299,14 +299,14 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack, setIsAuthentica
                   value={formData.phone}
                   onChange={handleInputChange}
                   placeholder="Insert Number Here with Country Code"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition-all"
+                  className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                 />
               </div>
 
               {/* Show socials for charity and vendor */}
               {(selectedUserType === 'charity' || selectedUserType === 'vendor') && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-blue-700 mb-2">
                     {selectedUserType === 'charity' ? 'Social Media / Website' : 'Company Website'}
                   </label>
                   <input
@@ -317,13 +317,13 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack, setIsAuthentica
                     placeholder={
                       selectedUserType === 'charity' ? 'Website or social media links' : 'Company website URL'
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition-all"
+                    className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                   />
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-blue-700 mb-2">
                   {selectedUserType === 'donor' ? 'City/Region' : 'Full Address'}
                 </label>
                 <input
@@ -334,12 +334,12 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack, setIsAuthentica
                   placeholder={
                     selectedUserType === 'donor' ? 'Your city or region' : 'Insert Full Address Here'
                   }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition-all"
+                  className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-blue-700 mb-2">
                   {selectedUserType === 'charity' ? 'Tell us about your cause' :
                    selectedUserType === 'vendor' ? 'Services/Products you offer' :
                    'Additional Information'} (Optional)
@@ -354,7 +354,7 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack, setIsAuthentica
                     'Any additional information you\'d like to share'
                   }
                   rows="3"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition-all resize-none"
+                  className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
                 />
               </div>
             </>
@@ -364,7 +364,7 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack, setIsAuthentica
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-gray-800 text-white py-3 px-4 rounded-lg hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
             {isLoading ? 'Please wait...' : content.submitText}
           </button>
@@ -375,10 +375,10 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack, setIsAuthentica
           <>
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
+                <div className="w-full border-t border-blue-200"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500">Or Sign in with</span>
+                <span className="px-4 bg-white text-blue-500">Or Sign in with</span>
               </div>
             </div>
 
@@ -387,7 +387,7 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack, setIsAuthentica
                 type="button"
                 onClick={handleAppleSignIn}
                 disabled={isLoading}
-                className="w-full bg-gray-800 text-white py-3 px-4 rounded-lg hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-3"
+                className="w-full bg-blue-800 text-white py-3 px-4 rounded-lg hover:bg-blue-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-3"
               >
                 <Apple className="w-5 h-5" />
                 Sign in with Apple
@@ -397,7 +397,7 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack, setIsAuthentica
                 type="button"
                 onClick={handleGoogleSignIn}
                 disabled={isLoading}
-                className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-3"
+                className="w-full border border-blue-200 text-blue-700 py-3 px-4 rounded-lg hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-3"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -414,25 +414,25 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack, setIsAuthentica
         {/* Toggle between sign in/up */}
         <div className="text-center mt-6">
           {isSignIn ? (
-            <p className="text-gray-600">
+            <p className="text-blue-600">
               Don't Have an Account?{' '}
               <button
                 type="button"
                 onClick={toggleAuthMode}
                 disabled={isLoading}
-                className="text-gray-900 font-medium hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                className="text-blue-800 font-medium hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Sign Up Here
               </button>
             </p>
           ) : (
-            <p className="text-gray-600">
+            <p className="text-blue-600">
               Already have an account?{' '}
               <button
                 type="button"
                 onClick={toggleAuthMode}
                 disabled={isLoading}
-                className="text-gray-900 font-medium hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                className="text-blue-800 font-medium hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Sign In Here
               </button>
@@ -442,7 +442,7 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack, setIsAuthentica
 
         {/* Verification note for charity/vendor signup */}
         {!isSignIn && (selectedUserType === 'charity' || selectedUserType === 'vendor') && (
-          <p className="text-xs text-gray-500 text-center mt-4">
+          <p className="text-xs text-blue-500 text-center mt-4">
             By submitting the form, Ripple will contact you for further verification check.
           </p>
         )}

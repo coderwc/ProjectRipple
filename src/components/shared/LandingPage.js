@@ -3,8 +3,9 @@ import { Heart, Package, FileText } from 'lucide-react';
 
 const LandingPage = ({ onSelectUserType }) => {
   return (
-    <div className="max-w-sm mx-auto bg-blue-600 min-h-screen flex flex-col items-center justify-center px-8">
-      
+    <div className="max-w-sm mx-auto min-h-screen flex flex-col items-center justify-center px-8"
+      style={{ background: 'linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%)' }}
+    >
       {/* Inspirational Text */}
       <div className="text-center mb-16">
         <h1 className="text-white text-2xl font-light mb-2 tracking-wide">
@@ -22,7 +23,7 @@ const LandingPage = ({ onSelectUserType }) => {
         {/* Donor Button */}
         <button
           onClick={() => onSelectUserType('donor')}
-          className="w-full bg-white bg-opacity-20 backdrop-blur-md text-white py-4 px-6 rounded-2xl font-medium text-lg flex items-center justify-center gap-3 hover:bg-opacity-30 transition-all duration-300 shadow-lg border border-white border-opacity-20"
+          className="w-full bg-white/20 backdrop-blur-xl text-white py-4 px-6 rounded-2xl font-medium text-lg flex items-center justify-center gap-3 hover:bg-white/30 transition-all duration-300 shadow-lg border border-white/30"
         >
           <Heart className="w-6 h-6" />
           I am a donor
@@ -31,7 +32,7 @@ const LandingPage = ({ onSelectUserType }) => {
         {/* Vendor Button */}
         <button
           onClick={() => onSelectUserType('vendor')}
-          className="w-full bg-white bg-opacity-20 backdrop-blur-md text-white py-4 px-6 rounded-2xl font-medium text-lg flex items-center justify-center gap-3 hover:bg-opacity-30 transition-all duration-300 shadow-lg border border-white border-opacity-20"
+          className="w-full bg-white/20 backdrop-blur-xl text-white py-4 px-6 rounded-2xl font-medium text-lg flex items-center justify-center gap-3 hover:bg-white/30 transition-all duration-300 shadow-lg border border-white/30"
         >
           <Package className="w-6 h-6" />
           I am a vendor
@@ -40,7 +41,7 @@ const LandingPage = ({ onSelectUserType }) => {
         {/* Charity Button */}
         <button
           onClick={() => onSelectUserType('charity')}
-          className="w-full bg-white bg-opacity-20 backdrop-blur-md text-white py-4 px-6 rounded-2xl font-medium text-lg flex items-center justify-center gap-3 hover:bg-opacity-30 transition-all duration-300 shadow-lg border border-white border-opacity-20"
+          className="w-full bg-white/20 backdrop-blur-xl text-white py-4 px-6 rounded-2xl font-medium text-lg flex items-center justify-center gap-3 hover:bg-white/30 transition-all duration-300 shadow-lg border border-white/30"
         >
           <FileText className="w-6 h-6" />
           I am a charity

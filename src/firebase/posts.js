@@ -10,7 +10,8 @@ import {
   query, 
   where, 
   orderBy,
-  serverTimestamp
+  serverTimestamp,
+  limit
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage, auth } from './config'; // ← Added auth import
@@ -82,6 +83,7 @@ export const createPost = async (postData) => {
       authorEmail: user.email,
       charityId: postData.charityId || user.uid,
       charityName: postData.charityName || user.displayName || 'Anonymous Charity',
+      category: postData.category || 'Uncategorized', // ← Add category field
       headline: postData.headline,
       storyDescription: postData.storyDescription,
       deadline: postData.deadline || '',
@@ -171,7 +173,7 @@ export const getPosts = async (filters = {}) => {
   }
 };
 
-// Get posts by charity ID from charities subcollection
+// Get posts by charity ID from charities collection
 export const getPostsByCharity = async (charityId) => {
   try {
     console.log('🔍 Loading posts for charity:', charityId);
@@ -288,6 +290,38 @@ export const deletePost = async (charityId, postId) => {
   } catch (error) {
     console.error('❌ Post deletion error:', error);
     throw new Error(`Failed to delete post: ${error.message}`);
+  }
+};
+
+// Get the latest public posts from all charities (Explore section)
+export const getLatestCharityPosts = async (limitCount = 8) => {
+  try {
+    const postsRef = collection(db, 'charities');
+    const q = query(
+      postsRef,
+      where('status', '==', 'active'),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    );
+
+    const querySnapshot = await getDocs(q);
+    const posts = [];
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      posts.push({
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt
+      });
+    });
+
+    console.log(`📦 Loaded ${posts.length} posts for Explore section`);
+    return { success: true, posts };
+  } catch (error) {
+    console.error('❌ Error fetching latest charity posts:', error);
+    return { success: false, error: error.message };
   }
 };
 

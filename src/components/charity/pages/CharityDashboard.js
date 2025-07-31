@@ -247,17 +247,18 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
     try {
       setLoading(true);
       
-      const postData = {
-        headline: formData.headline,
-        storyDescription: formData.storyDescription,
-        deadline: formData.deadline,
-        items: addedItems,
-        image: selectedImage,
-        author: user?.name || 'Anonymous',
-        location: 'Singapore',
-        charityId: user?.id,
-        charityName: user?.name
-      };
+  const postData = {
+  headline: formData.headline,
+  storyDescription: formData.storyDescription,
+  deadline: formData.deadline,
+  category: formData.category, // ✅ ADD THIS LINE
+  items: addedItems,
+  image: selectedImage,
+  author: user?.name || 'Anonymous',
+  location: 'Singapore',
+  charityId: user?.id,
+  charityName: user?.name
+};
 
       // Call your API to create the post
       const response = await createPost(postData);

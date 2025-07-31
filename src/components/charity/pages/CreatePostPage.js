@@ -296,6 +296,27 @@ const CreatePostPage = ({
           />
         </div>
 
+{/* Post Category Dropdown */}
+<div className="mb-6">
+  <label className="block text-lg font-bold text-gray-900 mb-2">Select Category</label>
+  <select
+    value={formData.category || ''}
+    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+    className="w-full p-3 bg-white border border-gray-300 rounded-md"
+    required
+  >
+    <option value="">Select a category</option>
+    <option value="Natural Disasters">Natural Disasters</option>
+    <option value="Animals">Animals</option>
+    <option value="Sustainability">Sustainability</option>
+    <option value="Education">Education</option>
+    <option value="Medical">Medical</option>
+    <option value="Non-profit">Non-profit</option>
+    <option value="Orphanage">Orphanage</option>
+    <option value="Infrastructure">Infrastructure</option>
+  </select>
+</div>
+
         {/* Deadline with Calendar */}
         <div className="mb-6">
           <label className="block text-lg font-bold text-gray-900 mb-2">Deadline</label>

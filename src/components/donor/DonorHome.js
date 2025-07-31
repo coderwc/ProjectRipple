@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Search,
   ShoppingCart,
@@ -17,7 +17,9 @@ import {
   Package
 } from 'lucide-react';
 import { useCart } from '../shared/CartContext';
+import { getLatestCharityPosts } from '../../firebase/posts';
 
+// ✅ category array can remain here
 const categories = [
   { name: 'Natural Disasters', icon: AlertTriangle },
   { name: 'Animals', icon: PawPrint },
@@ -29,57 +31,7 @@ const categories = [
   { name: 'Infrastructure', icon: Building2 },
 ];
 
-const urgentPosts = [
-  { 
-    id: 1,
-    title: 'Emergency Shelter', 
-    ngo: 'Relief Org', 
-    progress: 82,
-    charityData: { id: 1, name: 'Relief Org', description: 'Emergency relief organization' }
-  },
-  { 
-    id: 2,
-    title: 'Animal Rescue Fund', 
-    ngo: 'PawSafe', 
-    progress: 61,
-    charityData: { id: 2, name: 'PawSafe', description: 'Animal rescue and protection' }
-  },
-  { 
-    id: 3,
-    title: 'Flood Relief Supplies', 
-    ngo: 'NGO WaterAid', 
-    progress: 92,
-    charityData: { id: 3, name: 'NGO WaterAid', description: 'Water and sanitation aid' }
-  },
-];
-
-const exploreDrives = [
-  { 
-    id: 4, 
-    title: 'Books for Kids', 
-    org: 'EduFuture', 
-    progress: 45, 
-    daysLeft: 12,
-    charityData: { id: 4, name: 'EduFuture', description: 'Educational support for children' }
-  },
-  { 
-    id: 5, 
-    title: 'Medical Camp Aid', 
-    org: 'CureMore', 
-    progress: 73, 
-    daysLeft: 28,
-    charityData: { id: 5, name: 'CureMore', description: 'Medical aid and healthcare' }
-  },
-  { 
-    id: 6, 
-    title: 'New Shelter Homes', 
-    org: 'SafeHaven', 
-    progress: 35, 
-    daysLeft: 20,
-    charityData: { id: 6, name: 'SafeHaven', description: 'Shelter and housing assistance' }
-  },
-];
-
+// ✅ component definition starts here
 export default function DonorHome({ 
   user, 
   onSelectCategory, 
@@ -89,6 +41,73 @@ export default function DonorHome({
   onLogout 
 }) {
   const { getTotalItems } = useCart();
+  const [exploreDrives, setExploreDrives] = useState([]); // ✅ move useState inside component
+
+  // ✅ useEffect goes here
+  useEffect(() => {
+  const fetchExploreDrives = async () => {
+    try {
+      const response = await getLatestCharityPosts(8); // limit to 8 latest posts
+      console.log('📦 Response from getPostsAPI:', response); // ✅ Debug log
+
+      if (response.success && response.posts) {
+        const formattedPosts = response.posts.map(post => {
+          const remainingDays = (() => {
+            const today = new Date();
+            const target = new Date(post.deadline);
+            const diff = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+            return diff > 0 ? diff : 0;
+          })();
+
+          return {
+            id: post.id,
+            title: post.headline,
+            org: post.charityName || 'Unknown Org',
+            progress: Math.floor(Math.random() * 50) + 30,
+            daysLeft: remainingDays,
+            charityData: {
+              id: post.charityId,
+              name: post.charityName,
+              description: post.storyDescription
+            }
+          };
+        });
+
+        setExploreDrives(formattedPosts);
+      } else {
+        console.warn('🚨 Unexpected response structure:', response);
+      }
+    } catch (error) {
+      console.error('❌ Failed to load explore posts:', error);
+    }
+  };
+
+  fetchExploreDrives();
+}, []);
+
+  const urgentPosts = [
+    { 
+      id: 1,
+      title: 'Emergency Shelter', 
+      ngo: 'Relief Org', 
+      progress: 82,
+      charityData: { id: 1, name: 'Relief Org', description: 'Emergency relief organization' }
+    },
+    { 
+      id: 2,
+      title: 'Animal Rescue Fund', 
+      ngo: 'PawSafe', 
+      progress: 61,
+      charityData: { id: 2, name: 'PawSafe', description: 'Animal rescue and protection' }
+    },
+    { 
+      id: 3,
+      title: 'Flood Relief Supplies', 
+      ngo: 'NGO WaterAid', 
+      progress: 92,
+      charityData: { id: 3, name: 'NGO WaterAid', description: 'Water and sanitation aid' }
+    },
+  ];
 
   const handleLogout = () => {
     const confirmLogout = window.confirm("Are you sure you want to log out?");
@@ -244,3 +263,4 @@ export default function DonorHome({
     </div>
   );
 }
+

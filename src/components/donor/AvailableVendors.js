@@ -13,33 +13,113 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 
-const AvailableVendors = ({ charity, onBack, onSelectVendor }) => {
+const AvailableVendors = ({ charity, itemFilter, onBack, onSelectVendor }) => {
   const { addToCart, getTotalItems } = useCart();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch listings from root listings collection
+  // Fetch listings from all vendor subcollections
   useEffect(() => {
     const fetchListings = async () => {
       try {
-        console.log('AvailableVendors - Fetching from root listings collection...');
+        console.log('AvailableVendors - Fetching from vendor subcollections...');
         
-        // Query root listings collection directly
-        const q = query(
-          collection(db, 'listings'),
-          where('status', '==', 'active'),
-          orderBy('createdAt', 'desc')
+        console.log('AvailableVendors - Starting to fetch vendor listings...');
+        
+        // Try direct query to your specific vendor first
+        console.log('🔍 Testing direct query to your vendor...');
+        const yourVendorQuery = query(
+          collection(db, 'vendors', 'KzfgytI8wSWYsN4l0rgZyOYBVi93', 'listings')
         );
         
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
-          console.log('AvailableVendors - Found', querySnapshot.docs.length, 'listings');
-          const listingsData = querySnapshot.docs.map(doc => ({
+        const yourVendorSnapshot = await getDocs(yourVendorQuery);
+        console.log('🎯 Direct query to your vendor found:', yourVendorSnapshot.docs.length, 'listings');
+        yourVendorSnapshot.docs.forEach(doc => {
+          console.log('📋 Your direct listing:', {
             id: doc.id,
-            ...doc.data()
-          }));
+            data: doc.data()
+          });
+        });
+        
+        // Also try the collectionGroup query
+        console.log('🔍 AvailableVendors - Starting Firestore collectionGroup query...');
+        const q = query(
+          collectionGroup(db, 'listings')
+          // Removed where and orderBy to avoid index requirement - will filter in code
+        );
+        console.log('📋 AvailableVendors - Query will fetch ALL active listings from ALL vendors');
+        console.log('📋 AvailableVendors - Query created, attaching listener...');
+        
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+          console.log('AvailableVendors - Found', querySnapshot.docs.length, 'total listings from vendors');
+          console.log('🔍 Raw Firestore documents:', querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            path: doc.ref.path,
+            data: doc.data()
+          })));
+          
+          // Specifically look for your vendor's listings
+          const yourVendorListings = querySnapshot.docs.filter(doc => 
+            doc.ref.path.includes('KzfgytI8wSWYsN4l0rgZyOYBVi93')
+          );
+          console.log('🎯 Your vendor listings found:', yourVendorListings.length);
+          yourVendorListings.forEach(doc => {
+            console.log('📋 Your listing:', {
+              id: doc.id,
+              path: doc.ref.path,
+              data: doc.data()
+            });
+          });
+          const allListings = querySnapshot.docs.map(doc => {
+            const data = { id: doc.id, ...doc.data() };
+            
+            console.log('📄 Listing found:', { 
+              id: data.id, 
+              name: data.name, 
+              vendorName: data.vendorName, 
+              vendorId: data.vendorId,
+              status: data.status
+            });
+            
+            // Ensure vendorName fallback if still missing (should be rare now with server fix)
+            if (!data.vendorName || data.vendorName === '') {
+              data.vendorName = data.vendor || 'Unknown Vendor';
+            }
+            
+            return data;
+          });
+          
+          // Show all listings - don't filter by status
+          const listingsData = allListings;
+          console.log('🎯 Active listings after filtering:', listingsData.length);
+          console.log('🔍 Looking for "water very yummy" from "Gomgom"...');
+          const gomgomListing = listingsData.find(listing => 
+            listing.name && listing.name.toLowerCase().includes('water very yummy')
+          );
+          if (gomgomListing) {
+            console.log('✅ Found Gomgom listing:', gomgomListing);
+          } else {
+            console.log('❌ Gomgom listing not found in active listings');
+            console.log('📋 All active listing names:');
+            listingsData.forEach((listing, index) => {
+              console.log(`${index + 1}. Name: "${listing.name}" | Vendor: "${listing.vendorName}" | Status: "${listing.status}"`);
+            });
+          }
+          
+          // Additional debug info
+          if (listingsData.length === 0) {
+            console.log('❌ No vendor listings found in Firestore. Using mock data.');
+          } else {
+            console.log('✅ Using real vendor listings from Firestore.');
+          }
+          
           setListings(listingsData);
+          setLoading(false);
+        }, (error) => {
+          console.error('🚨 AvailableVendors - Firestore query error:', error);
+          console.log('❌ Falling back to mock data due to error');
           setLoading(false);
         });
 
@@ -112,8 +192,52 @@ const AvailableVendors = ({ charity, onBack, onSelectVendor }) => {
     }
   ];
 
-  // Use real listings if available, otherwise fallback to mock data
-  const products = listings.length > 0 ? listings : mockProducts;
+  // Filter products based on itemFilter if provided
+  const filterProducts = (products, filter) => {
+    if (!filter) return products;
+    
+    return products.filter(product => {
+      const productName = product.name?.toLowerCase() || '';
+      const productCategory = product.category?.toLowerCase() || '';
+      const filterLower = filter.toLowerCase();
+      
+      // First check if the product category directly matches the filter
+      const categoryMappings = {
+        'water bottles': ['water', 'drinks', 'beverages'],
+        'blankets': ['blankets', 'bedding'],
+        'first aid kits': ['medical', 'health', 'first aid'],
+        'clothing': ['clothing', 'clothes', 'apparel']
+      };
+      
+      const categoryTerms = categoryMappings[filterLower] || [];
+      const categoryMatch = categoryTerms.some(term => productCategory.includes(term));
+      
+      // If category matches, return true immediately
+      if (categoryMatch) return true;
+      
+      // Otherwise, fall back to name-based filtering
+      const nameSearchTerms = {
+        'water bottles': ['water', 'bottle', 'drink', 'beverage', 'dasani', 'evian', 'fiji', 'mineral', 'purified'],
+        'blankets': ['blanket', 'cover', 'bedding', 'warm'],
+        'first aid kits': ['first aid', 'medical', 'kit', 'bandage', 'medicine', 'health'],
+        'clothing': ['clothes', 'shirt', 'pants', 'jacket', 'apparel', 'wear', 'socks', 'sock', 'underwear', 'dress', 'skirt', 'shorts', 'sweater', 'hoodie', 'jeans']
+      };
+      
+      const searchTerms = nameSearchTerms[filterLower] || [filterLower];
+      
+      return searchTerms.some(term => productName.includes(term));
+    });
+  };
+
+  // Always use real listings from Firestore - no fallback to mock data
+  const products = filterProducts(listings, itemFilter);
+  
+  console.log('🛍️ AvailableVendors - Total products to display:', products.length);
+  console.log('📦 AvailableVendors - Products:', products.map(p => ({ id: p.id, name: p.name, vendor: p.vendorName || p.vendor })));
+  
+  if (products.length === 0) {
+    console.log('❌ No real listings found - check Firestore data');
+  }
 
   const suggestedCategories = ["Blankets", "Rice Bags", "Canned Food"];
 
@@ -214,7 +338,7 @@ const addToCartHandler = async (product, qty = 1) => {
           >
             <div className="w-4 h-4 bg-gray-400 rounded-full"></div>
             <span className="text-xs text-gray-600 truncate max-w-[100px]">
-              {product.vendorName || product.vendor || 'Vendor'}
+              {product.vendorName || product.vendor || 'Unknown Vendor'}
             </span>
           </button>
           <button
@@ -329,7 +453,7 @@ const addToCartHandler = async (product, qty = 1) => {
                   <div className="w-4 h-4 bg-gray-500 rounded-full"></div>
                 </div>
                 <span className="text-gray-600 font-medium underline">
-                  {selectedProduct.vendorName || selectedProduct.vendor}
+                  {selectedProduct.vendorName || selectedProduct.vendor || 'Unknown Vendor'}
                 </span>
               </button>
             </div>
@@ -421,8 +545,20 @@ const addToCartHandler = async (product, qty = 1) => {
       <div className="space-y-6">
         {/* Shop from available vendors title */}
         <h2 className="text-xl font-medium text-gray-900 mb-4">
-          Shop from available vendors:
+          {itemFilter ? `Shop for ${itemFilter}:` : 'Shop from available vendors:'}
         </h2>
+        
+        {/* Filter indicator */}
+        {itemFilter && (
+          <div className="bg-blue-100 border border-blue-200 rounded-lg p-3 mb-4">
+            <p className="text-sm text-blue-800">
+              <span className="font-medium">Filtering by:</span> {itemFilter}
+            </p>
+            <p className="text-xs text-blue-600 mt-1">
+              Showing products that match your selection from the charity post
+            </p>
+          </div>
+        )}
 
         {/* Sort and Filter */}
         <div className="flex justify-end items-center space-x-4 mb-6">
@@ -448,8 +584,8 @@ const addToCartHandler = async (product, qty = 1) => {
         {/* Products Grid */}
         {!loading && (
           <div className="grid grid-cols-2 gap-4 mb-8">
-            {products.map(product => (
-              <ProductCard key={product.id} product={product} />
+            {products.map((product, index) => (
+              <ProductCard key={`${product.id}-${index}`} product={product} />
             ))}
           </div>
         )}
@@ -457,7 +593,17 @@ const addToCartHandler = async (product, qty = 1) => {
         {/* No Products Message */}
         {!loading && products.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-gray-500">No products available at the moment.</p>
+            <p className="text-gray-500">
+              {itemFilter 
+                ? `No ${itemFilter.toLowerCase()} available at the moment.`
+                : 'No products available at the moment.'
+              }
+            </p>
+            {itemFilter && (
+              <p className="text-sm text-gray-400 mt-2">
+                Try browsing all products by going back and shopping without a filter.
+              </p>
+            )}
           </div>
         )}
 
