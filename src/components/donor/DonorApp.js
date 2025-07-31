@@ -20,6 +20,7 @@ function DonorApp({ user, onLogout }) {
   const [selectedCharityId, setSelectedCharityId] = useState(null);
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [selectedPostData, setSelectedPostData] = useState(null);
+  const [selectedItemFilter, setSelectedItemFilter] = useState(null); // Track selected item for filtering
   const [previousView, setPreviousView] = useState('home'); // Track previous view for cart navigation
   const { setCharity, clearCart, getTotalItems } = useCart();
 
@@ -51,6 +52,7 @@ function DonorApp({ user, onLogout }) {
   const handleCharitySelect = (charity) => {
     setSelectedCharity(charity);
     setCharity(charity); // Set charity in cart context
+    setSelectedItemFilter(charity.selectedItem || null); // Store the selected item filter
     setPreviousView(currentView); // Remember where we came from
     setCurrentView('shop');
   };
@@ -73,6 +75,13 @@ function DonorApp({ user, onLogout }) {
   const handleBackToVendors = () => {
     setCurrentView('shop');
     setSelectedVendor(null);
+  };
+
+  // New function to go back from available vendors to previous view
+  const handleBackFromVendors = () => {
+    setCurrentView(previousView || 'home');
+    setSelectedVendor(null);
+    setSelectedItemFilter(null); // Clear filter when going back
   };
 
   // Updated function to go to cart/shopping
@@ -166,7 +175,8 @@ const handleViewCharityProfile = (charityId) => {
       {currentView === 'shop' && (
         <AvailableVendors
           charity={selectedCharity}
-          onBack={handleBackToHome}
+          itemFilter={selectedItemFilter}
+          onBack={handleBackFromVendors}
           onSelectVendor={handleVendorProfile}
         />
       )}

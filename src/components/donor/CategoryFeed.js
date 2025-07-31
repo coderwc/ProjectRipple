@@ -27,7 +27,7 @@ useEffect(() => {
             headline: data.headline,
             source: data.charityName,
             progress: data.donationsReceived || 0, // You might want to calculate %
-            kindness: `Kindness Cap: ${data.donationsReceived || 0}% Full`,
+            kindness: `Kindness Cup: ${data.donationsReceived || 0}% Full`,
             remainingDays: calculateRemainingDays(data.deadline),
           });
         }
