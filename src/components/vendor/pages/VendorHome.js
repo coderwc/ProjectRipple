@@ -9,7 +9,8 @@ import {
   User,
   CheckCircle2,
 } from 'lucide-react';
-import { auth } from '../../../firebase/config';
+import { auth, db } from '../../../firebase/config';
+import { doc, getDoc } from 'firebase/firestore';
 
 const VendorHome = ({
   onNavigateToAdd,
@@ -20,13 +21,13 @@ const VendorHome = ({
   onNavigateToHome,
   onNavigateToProfile,
 }) => {
-  const [vendorData, setVendorData] = useState({ name: '', balance: 0 });
+  const [vendorData, setVendorData] = useState({ name: '', balance: 0, imageUrl: null });
 
   useEffect(() => {
     const fetchVendorData = async () => {
       try {
+        // First get data from your API
         const token = await auth.currentUser.getIdToken();
-
         const res = await fetch("http://localhost:5001/api/vendor/profile", {
           headers: {
             Authorization: `Bearer ${token}`
@@ -34,10 +35,28 @@ const VendorHome = ({
         });
 
         if (!res.ok) throw new Error("Failed to fetch vendor profile");
+        const apiData = await res.json();
 
-        const data = await res.json();
-        console.log('Vendor profile data:', data);
-        setVendorData(data);
+        // Then get profile image from Firestore
+        const user = auth.currentUser;
+        if (user) {
+          const docRef = doc(db, "vendors", user.uid);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            const firestoreData = docSnap.data();
+            setVendorData({
+              ...apiData,
+              imageUrl: firestoreData.imageUrl || null
+            });
+          } else {
+            setVendorData(apiData);
+          }
+        } else {
+          setVendorData(apiData);
+        }
+
+        console.log('Vendor profile data:', apiData);
       } catch (err) {
         console.error("Error fetching vendor data:", err);
       }
@@ -67,8 +86,12 @@ const VendorHome = ({
       {/* Header */}
       <div className="relative bg-white px-4 py-6 border-b border-gray-100 shadow-md">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-            <User className="w-6 h-6 text-blue-700" />
+          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
+            {vendorData.imageUrl ? (
+              <img src={vendorData.imageUrl} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <User className="w-6 h-6 text-blue-700" />
+            )}
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -106,7 +129,7 @@ const VendorHome = ({
         >
           <ClipboardList className="w-6 h-6 text-sky-600" />
           <div className="text-left">
-            <h2 className="text-md font-semibold text--900">My Orders</h2>
+            <h2 className="text-md font-semibold text-gray-900">My Orders</h2>
             <p className="text-sm text-gray-500">Manage shipping and status</p>
           </div>
         </button>
