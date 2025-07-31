@@ -62,9 +62,9 @@ export const createPost = async (postData) => {
         
         if (blob) {
           const timestamp = Date.now();
-          const imageRef = ref(storage, `posts/${timestamp}_${user.uid}.jpg`);
+          const imageRef = ref(storage, `charity-drives/${user.uid}/${timestamp}.jpg`);
           
-          console.log('Uploading image to:', `posts/${timestamp}_${user.uid}.jpg`);
+          console.log('Uploading image to:', `charity-drives/${user.uid}/${timestamp}.jpg`);
           const uploadResult = await uploadBytes(imageRef, blob);
           imageUrl = await getDownloadURL(uploadResult.ref);
           console.log('✅ Image uploaded successfully:', imageUrl);
@@ -341,11 +341,59 @@ export const createImpactPost = async (impactData) => {
       };
     }
 
-    // Skip image upload due to CORS issues in development
-    // Images will be handled locally in the frontend
-    console.log('⚠️ Skipping image upload due to CORS - handling locally');
+    let imageUrls = [];
     
-    // Create the impact post document (text only) - same structure as regular posts
+    // Handle image uploads to Firebase Storage
+    if (impactData.images && impactData.images.length > 0) {
+      console.log('📷 Uploading', impactData.images.length, 'images to Firebase Storage');
+      
+      try {
+        const uploadPromises = impactData.images.map(async (imageData, index) => {
+          let blob = null;
+          
+          // Handle different image data formats
+          if (imageData.file instanceof File) {
+            blob = imageData.file;
+          } else if (typeof imageData.url === 'string' && imageData.url.startsWith('blob:')) {
+            const response = await fetch(imageData.url);
+            blob = await response.blob();
+          } else if (typeof imageData.url === 'string' && imageData.url.startsWith('data:image')) {
+            const base64Data = imageData.url.replace(/^data:image\/\w+;base64,/, '');
+            const byteCharacters = atob(base64Data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            blob = new Blob([byteArray], { type: 'image/jpeg' });
+          }
+          
+          if (blob) {
+            const timestamp = Date.now();
+            const imageRef = ref(storage, `impact-posts/${user.uid}/${timestamp}_${index}.jpg`);
+            
+            console.log(`📤 Uploading image ${index + 1}/${impactData.images.length}`);
+            const uploadResult = await uploadBytes(imageRef, blob);
+            const imageUrl = await getDownloadURL(uploadResult.ref);
+            console.log(`✅ Image ${index + 1} uploaded:`, imageUrl);
+            return imageUrl;
+          }
+          
+          return null;
+        });
+        
+        const uploadResults = await Promise.all(uploadPromises);
+        imageUrls = uploadResults.filter(url => url !== null);
+        console.log('✅ All images uploaded successfully:', imageUrls);
+        
+      } catch (imageError) {
+        console.error('❌ Image upload failed:', imageError);
+        console.log('📝 Creating impact post without images due to upload error');
+        // Continue without images rather than failing the entire post
+      }
+    }
+    
+    // Create the impact post document - same structure as regular posts
     const newImpactPost = {
       authorId: user.uid,
       authorName: user.displayName || user.email || 'Anonymous',
@@ -355,14 +403,15 @@ export const createImpactPost = async (impactData) => {
       caption: impactData.caption || '',
       drive: impactData.drive || '',
       location: impactData.location || '',
-      hasImages: impactData.images && impactData.images.length > 0,
-      imageCount: impactData.images ? impactData.images.length : 0,
+      imageUrls: imageUrls, // Store Firebase image URLs
+      hasImages: imageUrls.length > 0,
+      imageCount: imageUrls.length,
       postType: 'impact', // Mark as impact post
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     };
     
-    console.log('🔍 Impact post data being sent to Firestore (text only):', newImpactPost);
+    console.log('🔍 Impact post data being sent to Firestore:', newImpactPost);
     
     // Store in charities collection (same as regular posts)
     const docRef = await addDoc(collection(db, 'charities'), newImpactPost);
@@ -375,7 +424,7 @@ export const createImpactPost = async (impactData) => {
       impact: {
         id: docRef.id,
         ...newImpactPost,
-        images: [], // Empty array - images handled locally
+        images: imageUrls, // Return Firebase URLs
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
@@ -410,6 +459,8 @@ export const getImpactPosts = async (charityId) => {
       impacts.push({
         id: doc.id,
         ...data,
+        // Map imageUrls to images field for frontend compatibility
+        images: data.imageUrls || data.images || [],
         createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
         updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt
       });
