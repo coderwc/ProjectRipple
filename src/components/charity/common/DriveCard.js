@@ -26,7 +26,7 @@ const DriveCard = ({ drive, onClick, onDelete, showDeleteButton = false }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl p-4 mb-4 shadow-sm border border-gray-100 w-full relative">
+    <div className="bg-white rounded-xl p-4 mb-4 shadow-sm border-2 border-blue-200 w-full relative hover:border-blue-400 hover:shadow-lg transition-all duration-200">
       {/* Delete button - only show for user's own posts */}
       {showDeleteButton && (
         <button
@@ -41,7 +41,7 @@ const DriveCard = ({ drive, onClick, onDelete, showDeleteButton = false }) => {
       {/* Make the card clickable */}
       <button 
         onClick={() => onClick && onClick(drive)}
-        className="w-full text-left"
+        className="w-full text-left hover:scale-[1.02] transition-transform duration-200"
       >
       <div className="flex gap-3">
         <div className="w-20 h-16 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
