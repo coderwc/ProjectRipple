@@ -7,57 +7,57 @@ const CategoryFeed = ({ onBack, onSelectPost, categoryName = "Natural Disasters"
     switch (category) {
       case 'Natural Disasters':
         return [
-          { id: 1, headline: "Emergency Earthquake Relief Fund", source: "NBC News", kindness: "Kindness Cap: 75% Full", remainingDays: 28, progress: 75 },
-          { id: 2, headline: "Flood Relief Supplies", source: "Relief International", kindness: "Kindness Cap: 85% Full", remainingDays: 15, progress: 85 },
-          { id: 3, headline: "Hurricane Recovery Aid", source: "Red Cross", kindness: "Kindness Cap: 62% Full", remainingDays: 35, progress: 62 }
+          { id: 1, headline: "Emergency Earthquake Relief Fund", source: "NBC News", kindness: "Kindness Cup: 75% Full", remainingDays: 28, progress: 75 },
+          { id: 2, headline: "Flood Relief Supplies", source: "Relief International", kindness: "Kindness Cup: 85% Full", remainingDays: 15, progress: 85 },
+          { id: 3, headline: "Hurricane Recovery Aid", source: "Red Cross", kindness: "Kindness Cup: 62% Full", remainingDays: 35, progress: 62 }
         ];
       case 'Animals':
         return [
-          { id: 4, headline: "Animal Rescue Fund", source: "PawSafe", kindness: "Kindness Cap: 61% Full", remainingDays: 22, progress: 61 },
-          { id: 5, headline: "Wildlife Sanctuary Support", source: "Animal Welfare", kindness: "Kindness Cap: 78% Full", remainingDays: 18, progress: 78 },
-          { id: 6, headline: "Street Dog Vaccination Drive", source: "Pet Care NGO", kindness: "Kindness Cap: 45% Full", remainingDays: 30, progress: 45 }
+          { id: 4, headline: "Animal Rescue Fund", source: "PawSafe", kindness: "Kindness Cup: 61% Full", remainingDays: 22, progress: 61 },
+          { id: 5, headline: "Wildlife Sanctuary Support", source: "Animal Welfare", kindness: "Kindness Cup: 78% Full", remainingDays: 18, progress: 78 },
+          { id: 6, headline: "Street Dog Vaccination Drive", source: "Pet Care NGO", kindness: "Kindness Cup: 45% Full", remainingDays: 30, progress: 45 }
         ];
       case 'Education':
         return [
-          { id: 7, headline: "Books for Kids", source: "EduFuture", kindness: "Kindness Cap: 45% Full", remainingDays: 12, progress: 45 },
-          { id: 8, headline: "School Building Project", source: "Teach for All", kindness: "Kindness Cap: 67% Full", remainingDays: 25, progress: 67 },
-          { id: 9, headline: "Digital Learning Initiative", source: "Tech4Education", kindness: "Kindness Cap: 52% Full", remainingDays: 40, progress: 52 }
+          { id: 7, headline: "Books for Kids", source: "EduFuture", kindness: "Kindness Cup: 45% Full", remainingDays: 12, progress: 45 },
+          { id: 8, headline: "School Building Project", source: "Teach for All", kindness: "Kindness Cup: 67% Full", remainingDays: 25, progress: 67 },
+          { id: 9, headline: "Digital Learning Initiative", source: "Tech4Education", kindness: "Kindness Cup: 52% Full", remainingDays: 40, progress: 52 }
         ];
       case 'Medical':
         return [
-          { id: 10, headline: "Medical Camp Aid", source: "CureMore", kindness: "Kindness Cap: 73% Full", remainingDays: 28, progress: 73 },
-          { id: 11, headline: "Cancer Treatment Fund", source: "Hope Foundation", kindness: "Kindness Cap: 89% Full", remainingDays: 10, progress: 89 },
-          { id: 12, headline: "Rural Health Centers", source: "Health First", kindness: "Kindness Cap: 38% Full", remainingDays: 45, progress: 38 }
+          { id: 10, headline: "Medical Camp Aid", source: "CureMore", kindness: "Kindness Cup: 73% Full", remainingDays: 28, progress: 73 },
+          { id: 11, headline: "Cancer Treatment Fund", source: "Hope Foundation", kindness: "Kindness Cup: 89% Full", remainingDays: 10, progress: 89 },
+          { id: 12, headline: "Rural Health Centers", source: "Health First", kindness: "Kindness Cup: 38% Full", remainingDays: 45, progress: 38 }
         ];
       case 'Sustainability':
         return [
-          { id: 13, headline: "Clean Energy Initiative", source: "Green Future", kindness: "Kindness Cap: 65% Full", remainingDays: 30, progress: 65 },
-          { id: 14, headline: "Plastic-Free Ocean Project", source: "Ocean Clean", kindness: "Kindness Cap: 72% Full", remainingDays: 22, progress: 72 },
-          { id: 15, headline: "Tree Planting Drive", source: "Earth Savers", kindness: "Kindness Cap: 48% Full", remainingDays: 35, progress: 48 }
+          { id: 13, headline: "Clean Energy Initiative", source: "Green Future", kindness: "Kindness Cup: 65% Full", remainingDays: 30, progress: 65 },
+          { id: 14, headline: "Plastic-Free Ocean Project", source: "Ocean Clean", kindness: "Kindness Cup: 72% Full", remainingDays: 22, progress: 72 },
+          { id: 15, headline: "Tree Planting Drive", source: "Earth Savers", kindness: "Kindness Cup: 48% Full", remainingDays: 35, progress: 48 }
         ];
       case 'Non-profit':
         return [
-          { id: 16, headline: "Community Kitchen Support", source: "Feed the Hungry", kindness: "Kindness Cap: 83% Full", remainingDays: 12, progress: 83 },
-          { id: 17, headline: "Homeless Shelter Fund", source: "Shelter First", kindness: "Kindness Cap: 56% Full", remainingDays: 28, progress: 56 },
-          { id: 18, headline: "Youth Skill Development", source: "Skill Up", kindness: "Kindness Cap: 41% Full", remainingDays: 40, progress: 41 }
+          { id: 16, headline: "Community Kitchen Support", source: "Feed the Hungry", kindness: "Kindness Cup: 83% Full", remainingDays: 12, progress: 83 },
+          { id: 17, headline: "Homeless Shelter Fund", source: "Shelter First", kindness: "Kindness Cup: 56% Full", remainingDays: 28, progress: 56 },
+          { id: 18, headline: "Youth Skill Development", source: "Skill Up", kindness: "Kindness Cup: 41% Full", remainingDays: 40, progress: 41 }
         ];
       case 'Orphanage':
         return [
-          { id: 19, headline: "New Shelter Homes", source: "SafeHaven", kindness: "Kindness Cap: 35% Full", remainingDays: 20, progress: 35 },
-          { id: 20, headline: "Educational Supplies for Kids", source: "Hope for Children", kindness: "Kindness Cap: 67% Full", remainingDays: 25, progress: 67 },
-          { id: 21, headline: "Nutrition Program", source: "Child Care NGO", kindness: "Kindness Cap: 79% Full", remainingDays: 18, progress: 79 }
+          { id: 19, headline: "New Shelter Homes", source: "SafeHaven", kindness: "Kindness Cup: 35% Full", remainingDays: 20, progress: 35 },
+          { id: 20, headline: "Educational Supplies for Kids", source: "Hope for Children", kindness: "Kindness Cup: 67% Full", remainingDays: 25, progress: 67 },
+          { id: 21, headline: "Nutrition Program", source: "Child Care NGO", kindness: "Kindness Cup: 79% Full", remainingDays: 18, progress: 79 }
         ];
       case 'Infrastructure':
         return [
-          { id: 22, headline: "Clean Water Pipeline", source: "Water for All", kindness: "Kindness Cap: 58% Full", remainingDays: 45, progress: 58 },
-          { id: 23, headline: "Rural Road Development", source: "Build Together", kindness: "Kindness Cap: 43% Full", remainingDays: 60, progress: 43 },
-          { id: 24, headline: "Solar Power Installation", source: "Power Up", kindness: "Kindness Cap: 71% Full", remainingDays: 30, progress: 71 }
+          { id: 22, headline: "Clean Water Pipeline", source: "Water for All", kindness: "Kindness Cup: 58% Full", remainingDays: 45, progress: 58 },
+          { id: 23, headline: "Rural Road Development", source: "Build Together", kindness: "Kindness Cup: 43% Full", remainingDays: 60, progress: 43 },
+          { id: 24, headline: "Solar Power Installation", source: "Power Up", kindness: "Kindness Cup: 71% Full", remainingDays: 30, progress: 71 }
         ];
       default:
         return [
-          { id: 25, headline: "Community Support Initiative", source: "Local NGO", kindness: "Kindness Cap: 55% Full", remainingDays: 20, progress: 55 },
-          { id: 26, headline: "Social Welfare Program", source: "Helping Hands", kindness: "Kindness Cap: 70% Full", remainingDays: 15, progress: 70 },
-          { id: 27, headline: "Youth Development Project", source: "Future Leaders", kindness: "Kindness Cap: 42% Full", remainingDays: 35, progress: 42 }
+          { id: 25, headline: "Community Support Initiative", source: "Local NGO", kindness: "Kindness Cup: 55% Full", remainingDays: 20, progress: 55 },
+          { id: 26, headline: "Social Welfare Program", source: "Helping Hands", kindness: "Kindness Cup: 70% Full", remainingDays: 15, progress: 70 },
+          { id: 27, headline: "Youth Development Project", source: "Future Leaders", kindness: "Kindness Cup: 42% Full", remainingDays: 35, progress: 42 }
         ];
     }
   };

@@ -14,7 +14,7 @@ const CharityPost = ({
   const postData = {
     headline: "Emergency Earthquake Relief Fund",
     organization: "Disaster Relief NGO",
-    kindnessCap: "78% Full",
+    kindnessCup: "78% Full",
     remainingDays: 40,
     progress: 78,
     image: "/api/placeholder/400/200"
@@ -23,12 +23,12 @@ const CharityPost = ({
   const donationItems = [
     { id: 1, type: "Water Bottles", current: 28, target: 40, available: true },
     { id: 2, type: "Blankets", current: 15, target: 20, available: true },
-    { id: 3, type: "Rice Bags", current: 28, target: 40, available: true },
-    { id: 4, type: "Soap Bars", current: 28, target: 40, available: false }
+    { id: 3, type: "First Aid Kits", current: 28, target: 40, available: true },
+    { id: 4, type: "Clothing", current: 28, target: 40, available: true }
   ];
 
   const handleItemClick = (item) => {
-    if (item.available && item.type === "Water Bottles" && onCharitySelect) {
+    if (item.available && onCharitySelect) {
       // Create mock charity data for the shopping interface
       const charityData = {
         id: postData.id || postId,
@@ -39,7 +39,6 @@ const CharityPost = ({
     }
   };
 
-  const familiesSupported = 4;
 
   return (
     <div className="max-w-sm mx-auto p-4 bg-gray-50 min-h-screen relative">
@@ -92,7 +91,7 @@ const CharityPost = ({
           {/* Progress info */}
           <div className="space-y-2">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-blue-600">Kindness Cap: {postData.kindnessCap}</span>
+              <span className="text-blue-600">Kindness Cup: {postData.kindnessCup}</span>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-blue-500 rounded"></div>
                 <span className="text-gray-500 text-xs">xxx More Days</span>
@@ -177,8 +176,8 @@ const CharityPost = ({
               <div key={item.id} className="relative h-32">
                 <div 
                   className={`p-4 rounded-lg border h-full flex flex-col justify-between transition-all ${
-                    item.available ? 'bg-blue-50 border-blue-200 hover:bg-blue-100 cursor-pointer' : 'bg-gray-50 border-gray-200'
-                  } ${item.type === "Water Bottles" && item.available ? 'hover:shadow-md' : ''}`}
+                    item.available ? 'bg-blue-50 border-blue-200 hover:bg-blue-100 cursor-pointer hover:shadow-md' : 'bg-gray-50 border-gray-200'
+                  }`}
                   onClick={() => handleItemClick(item)}
                 >
                   <div className="flex flex-col">
@@ -187,7 +186,7 @@ const CharityPost = ({
                     </span>
                     {item.available && (
                       <span className="text-xs text-blue-600 mb-3">
-                        {item.type === "Water Bottles" ? "Click to shop" : "Available for donors"}
+                        Click to shop
                       </span>
                     )}
                     {!item.available && (
@@ -214,19 +213,6 @@ const CharityPost = ({
           </div>
         </div>
 
-        {/* Support Statistics */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-4 text-white">
-          <p className="text-sm opacity-90 mb-2">So Far, We're Supporting</p>
-          <div className="flex items-center gap-4">
-            <div className="bg-white bg-opacity-20 rounded-lg p-3 min-w-0">
-              <div className="text-2xl font-bold">{familiesSupported}</div>
-            </div>
-            <div>
-              <div className="text-lg font-semibold">FAMILIES</div>
-              <div className="text-sm opacity-90">In Need</div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
