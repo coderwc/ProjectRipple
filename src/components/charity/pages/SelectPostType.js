@@ -3,9 +3,9 @@ import { Heart, Camera, ArrowLeft } from 'lucide-react';
 
 const SelectPostType = ({ setCurrentPage, onBack }) => {
   return (
-    <div className="max-w-sm mx-auto bg-gray-50 min-h-screen">
+    <div className="max-w-sm mx-auto min-h-screen bg-gradient-to-b from-blue-200 via-blue-100 to-white relative">
       {/* Status Bar */}
-      <div className="flex justify-between items-center px-4 py-2 bg-white text-sm font-medium">
+      <div className="flex justify-between items-center px-4 py-2 bg-white text-sm font-medium text-gray-700">
         <span>9:30</span>
         <div className="flex gap-1">
           <div className="w-4 h-2 bg-black rounded-sm"></div>
@@ -14,12 +14,12 @@ const SelectPostType = ({ setCurrentPage, onBack }) => {
       </div>
 
       {/* Header */}
-      <div className="bg-white px-4 py-4 border-b border-gray-100">
+      <div className="bg-white px-4 py-4 border-b border-gray-100 shadow-md">
         <div className="flex items-center gap-3">
           <button onClick={onBack}>
             <ArrowLeft className="w-6 h-6 text-gray-700" />
           </button>
-          <h1 className="text-xl font-bold text-gray-900">New Post</h1>
+          <h1 className="text-xl font-bold text-blue-800">New Post</h1>
         </div>
       </div>
 

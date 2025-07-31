@@ -6,7 +6,7 @@ import {
   updateProfile,
   signOut
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from './config';
 
 // 🔥 Sync with vendor backend
@@ -47,7 +47,11 @@ export const signUpUser = async (userData, userType) => {
       location: userData.location || '',
       socials: userData.socials || '',
       queries: userData.queries || '',
+      tagline: userData.tagline || '',
+      aboutUs: userData.aboutUs || '',
+      focusAreas: userData.focusAreas || [],
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       isVerified: userType === 'donor'
     };
 
@@ -246,9 +250,33 @@ export const signInWithGoogle = async (expectedRole) => {
   }
 };
 
-export const updateUserProfile = async (newData) => {
-  const user = auth.currentUser;
-  if (!user) throw new Error("No authenticated user");
+export const updateUserProfile = async (userId, newData) => {
+  try {
+    const user = auth.currentUser;
+    if (!user) throw new Error("No authenticated user");
 
-  await updateProfile(user, newData);
+    // Update Firebase Auth profile if name changed
+    if (newData.name && newData.name !== user.displayName) {
+      await updateProfile(user, {
+        displayName: newData.name
+      });
+    }
+
+    // Update Firestore document with all profile data
+    const userRef = doc(db, 'users', userId);
+    await setDoc(userRef, {
+      ...newData,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+
+    // Return updated user data
+    const updatedDoc = await getDoc(userRef);
+    return {
+      id: updatedDoc.id,
+      ...updatedDoc.data()
+    };
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    throw error;
+  }
 };

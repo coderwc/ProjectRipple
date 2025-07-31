@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { LogOut } from 'lucide-react';
 import Dashboard from './Dashboard';
 import CreatePostPage from './CreatePostPage';
 import AddItemsPage from './AddItemsPage';
@@ -11,7 +10,7 @@ import SelectPostType from './SelectPostType';
 import ImpactPostDrafting from './ImpactPostDrafting';
 import ImpactGallery from './ImpactGallery';
 import { createPost, getAIRecommendations, getCharityPosts } from '../../../api/posts';
-import { deletePost, createImpactPost, getImpactPosts } from '../../../firebase/posts';
+import { deletePost, createImpactPost, getImpactPosts, deleteImpactPost } from '../../../firebase/posts';
 import { itemCategories } from '../constants/categories';
 
 const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
@@ -40,55 +39,14 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
 
   // Dashboard state
   const [showMore, setShowMore] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('Natural Disasters');
   const [selectedDrive, setSelectedDrive] = useState(null);
 
   // Impact posts state
   const [impactPosts, setImpactPosts] = useState([]);
   const [selectedImpactPost, setSelectedImpactPost] = useState(null);
 
-  // Mock data as default state + Firebase posts
-  const [ongoingDrives, setOngoingDrives] = useState([
-    {
-      id: 1,
-      name: "Emergency Food Relief",
-      vendor: "Local Food Bank",
-      description: "Providing essential food supplies to families affected by recent flooding",
-      expiry: "31/12/2025",
-      image: "https://images.unsplash.com/photo-1584294232067-c97f5d99eff3?q=80&w=2776&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      items: [
-        { name: "Canned Food", quantity: 100 },
-        { name: "Rice Bags", quantity: 50 },
-        { name: "Water Bottles", quantity: 200 }
-      ]
-    },
-    {
-      id: 2,
-      name: "Winter Clothing Drive",
-      vendor: "Community Center",
-      description: "Collecting warm clothing for homeless individuals during winter season",
-      expiry: "31/12/2025",
-      image: "https://images.unsplash.com/photo-1518398046578-8cca57782e17?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      items: [
-        { name: "Winter Coats", quantity: 30 },
-        { name: "Blankets", quantity: 50 },
-        { name: "Gloves", quantity: 100 }
-      ]
-    },
-    {
-      id: 3,
-      name: "School Supplies Support",
-      vendor: "Education Foundation",
-      description: "Supporting underprivileged students with essential school materials",
-      expiry: "1/6/2025",
-      image: "https://images.unsplash.com/photo-1497486751825-1233686d5d80?w=120&h=100&fit=crop",
-      items: [
-        { name: "Notebooks", quantity: 200 },
-        { name: "Pens", quantity: 500 },
-        { name: "Backpacks", quantity: 50 }
-      ]
-    }
-  ]);
+  // State for real backend data only
+  const [ongoingDrives, setOngoingDrives] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
 
   // Load user's posts and impact posts on component mount
@@ -124,60 +82,18 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
               expiry: post.deadline,
               image: post.imageUrl || null,
               items: post.items || [],
+              donationsReceived: post.donationsReceived || 0,
+              donorCount: post.donorCount || 0,
               isUserPost: true
             }));
             
             console.log('✅ Formatted user posts:', formattedPosts);
             
-            // Reset to mock data first, then add user posts to front
-            setOngoingDrives(prev => {
-              // Get the mock data (last 3 items should be mock data)
-              const mockData = prev.length > 0 ? prev.filter(item => !item.isUserPost) : [
-                {
-                  id: 1,
-                  name: "Emergency Food Relief",
-                  vendor: "Local Food Bank",
-                  description: "Providing essential food supplies to families affected by recent flooding",
-                  expiry: "31/12/2025",
-                  image: "https://images.unsplash.com/photo-1584294232067-c97f5d99eff3?q=80&w=2776&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-                  items: [
-                    { name: "Canned Food", quantity: 100 },
-                    { name: "Rice Bags", quantity: 50 },
-                    { name: "Water Bottles", quantity: 200 }
-                  ]
-                },
-                {
-                  id: 2,
-                  name: "Winter Clothing Drive",
-                  vendor: "Community Center",
-                  description: "Collecting warm clothing for homeless individuals during winter season",
-                  expiry: "31/12/2025",
-                  image: "https://images.unsplash.com/photo-1518398046578-8cca57782e17?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-                  items: [
-                    { name: "Winter Coats", quantity: 30 },
-                    { name: "Blankets", quantity: 50 },
-                    { name: "Gloves", quantity: 100 }
-                  ]
-                },
-                {
-                  id: 3,
-                  name: "School Supplies Support",
-                  vendor: "Education Foundation",
-                  description: "Supporting underprivileged students with essential school materials",
-                  expiry: "1/6/2025",
-                  image: "https://images.unsplash.com/photo-1497486751825-1233686d5d80?w=120&h=100&fit=crop",
-                  items: [
-                    { name: "Notebooks", quantity: 200 },
-                    { name: "Pens", quantity: 500 },
-                    { name: "Backpacks", quantity: 50 }
-                  ]
-                }
-              ];
-              
-              return [...formattedPosts, ...mockData];
-            });
+            // Set only real backend data
+            setOngoingDrives(formattedPosts);
           } else {
-            console.log('📭 No user posts found, showing only mock data');
+            console.log('📭 No user posts found');
+            setOngoingDrives([]);
           }
         } catch (error) {
           console.error('❌ Error loading user posts:', error);
@@ -199,13 +115,6 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
     }
   };
 
-  // Logout handler with confirmation
-  const handleLogout = () => {
-    const confirmLogout = window.confirm("Are you sure you want to log out?");
-    if (confirmLogout) {
-      onLogout();
-    }
-  };
 
   // Add item function
   const handleAddItem = () => {
@@ -302,7 +211,7 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
     }
   };
 
-  // Handle impact post creation (Firebase for text, local for images)
+  // Handle impact post creation (Firebase for text and images)
   const handleImpactPost = async (postData) => {
     try {
       setLoading(true);
@@ -316,38 +225,39 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
         charityName: user?.name
       };
       
-      // Always save text to Firebase and images locally (due to CORS issues)
+      // Save both text and images to Firebase
       const response = await createImpactPost(impactData);
       
       if (response.success) {
-        // Firebase text save successful - combine with local images
+        // Firebase save successful
         const newImpactPost = {
           ...response.impact,
           author: user?.name || 'Anonymous',
+          authorName: user?.name || 'Anonymous',
           timestamp: response.impact.createdAt,
-          images: postData.images?.map(img => img.url) || [], // Always use local images
           syncedToFirebase: true
         };
         
         setImpactPosts([newImpactPost, ...impactPosts]);
-        console.log('✅ Impact post text saved to Firebase, images stored locally');
+        console.log('✅ Impact post saved to Firebase (text and images)');
         
       } else {
-        // Firebase save failed - complete local fallback
-        console.log('⚠️ Firebase save failed, using complete local fallback');
+        // Firebase save failed - local fallback with blob URLs
+        console.log('⚠️ Firebase save failed, using local fallback');
         const localImpactPost = {
           id: Date.now(),
           caption: postData.caption || '',
           drive: postData.drive || '',
           location: postData.location || '',
           author: user?.name || 'Anonymous',
+          authorName: user?.name || 'Anonymous',
           timestamp: new Date().toISOString(),
           images: postData.images?.map(img => img.url) || [],
           localOnly: true // Mark as completely local-only
         };
         
         setImpactPosts([localImpactPost, ...impactPosts]);
-        console.log('✅ Impact post saved completely locally');
+        console.log('✅ Impact post saved locally');
       }
       
       // Navigate to success page
@@ -363,6 +273,7 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
         drive: postData.drive || '',
         location: postData.location || '',
         author: user?.name || 'Anonymous',
+        authorName: user?.name || 'Anonymous',
         timestamp: new Date().toISOString(),
         images: postData.images?.map(img => img.url) || [],
         localOnly: true
@@ -476,22 +387,27 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
     }
   };
 
-  // Logout Icon Component
-  const LogoutIcon = () => (
-    <button
-      onClick={handleLogout}
-      className="absolute top-6 right-4 flex items-center gap-1 text-sm text-gray-500 hover:text-red-600 transition-colors"
-      aria-label="Log out"
-      title="Logout"
-    >
-      <LogOut className="w-5 h-5" />
-    </button>
-  );
+  const handleDeleteImpactPost = async (post) => {
+    try {
+      setLoading(true);
+      
+      await deleteImpactPost(user.id, post.id);
+      
+      // Remove from local state
+      setImpactPosts(prev => prev.filter(p => p.id !== post.id));
+      
+      console.log('✅ Impact post deleted successfully');
+      
+    } catch (error) {
+      console.error('Error deleting impact post:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
-      {/* Logout Icon - Always visible */}
-      <LogoutIcon />
       
       {currentPage === 'driveDetails' && (
         <DriveDetailsPage
@@ -550,6 +466,7 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
             setSelectedImpactPost(null);
             setCurrentPage('dashboard');
           }}
+          onDeletePost={handleDeleteImpactPost}
         />
       )}
       
@@ -588,8 +505,6 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
         <Dashboard
           showMore={showMore}
           setShowMore={setShowMore}
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
           ongoingDrives={ongoingDrives}
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
