@@ -91,6 +91,7 @@ export const createPost = async (postData) => {
       donationsReceived: 0,
       donorCount: 0,
       views: 0,
+      postType: 'fundraising', // Mark as fundraising post
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     };
@@ -176,8 +177,7 @@ export const getPostsByCharity = async (charityId) => {
     console.log('🔍 Loading posts for charity:', charityId);
     console.log('🔍 Query: charities collection where charityId ==', charityId);
     
-    // Load from charities collection filtered by charityId
-    // Removed orderBy to avoid composite index requirement
+    // Load from charities collection filtered by charityId, excluding impact posts
     const postsRef = collection(db, 'charities');
     const q = query(postsRef, where('charityId', '==', charityId));
     
@@ -191,13 +191,17 @@ export const getPostsByCharity = async (charityId) => {
     querySnapshot.forEach((doc) => {
       const data = doc.data();
       console.log('📄 Found post:', doc.id, data);
-      posts.push({
-        id: doc.id,
-        ...data,
-        // Convert timestamps to ISO strings for consistency
-        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
-        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt
-      });
+      
+      // Skip impact posts - only include fundraising posts
+      if (data.postType !== 'impact') {
+        posts.push({
+          id: doc.id,
+          ...data,
+          // Convert timestamps to ISO strings for consistency
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt
+        });
+      }
     });
     
     // Sort posts manually by creation date (newest first)
@@ -284,5 +288,134 @@ export const deletePost = async (charityId, postId) => {
   } catch (error) {
     console.error('❌ Post deletion error:', error);
     throw new Error(`Failed to delete post: ${error.message}`);
+  }
+};
+
+// ========== IMPACT POSTS FUNCTIONS ==========
+
+// Create a new impact post (stored in charities collection like regular posts)
+export const createImpactPost = async (impactData) => {
+  try {
+    const user = auth.currentUser;
+    console.log('🔍 Creating impact post for user:', user?.uid);
+    
+    if (!user) {
+      console.error('❌ No authenticated user found');
+      return {
+        success: false,
+        error: 'User must be authenticated to create impact posts'
+      };
+    }
+
+    // Skip image upload due to CORS issues in development
+    // Images will be handled locally in the frontend
+    console.log('⚠️ Skipping image upload due to CORS - handling locally');
+    
+    // Create the impact post document (text only) - same structure as regular posts
+    const newImpactPost = {
+      authorId: user.uid,
+      authorName: user.displayName || user.email || 'Anonymous',
+      authorEmail: user.email,
+      charityId: impactData.charityId || user.uid,
+      charityName: impactData.charityName || user.displayName || 'Anonymous Charity',
+      caption: impactData.caption || '',
+      drive: impactData.drive || '',
+      location: impactData.location || '',
+      hasImages: impactData.images && impactData.images.length > 0,
+      imageCount: impactData.images ? impactData.images.length : 0,
+      postType: 'impact', // Mark as impact post
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+    
+    console.log('🔍 Impact post data being sent to Firestore (text only):', newImpactPost);
+    
+    // Store in charities collection (same as regular posts)
+    const docRef = await addDoc(collection(db, 'charities'), newImpactPost);
+    
+    console.log('✅ Impact post created with ID:', docRef.id);
+    console.log('✅ Impact post saved to collection: charities');
+    
+    return {
+      success: true,
+      impact: {
+        id: docRef.id,
+        ...newImpactPost,
+        images: [], // Empty array - images handled locally
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    };
+  } catch (error) {
+    console.error('❌ Impact post creation error:', error);
+    return {
+      success: false,
+      error: `Failed to create impact post: ${error.message}`
+    };
+  }
+};
+
+// Get impact posts for a charity (from charities collection)
+export const getImpactPosts = async (charityId) => {
+  try {
+    console.log('🔍 Loading impact posts for charity:', charityId);
+    
+    // Query charities collection for impact posts
+    const charitiesRef = collection(db, 'charities');
+    const q = query(
+      charitiesRef, 
+      where('charityId', '==', charityId),
+      where('postType', '==', 'impact')
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const impacts = [];
+    
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      impacts.push({
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt
+      });
+    });
+    
+    // Sort impacts manually by creation date (newest first)
+    impacts.sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      return dateB - dateA;
+    });
+    
+    console.log(`✅ Retrieved ${impacts.length} impact posts for charity ${charityId}`);
+    return {
+      success: true,
+      impacts: impacts
+    };
+  } catch (error) {
+    console.error('❌ Impact posts fetch error:', error);
+    return {
+      success: false,
+      error: `Failed to fetch impact posts: ${error.message}`,
+      impacts: []
+    };
+  }
+};
+
+// Delete an impact post (from charities collection)
+export const deleteImpactPost = async (charityId, impactId) => {
+  try {
+    console.log('🗑️ Deleting impact post:', impactId);
+    
+    // Delete from charities collection
+    const impactRef = doc(db, 'charities', impactId);
+    await deleteDoc(impactRef);
+    
+    console.log('✅ Impact post deleted successfully:', impactId);
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Impact post deletion error:', error);
+    throw new Error(`Failed to delete impact post: ${error.message}`);
   }
 };

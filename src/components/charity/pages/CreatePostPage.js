@@ -109,6 +109,15 @@ const CreatePostPage = ({
       newDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), dayObj.day);
     }
     
+    // Validate date is within allowed range (today to 3 months from today)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time for comparison
+    const maxDate = new Date(today.getFullYear(), today.getMonth() + 3, today.getDate());
+    
+    if (newDate < today || newDate > maxDate) {
+      return; // Don't allow selection of invalid dates
+    }
+    
     setFormData({...formData, deadline: formatDate(newDate)});
     setIsCalendarOpen(false);
   };
@@ -116,6 +125,19 @@ const CreatePostPage = ({
   const navigateMonth = (direction) => {
     const newMonth = new Date(currentMonth);
     newMonth.setMonth(newMonth.getMonth() + direction);
+    
+    // Limit navigation to 3 months from today
+    const today = new Date();
+    const maxDate = new Date(today.getFullYear(), today.getMonth() + 3, today.getDate());
+    
+    if (direction > 0 && newMonth > maxDate) {
+      return; // Don't navigate beyond 3 months
+    }
+    
+    if (direction < 0 && newMonth < new Date(today.getFullYear(), today.getMonth(), 1)) {
+      return; // Don't navigate before current month
+    }
+    
     setCurrentMonth(newMonth);
   };
 
@@ -148,6 +170,29 @@ const CreatePostPage = ({
     return dayObj.day === selectedDay && 
            (currentMonth.getMonth() + 1) === selectedMonth && 
            currentMonth.getFullYear() === selectedYear;
+  };
+
+  const isDateDisabled = (dayObj) => {
+    let checkDate;
+    
+    if (!dayObj.isCurrentMonth) {
+      const newMonth = new Date(currentMonth);
+      if (dayObj.isPrevMonth) {
+        newMonth.setMonth(newMonth.getMonth() - 1);
+      } else {
+        newMonth.setMonth(newMonth.getMonth() + 1);
+      }
+      newMonth.setDate(dayObj.day);
+      checkDate = newMonth;
+    } else {
+      checkDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), dayObj.day);
+    }
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const maxDate = new Date(today.getFullYear(), today.getMonth() + 3, today.getDate());
+    
+    return checkDate < today || checkDate > maxDate;
   };
 
   // Fixed image upload handler
@@ -290,23 +335,29 @@ const CreatePostPage = ({
 
                 {/* Calendar grid */}
                 <div className="grid grid-cols-7 gap-1 p-2">
-                  {days.map((dayObj, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleDateClick(dayObj)}
-                      className={`
-                        w-8 h-8 text-sm rounded flex items-center justify-center
-                        ${dayObj.isCurrentMonth 
-                          ? 'text-gray-900 hover:bg-gray-100' 
-                          : 'text-gray-400 hover:bg-gray-50'
-                        }
-                        ${isSelected(dayObj) ? 'bg-blue-500 text-white hover:bg-blue-600' : ''}
-                        ${isToday(dayObj) && !isSelected(dayObj) ? 'bg-gray-100 font-medium' : ''}
-                      `}
-                    >
-                      {dayObj.day}
-                    </button>
-                  ))}
+                  {days.map((dayObj, index) => {
+                    const disabled = isDateDisabled(dayObj);
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => !disabled && handleDateClick(dayObj)}
+                        disabled={disabled}
+                        className={`
+                          w-8 h-8 text-sm rounded flex items-center justify-center
+                          ${disabled 
+                            ? 'text-gray-300 cursor-not-allowed' 
+                            : dayObj.isCurrentMonth 
+                              ? 'text-gray-900 hover:bg-gray-100' 
+                              : 'text-gray-400 hover:bg-gray-50'
+                          }
+                          ${!disabled && isSelected(dayObj) ? 'bg-blue-500 text-white hover:bg-blue-600' : ''}
+                          ${!disabled && isToday(dayObj) && !isSelected(dayObj) ? 'bg-gray-100 font-medium' : ''}
+                        `}
+                      >
+                        {dayObj.day}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 {/* Footer */}
