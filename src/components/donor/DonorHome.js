@@ -13,11 +13,13 @@ import {
   Filter,
   SortAsc,
   Droplet,
-  LogOut,
-  Package
+  Package,
+  User
 } from 'lucide-react';
 import { useCart } from '../shared/CartContext';
 import { getLatestCharityPosts } from '../../firebase/posts';
+import { auth, db } from '../../firebase/config';
+import { doc, getDoc } from 'firebase/firestore';
 
 // ✅ category array can remain here
 const categories = [
@@ -37,11 +39,13 @@ export default function DonorHome({
   onSelectCategory, 
   onSelectPost, 
   onCharitySelect, 
-  onGoToCart, 
+  onGoToCart,
+  onGoToProfile,
   onLogout 
 }) {
   const { getTotalItems } = useCart();
   const [exploreDrives, setExploreDrives] = useState([]); // ✅ move useState inside component
+  const [donorProfile, setDonorProfile] = useState(null);
 
   // ✅ useEffect goes here
   useEffect(() => {
@@ -85,6 +89,27 @@ export default function DonorHome({
   fetchExploreDrives();
 }, []);
 
+  // Fetch donor profile data
+  useEffect(() => {
+    const fetchDonorProfile = async () => {
+      try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) return;
+
+        const docRef = doc(db, "donors", currentUser.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          setDonorProfile(docSnap.data());
+        }
+      } catch (error) {
+        console.error("Error fetching donor profile:", error);
+      }
+    };
+
+    fetchDonorProfile();
+  }, []);
+
   const urgentPosts = [
     { 
       id: 1,
@@ -109,12 +134,6 @@ export default function DonorHome({
     },
   ];
 
-  const handleLogout = () => {
-    const confirmLogout = window.confirm("Are you sure you want to log out?");
-    if (confirmLogout) {
-      onLogout();
-    }
-  };
 
   const handleShopForCharity = (charityData, event) => {
     event.stopPropagation(); // Prevent triggering the post selection
@@ -125,7 +144,22 @@ export default function DonorHome({
     <div className="max-w-sm mx-auto p-4 bg-gray-50 min-h-screen relative">
       {/* Top Bar */}
       <div className="flex items-center mb-4">
-        <div className="w-10 h-10 bg-gray-300 rounded-full" />
+        <button 
+          onClick={onGoToProfile}
+          className="w-10 h-10 bg-gray-300 rounded-full hover:bg-gray-400 transition-colors cursor-pointer overflow-hidden border-2 border-gray-200"
+        >
+          {donorProfile?.imageUrl ? (
+            <img 
+              src={donorProfile.imageUrl} 
+              alt="Profile" 
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <User className="w-5 h-5 text-gray-600" />
+            </div>
+          )}
+        </button>
         
         {/* Lengthened Search Bar - Shifted Left */}
         <div className="flex-1 mx-2 mr-4 relative">
@@ -137,8 +171,8 @@ export default function DonorHome({
           />
         </div>
         
-        {/* Cart and Logout Buttons Side by Side */}
-        <div className="flex items-center space-x-3">
+        {/* Cart Button */}
+        <div className="flex items-center">
           {/* Shopping Cart Icon with Badge */}
           <button 
             onClick={onGoToCart}
@@ -150,15 +184,6 @@ export default function DonorHome({
                 {getTotalItems()}
               </span>
             )}
-          </button>
-          
-          {/* Logout Button */}
-          <button
-            onClick={handleLogout}
-            className="text-gray-500 hover:text-red-600 transition-colors"
-            title="Logout"
-          >
-            <LogOut className="w-5 h-5" />
           </button>
         </div>
       </div>
