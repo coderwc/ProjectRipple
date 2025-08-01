@@ -7,6 +7,7 @@ import AvailableVendors from './AvailableVendors';
 import VendorProducts from './VendorProducts';
 import ShoppingCart from './Donorcomponents/ShoppingCart';
 import Checkout from './Donorcomponents/Checkout';
+import DonorProfile from './DonorProfile';
 import { useCart } from '../shared/CartContext';
 import DonorsAndMessages from './DonorsAndMessages';
 import Story from './Story'; 
@@ -118,6 +119,17 @@ function DonorApp({ user, onLogout }) {
     onLogout(); // Call the parent logout function
   };
 
+  // Function to handle profile navigation
+  const handleGoToProfile = () => {
+    setPreviousView(currentView);
+    setCurrentView('profile');
+  };
+
+  // Function to handle going back from profile
+  const handleBackFromProfile = () => {
+    setCurrentView(previousView || 'home');
+  };
+
   const handleViewDonors = (postId) => {
   setSelectedPost(postId);
   setCurrentView('donorsAndMessages');
@@ -148,6 +160,7 @@ const handleViewCharityProfile = (charityId) => {
           onSelectPost={handleSelectPost}
           onCharitySelect={handleCharitySelect}
           onGoToCart={handleGoToCart}
+          onGoToProfile={handleGoToProfile}
           onLogout={handleLogout}
         />
       )}
@@ -243,6 +256,13 @@ const handleViewCharityProfile = (charityId) => {
     onBack={() => setCurrentView(previousView || 'post')} 
   />
 )}
+
+      {currentView === 'profile' && (
+        <DonorProfile
+          onBack={handleBackFromProfile}
+          onLogout={handleLogout}
+        />
+      )}
 
     </div>
   );
