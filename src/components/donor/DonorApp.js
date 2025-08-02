@@ -135,8 +135,9 @@ function DonorApp({ user, onLogout }) {
   setCurrentView('donorsAndMessages');
 };
 
-  const handleViewStory = (postId) => {
+  const handleViewStory = (postId, postData) => {
   setSelectedPost(postId);
+  setSelectedPostData(postData);
   setCurrentView('story');
 };
 
@@ -239,6 +240,7 @@ const handleViewCharityProfile = (charityId) => {
 {currentView === 'story' && (
   <Story 
     postId={selectedPost} 
+    postData={selectedPostData}
     onBack={() => setCurrentView('post')} 
   />
 )}

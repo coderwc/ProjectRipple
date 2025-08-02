@@ -173,7 +173,7 @@ const CharityPost = ({
           </button>
 
           <button
-            onClick={() => onViewStory(postId)}
+            onClick={() => onViewStory(postId, postData)}
             className="flex-1 flex flex-col items-center gap-2 bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -213,7 +213,6 @@ const CharityPost = ({
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
           </button>
-          <p className="text-xs text-gray-500 mt-3 leading-4">{storyDescription}</p>
         </div>
 
         {/* Items Needed */}

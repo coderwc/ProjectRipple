@@ -1,15 +1,22 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 
-const Story = ({ onBack, postId }) => {
-  // You can use `postId` to fetch story data if needed
-  // For now, we’ll use placeholder content
-  const storyContent = `
-    Lorem ipsum dolor sit amet consectetur. Lectus viverra sed aliquam quis enim leo. 
-    Turpis nec facilisis placerat dolor ac donec. Odio semper quis rutrum quis lacus odio 
-    vivamus ultricies. Ultrices ultricies platea feugiat ac velit nulla. 
-    Proin lectus commodo id nullam venenatis.
-  `;
+const Story = ({ onBack, postId, postData }) => {
+  // Use the actual post data passed from CharityPost
+  // Try multiple possible field names for the description
+  const storyContent = postData?.description || 
+                      postData?.storyDescription || 
+                      postData?.about || 
+                      postData?.story || 
+                      postData?.details || 
+                      `Lorem ipsum dolor sit amet consectetur. Lectus viverra sed aliquam quis enim leo. 
+                       Turpis nec facilisis placerat dolor ac donec. Odio semper quis rutrum quis lacus odio 
+                       vivamus ultricies. Ultrices ultricies platea feugiat ac velit nulla. 
+                       Proin lectus commodo id nullam venenatis.`;
+  
+  const charityName = postData?.charityName || 'Charity Name';
+  const headline = postData?.headline || 'Headline Story';
+  const imageUrl = postData?.imageUrl;
 
   return (
     <div className="max-w-sm mx-auto p-4 bg-gray-50 min-h-screen relative">
@@ -28,34 +35,38 @@ const Story = ({ onBack, postId }) => {
           <button onClick={onBack} className="p-1 hover:bg-gray-100 rounded">
             <ArrowLeft className="w-6 h-6 text-gray-700" />
           </button>
-          <span className="text-lg font-medium text-gray-900">Story page</span>
+          <span className="text-lg font-medium text-gray-900">About This Drive</span>
         </div>
       </div>
 
       {/* Story Content */}
       <div className="space-y-4">
         <div className="bg-white rounded-lg p-4 shadow-sm">
-          <h2 className="text-lg font-bold text-gray-900 mb-1">Headline Story</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-1">{headline}</h2>
 
           <div className="flex items-center gap-2 mb-3">
             <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
             <div>
-              <p className="text-sm font-semibold text-gray-800">Charity Name</p>
+              <p className="text-sm font-semibold text-gray-800">{charityName}</p>
               <p className="text-xs text-gray-500">Verified Identification</p>
             </div>
           </div>
 
           <p className="text-sm text-gray-700 leading-6">{storyContent}</p>
 
-          {/* Example image and repeated paragraph */}
-          <div className="my-4">
-            <img 
-              src="https://via.placeholder.com/300x180" 
-              alt="Charity activity" 
-              className="rounded-lg mb-3 w-full object-cover"
-            />
-            <p className="text-sm text-gray-700 leading-6">{storyContent}</p>
-          </div>
+          {/* Drive image if available */}
+          {imageUrl && (
+            <div className="my-4">
+              <img 
+                src={imageUrl} 
+                alt="Drive activity" 
+                className="rounded-lg mb-3 w-full object-cover"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
+            </div>
+          )}
 
           {/* CTA Button */}
           <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg text-sm font-semibold">
