@@ -91,6 +91,13 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout, user, onUserUpdate
     setEditingField(null);
   };
 
+  const handleLogout = () => {
+    const confirmLogout = window.confirm("Are you sure you want to log out?");
+    if (confirmLogout) {
+      onLogout();
+    }
+  };
+
   const addFocusArea = () => {
     setTempData({
       ...tempData,
@@ -477,7 +484,7 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout, user, onUserUpdate
 
         {/* Logout Button */}
         <button 
-          onClick={onLogout} 
+          onClick={handleLogout} 
           className="w-full bg-red-500 text-white py-3 rounded-xl font-medium hover:bg-red-600 transition-colors shadow"
         >
           LOG OUT
