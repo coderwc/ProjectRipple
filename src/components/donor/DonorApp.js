@@ -44,8 +44,15 @@ function DonorApp({ user, onLogout }) {
     setSelectedPost(null);
   };
 
+  const handleBackFromPost = () => {
+    // Go back to where we came from (home or category)
+    setCurrentView(previousView || 'home');
+    setSelectedPost(null);
+  };
+
   const handleSelectPost = (postId) => {
     setSelectedPost(postId);
+    setPreviousView(currentView); // Remember where we came from
     setCurrentView('post');
   };
 
@@ -177,7 +184,7 @@ const handleViewCharityProfile = (charityId) => {
       {currentView === 'post' && (
   <CharityPost
   postId={selectedPost}
-  onBack={handleBackToCategory}
+  onBack={handleBackFromPost}
   onCharitySelect={handleCharitySelect}
   onViewDonors={handleViewDonors}
   onViewStory={handleViewStory}

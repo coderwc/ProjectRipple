@@ -13,7 +13,6 @@ import {
   Filter,
   SortAsc,
   Droplet,
-  Package,
   User
 } from 'lucide-react';
 import { useCart } from '../shared/CartContext';
@@ -63,6 +62,7 @@ export default function DonorHome({
               org: post.charityName || 'Unknown Org',
               progress: Math.floor(Math.random() * 50) + 30,
               daysLeft: remainingDays,
+              imageUrl: post.imageUrl, // Include the image URL
               charityData: {
                 id: post.charityId,
                 name: post.charityName,
@@ -126,10 +126,6 @@ export default function DonorHome({
   ];
 
 
-  const handleShopForCharity = (charityData, event) => {
-    event.stopPropagation(); // Prevent triggering the post selection
-    onCharitySelect(charityData);
-  };
 
   return (
     <div className="max-w-sm mx-auto p-4 bg-gray-50 min-h-screen relative">
@@ -216,8 +212,20 @@ export default function DonorHome({
               onClick={() => onSelectPost(drive.id)}
               className="cursor-pointer hover:shadow-md transition-all duration-200"
             >
-              {/* Grey placeholder - Standardized uniform size */}
-              <div className="w-full h-20 bg-gray-300 rounded-lg mb-3" />
+              {/* Charity image - Standardized uniform size */}
+              <div className="w-full h-20 bg-gray-300 rounded-lg mb-3 overflow-hidden">
+                {drive.imageUrl ? (
+                  <img 
+                    src={drive.imageUrl} 
+                    alt={drive.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                    <span className="text-gray-500 text-xs">No Image</span>
+                  </div>
+                )}
+              </div>
               
               {/* Content section */}
               <div className="space-y-2">
@@ -237,15 +245,6 @@ export default function DonorHome({
                 </div>
               </div>
             </div>
-            
-            {/* Shop Button */}
-            <button
-              onClick={(e) => handleShopForCharity(drive.charityData, e)}
-              className="w-full bg-green-500 hover:bg-green-600 text-white text-xs py-2 px-3 rounded flex items-center justify-center space-x-1 transition-colors"
-            >
-              <Package className="w-3 h-3" />
-              <span>Shop for {drive.org}</span>
-            </button>
           </div>
         ))}
       </div>

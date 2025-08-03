@@ -29,6 +29,7 @@ useEffect(() => {
             progress: data.donationsReceived || 0, // You might want to calculate %
             kindness: `Kindness Cap: ${data.donationsReceived || 0}% Full`,
             remainingDays: calculateRemainingDays(data.deadline),
+            imageUrl: data.imageUrl, // Include the image URL
           });
         }
       });
@@ -102,8 +103,20 @@ const calculateRemainingDays = (deadlineStr) => {
             onClick={() => onSelectPost && onSelectPost(item.id)}
           >
             <div className="flex gap-4 items-start">
-              {/* Image placeholder - Grey placeholder, uniform size */}
-              <div className="w-20 h-20 bg-gray-300 rounded-lg flex-shrink-0"></div>
+              {/* Charity image - uniform size */}
+              <div className="w-20 h-20 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden">
+                {item.imageUrl ? (
+                  <img 
+                    src={item.imageUrl} 
+                    alt={item.headline}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                    <span className="text-gray-500 text-xs">No Image</span>
+                  </div>
+                )}
+              </div>
               
               {/* Content */}
               <div className="flex-1 min-w-0">
