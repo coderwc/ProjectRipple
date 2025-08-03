@@ -1,20 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ShoppingCart, Plus, ChevronDown, Filter, X, Minus } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Plus, Filter, X, Minus } from 'lucide-react';
 import { useCart } from '../shared/CartContext';
 import { saveCartItem } from '../../firebase/cart';
 import { 
   collection, 
   getDocs, 
   query, 
-  where, 
-  orderBy, 
   onSnapshot,
   collectionGroup 
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 
 const AvailableVendors = ({ charity, itemFilter, onBack, onSelectVendor, onGoToCart }) => {
-  const { addToCart, getTotalItems, reloadCart } = useCart();
+  const { getTotalItems, reloadCart } = useCart();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [listings, setListings] = useState([]);
@@ -136,64 +134,6 @@ const AvailableVendors = ({ charity, itemFilter, onBack, onSelectVendor, onGoToC
     fetchListings();
   }, []);
 
-  // Mock fallback data for development
-  const mockProducts = [
-    {
-      id: 1,
-      name: "Dasani Water (2L)",
-      price: 2.00,
-      vendor: "YpRd698LE0aZyBEHRqEM8tFZvlQ2", //temporary for testing, linked to tionghuiyigmail
-      vendorName: "Tiong Bakery",
-      stock: 200,
-      images: [null, null, null],
-      image: null
-    },
-    {
-      id: 2,
-      name: "Mineral Water",
-      price: 1.50,
-      vendor: "Abc Mart",
-      stock: 150,
-      images: [null, null, null],
-      image: null
-    },
-    {
-      id: 3,
-      name: "Evian Water",
-      price: 1.70,
-      vendor: "Speedmart",
-      stock: 75,
-      images: [null, null, null],
-      image: null
-    },
-    {
-      id: 4,
-      name: "Fiji Water",
-      price: 1.50,
-      vendor: "Philippines Mart",
-      stock: 120,
-      images: [null, null, null],
-      image: null
-    },
-    {
-      id: 5,
-      name: "Purified Water",
-      price: 0.80,
-      vendor: "Fairprice",
-      stock: 300,
-      images: [null, null, null],
-      image: null
-    },
-    {
-      id: 6,
-      name: "VOSS Bottle",
-      price: 3.00,
-      vendor: "Premium Mart",
-      stock: 50,
-      images: [null, null, null],
-      image: null
-    }
-  ];
 
   // Filter products based on itemFilter if provided
   const filterProducts = (products, filter) => {

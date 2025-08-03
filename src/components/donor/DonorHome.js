@@ -12,8 +12,7 @@ import {
   AlertTriangle,
   Filter,
   Droplet,
-  User,
-  ExternalLink
+  User
 } from 'lucide-react';
 
 import { useCart } from '../shared/CartContext';
@@ -128,11 +127,6 @@ export default function DonorHome({
     return () => unsubscribe();
   }, []);
 
-  const handleLogout = () => {
-    if (window.confirm("Are you sure you want to log out?")) {
-      onLogout();
-    }
-  };
 
   const handleTimeFilterChange = (timeFilter) => {
     const newFilterOptions = { ...filterOptions, timeFilter };

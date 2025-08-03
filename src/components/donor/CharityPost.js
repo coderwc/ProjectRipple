@@ -39,7 +39,6 @@ const CharityPost = ({
   const [postData, setPostData] = useState(null);
   const [transformedItems, setTransformedItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isLiked, setIsLiked] = useState(false);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -108,8 +107,7 @@ const CharityPost = ({
     authorId,
     donationsReceived,
     deadline,
-    imageUrl,
-    storyDescription
+    imageUrl
   } = postData;
 
   const remainingDays = (() => {

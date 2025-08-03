@@ -22,7 +22,6 @@ function DonorApp({ user, onLogout }) {
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [selectedItemFilter, setSelectedItemFilter] = useState(null);
   const [previousView, setPreviousView] = useState('home');
-  const [postOrigin, setPostOrigin] = useState(null); // 'home' or 'category'
   const [selectedPostData, setSelectedPostData] = useState(null);
 
   const { setCharity, clearCart, getTotalItems, getUniqueProducts } = useCart();
@@ -41,10 +40,6 @@ function DonorApp({ user, onLogout }) {
     setPreviousView('home');
   };
 
-  const handleBackToCategory = () => {
-    setCurrentView('category');
-    setSelectedPost(null);
-  };
 
   const handleBackFromPost = () => {
     // Go back to where we came from (home or category)
@@ -52,9 +47,8 @@ function DonorApp({ user, onLogout }) {
     setSelectedPost(null);
   };
 
-  const handleSelectPost = (postId, origin = currentView) => {
+  const handleSelectPost = (postId) => {
     setSelectedPost(postId);
-    setPostOrigin(origin); // Track where post was opened from
     setPreviousView(currentView); // Remember where we came from
     setCurrentView('post');
   };
@@ -67,11 +61,6 @@ function DonorApp({ user, onLogout }) {
     setCurrentView('shop');
   };
 
-  const handleVendorSelect = (vendor) => {
-    setSelectedVendor(vendor);
-    setPreviousView(currentView);
-    setCurrentView('vendor');
-  };
 
   const handleVendorProfile = (vendor) => {
     setSelectedVendor(vendor);
