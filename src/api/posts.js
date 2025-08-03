@@ -1,5 +1,5 @@
 // src/api/posts.js - Updated to use Firebase
-import { createPost as createPostFirebase, getPosts, getPostsByCharity } from '../firebase/posts';
+import { createPost as createPostFirebase, getPosts, getPostsByCharity, getCharityProfile as getCharityProfileFirebase } from '../firebase/posts';
 import { createDonation, getDonationsByPost } from '../firebase/donations';
 
 const API_BASE_URL = 'http://localhost:5001/api';
@@ -79,26 +79,14 @@ export const getAIRecommendations = async (description, headline, location) => {
   }
 };
 
-// Get public charity profile by ID
+// Get public charity profile by ID - uses Firebase
 export const getCharityProfile = async (charityId) => {
   try {
-    console.log('🔍 Fetching charity profile from API for ID:', charityId);
-    const response = await fetch(`${API_BASE_URL}/charity/public/${charityId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
+    console.log('🔍 Fetching charity profile from Firebase for ID:', charityId);
+    const result = await getCharityProfileFirebase(charityId);
     
-    console.log('📡 API Response status:', response.status);
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch charity profile');
-    }
-    
-    const result = await response.json();
-    console.log('✅ API Response data:', result);
-    return { success: true, charity: result };
+    console.log('✅ Firebase Response data:', result);
+    return result;
   } catch (error) {
     console.error('❌ Error fetching charity profile:', error);
     return { success: false, error: error.message };

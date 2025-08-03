@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Heart, ChevronLeft, ChevronRight, Trash2, MoreHorizontal } from 'lucide-react';
+import { ArrowLeft, Heart, ChevronLeft, ChevronRight, Trash2, MoreHorizontal, Edit3 } from 'lucide-react';
 
-const ImpactGallery = ({ impactPosts = [], selectedPost: initialSelectedPost = null, onBack, onDeletePost }) => {
+const ImpactGallery = ({ impactPosts = [], selectedPost: initialSelectedPost = null, onBack, onDeletePost, onUpdatePost }) => {
   const [selectedPost, setSelectedPost] = useState(initialSelectedPost);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showDeleteMenu, setShowDeleteMenu] = useState(null);
+  const [editingPost, setEditingPost] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    caption: '',
+    drive: '',
+    location: ''
+  });
 
   // Set the initial selected post when passed from dashboard
   useEffect(() => {
@@ -43,6 +49,44 @@ const ImpactGallery = ({ impactPosts = [], selectedPost: initialSelectedPost = n
       day: 'numeric', 
       year: 'numeric' 
     });
+  };
+
+  const handleEditPost = (post) => {
+    setEditingPost(post.id);
+    setEditFormData({
+      caption: post.caption || '',
+      drive: post.drive || '',
+      location: post.location || ''
+    });
+    setShowDeleteMenu(null);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingPost || !onUpdatePost) return;
+    
+    try {
+      await onUpdatePost(editingPost, editFormData);
+      
+      // Update selectedPost if we're editing the currently viewed post
+      if (selectedPost && selectedPost.id === editingPost) {
+        setSelectedPost(prev => ({
+          ...prev,
+          ...editFormData,
+          updatedAt: new Date().toISOString()
+        }));
+      }
+      
+      setEditingPost(null);
+      setEditFormData({ caption: '', drive: '', location: '' });
+    } catch (error) {
+      console.error('Error updating impact post:', error);
+      alert(`Failed to update impact post: ${error.message}`);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingPost(null);
+    setEditFormData({ caption: '', drive: '', location: '' });
   };
 
   const handleDeletePost = async (post) => {
@@ -98,6 +142,13 @@ const ImpactGallery = ({ impactPosts = [], selectedPost: initialSelectedPost = n
               </button>
               {showDeleteMenu === selectedPost.id && (
                 <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[120px]">
+                  <button
+                    onClick={() => handleEditPost(selectedPost)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                    Edit
+                  </button>
                   <button
                     onClick={() => handleDeletePost(selectedPost)}
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
@@ -170,18 +221,79 @@ const ImpactGallery = ({ impactPosts = [], selectedPost: initialSelectedPost = n
             <span className="text-sm text-gray-500">{formatDate(selectedPost.timestamp || selectedPost.createdAt)}</span>
           </div>
 
-          {/* Caption */}
-          {selectedPost.caption && (
-            <div className="mb-4">
-              <p className="text-gray-900">{selectedPost.caption}</p>
+          {/* Edit Form for Detailed View */}
+          {editingPost === selectedPost.id ? (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Caption</label>
+                <textarea
+                  value={editFormData.caption}
+                  onChange={(e) => setEditFormData({...editFormData, caption: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
+                  rows="4"
+                  placeholder="Share your impact story..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Drive</label>
+                <input
+                  type="text"
+                  value={editFormData.drive}
+                  onChange={(e) => setEditFormData({...editFormData, drive: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  placeholder="Associated drive or campaign"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                <input
+                  type="text"
+                  value={editFormData.location}
+                  onChange={(e) => setEditFormData({...editFormData, location: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  placeholder="Location of impact"
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={handleSaveEdit}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Save Changes
+                </button>
+                <button
+                  onClick={handleCancelEdit}
+                  className="flex-1 px-4 py-2 bg-gray-400 text-white text-sm font-medium rounded-lg hover:bg-gray-500 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
-          )}
+          ) : (
+            <>
+              {/* Caption */}
+              {selectedPost.caption && (
+                <div className="mb-4">
+                  <p className="text-gray-900">{selectedPost.caption}</p>
+                </div>
+              )}
 
-          {/* Location */}
-          {selectedPost.location && (
-            <div className="text-sm text-gray-500">
-              📍 {selectedPost.location}
-            </div>
+              {/* Drive */}
+              {selectedPost.drive && (
+                <div className="mb-4">
+                  <div className="inline-flex items-center px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
+                    <span>{selectedPost.drive}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Location */}
+              {selectedPost.location && (
+                <div className="text-sm text-gray-500">
+                  📍 {selectedPost.location}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -258,6 +370,13 @@ const ImpactGallery = ({ impactPosts = [], selectedPost: initialSelectedPost = n
                         {showDeleteMenu === post.id && (
                           <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[120px]">
                             <button
+                              onClick={() => handleEditPost(post)}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                              Edit
+                            </button>
+                            <button
                               onClick={() => handleDeletePost(post)}
                               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
                             >
@@ -270,6 +389,59 @@ const ImpactGallery = ({ impactPosts = [], selectedPost: initialSelectedPost = n
                     </div>
                   </div>
                 </div>
+
+                {/* Edit Form */}
+                {editingPost === post.id && (
+                  <div className="p-4 bg-gray-50 border-b border-gray-200">
+                    <h4 className="font-medium text-gray-900 mb-3">Edit Impact Post</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Caption</label>
+                        <textarea
+                          value={editFormData.caption}
+                          onChange={(e) => setEditFormData({...editFormData, caption: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
+                          rows="3"
+                          placeholder="Share your impact story..."
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Drive</label>
+                        <input
+                          type="text"
+                          value={editFormData.drive}
+                          onChange={(e) => setEditFormData({...editFormData, drive: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                          placeholder="Associated drive or campaign"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                        <input
+                          type="text"
+                          value={editFormData.location}
+                          onChange={(e) => setEditFormData({...editFormData, location: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                          placeholder="Location of impact"
+                        />
+                      </div>
+                      <div className="flex gap-2 pt-2">
+                        <button
+                          onClick={handleSaveEdit}
+                          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          className="px-4 py-2 bg-gray-400 text-white text-sm font-medium rounded-lg hover:bg-gray-500 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Images */}
                 {post.images && post.images.length > 0 && (

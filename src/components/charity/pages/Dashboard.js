@@ -36,9 +36,6 @@ const Dashboard = ({
             <h1 className="text-xl font-bold text-blue-800">{user?.name || 'Charity Organization'}</h1>
             {user?.isVerified && <CheckCircle2 className="w-5 h-5 text-blue-500" />}
           </div>
-          <p className="text-sm text-gray-500">
-            {user?.isVerified ? 'Verified Identification' : 'Pending Verification'}
-          </p>
         </div>
       </div>
     </div>

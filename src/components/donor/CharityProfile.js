@@ -110,8 +110,12 @@ const CharityProfile = ({ charityId, onBack }) => {
 
           {/* Charity Name & Tagline */}
           <div className="text-center mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-1">{charityData.name}</h2>
-            <p className="text-gray-600">{charityData.tagline}</p>
+            <h2 className="text-xl font-bold text-gray-900 mb-1">{charityData.name || 'Charity Name'}</h2>
+            {charityData.tagline ? (
+              <p className="text-gray-600">{charityData.tagline}</p>
+            ) : (
+              <p className="text-gray-400 italic">No tagline provided</p>
+            )}
           </div>
 
           {/* Contact Information */}
@@ -121,63 +125,91 @@ const CharityProfile = ({ charityId, onBack }) => {
             {/* Location */}
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <MapPin className="w-5 h-5 text-gray-500" />
-              <span className="text-gray-700">{charityData.location}</span>
+              <span className={charityData.location ? "text-gray-700" : "text-gray-400 italic"}>
+                {charityData.location || 'No location provided'}
+              </span>
             </div>
 
             {/* Phone */}
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <Phone className="w-5 h-5 text-gray-500" />
-              <span className="text-gray-700">{charityData.phone}</span>
+              <span className={charityData.phone ? "text-gray-700" : "text-gray-400 italic"}>
+                {charityData.phone || 'No phone number provided'}
+              </span>
             </div>
 
             {/* Website */}
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <Globe className="w-5 h-5 text-gray-500" />
-              <span className="text-blue-600">{charityData.website}</span>
+              <span className={charityData.socials ? "text-blue-600" : "text-gray-400 italic"}>
+                {charityData.socials || 'No website provided'}
+              </span>
             </div>
           </div>
 
           {/* About Us Section */}
           <div className="mb-6">
             <h3 className="text-lg font-bold text-gray-900 mb-3">About Us</h3>
-            <p className="text-gray-600 leading-relaxed text-sm">
-              {charityData.aboutUs}
-            </p>
+            {charityData.aboutUs ? (
+              <p className="text-gray-600 leading-relaxed text-sm">
+                {charityData.aboutUs}
+              </p>
+            ) : (
+              <p className="text-gray-400 italic text-sm">
+                No description provided yet.
+              </p>
+            )}
           </div>
 
           {/* Our Focus Section */}
           <div className="mb-6">
             <h3 className="text-lg font-bold text-gray-900 mb-3">Our Focus</h3>
             <div className="flex flex-wrap gap-2">
-              {charityData.focusAreas.map((area, index) => (
-                <span
-                  key={index}
-                  className="bg-blue-100 text-blue-700 rounded-full px-3 py-1 text-xs font-medium"
-                >
-                  {area}
-                </span>
-              ))}
+              {charityData.focusAreas && charityData.focusAreas.length > 0 ? (
+                charityData.focusAreas.map((area, index) => (
+                  <span
+                    key={index}
+                    className="bg-blue-100 text-blue-700 rounded-full px-3 py-1 text-xs font-medium"
+                  >
+                    {area}
+                  </span>
+                ))
+              ) : (
+                <span className="text-gray-400 italic text-sm">No focus areas specified</span>
+              )}
             </div>
           </div>
 
-          {/* Impact Statistics */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-4 text-white">
-            <h3 className="text-lg font-bold mb-3">Our Impact</h3>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className="text-2xl font-bold">{charityData.impactStats.familiesHelped.toLocaleString()}</div>
-                <div className="text-xs opacity-90">Families Helped</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{charityData.impactStats.communitiesReached}</div>
-                <div className="text-xs opacity-90">Communities Reached</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{charityData.impactStats.yearsActive}</div>
-                <div className="text-xs opacity-90">Years Active</div>
+          {/* Impact Statistics - Only show if charity has provided impact stats */}
+          {charityData.impactStats ? (
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-4 text-white">
+              <h3 className="text-lg font-bold mb-3">Our Impact</h3>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <div className="text-2xl font-bold">
+                    {(charityData.impactStats.familiesHelped || 0).toLocaleString()}
+                  </div>
+                  <div className="text-xs opacity-90">Families Helped</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">
+                    {charityData.impactStats.communitiesReached || 0}
+                  </div>
+                  <div className="text-xs opacity-90">Communities Reached</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">
+                    {charityData.impactStats.yearsActive || 1}
+                  </div>
+                  <div className="text-xs opacity-90">Years Active</div>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-gray-100 rounded-lg p-4 text-center">
+              <p className="text-gray-500 italic">Impact statistics not yet provided</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

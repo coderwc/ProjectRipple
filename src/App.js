@@ -33,6 +33,10 @@ function App() {
               location: userData.location || '',
               socials: userData.socials || '',
               queries: userData.queries || '',
+              tagline: userData.tagline || '',
+              aboutUs: userData.aboutUs || '',
+              focusAreas: userData.focusAreas || [],
+              imageUrl: userData.imageUrl || '',
               isVerified: userData.isVerified || false
             };
             setUser(userObj);
@@ -51,6 +55,10 @@ function App() {
                 location: userData.location || '',
                 socials: userData.socials || '',
                 queries: userData.queries || '',
+                tagline: userData.tagline || '',
+                aboutUs: userData.aboutUs || '',
+                focusAreas: userData.focusAreas || [],
+                imageUrl: userData.imageUrl || '',
                 isVerified: userData.isVerified || false
               };
               setUser(userObj);
@@ -92,6 +100,7 @@ function App() {
   };
 
  const handleUserUpdate = (updatedUserData) => {
+  console.log('🔄 App: Receiving user update:', updatedUserData);
   setUser(updatedUserData);
 };
 
