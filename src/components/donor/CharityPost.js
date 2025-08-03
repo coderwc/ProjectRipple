@@ -4,6 +4,29 @@ import { getDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { getItemDonationTotals } from '../../firebase/posts';
 
+// Helper function to normalize item names for matching (same as in posts.js)
+const normalizeItemName = (itemName) => {
+  if (!itemName) return '';
+  
+  // Remove vendor names and common variations
+  let normalized = itemName
+    .toLowerCase()
+    .trim()
+    // Remove vendor names
+    .replace(/\s*-\s*(gomgom|premium mart|vendor\d+).*$/i, '')
+    // Remove brand prefixes 
+    .replace(/^(gomgom|premium mart)\s*/i, '')
+    // Normalize plural/singular
+    .replace(/s$/, '') // Remove trailing 's'
+    .replace(/ies$/, 'y') // flies -> fly
+    .replace(/es$/, '') // boxes -> box
+    // Remove extra spaces
+    .replace(/\s+/g, ' ')
+    .trim();
+    
+  return normalized;
+};
+
 const CharityPost = ({
   onBack,
   postId,
@@ -34,7 +57,12 @@ const CharityPost = ({
           console.log('🎁 Donation totals retrieved:', donationTotals);
 
           const formatted = rawData.items?.map((item) => {
-            const donatedQuantity = donationTotals[item.name] || 0;
+            // Normalize charity post item name to match donation records
+            const normalizedCharityItemName = normalizeItemName(item.name);
+            const donatedQuantity = donationTotals[normalizedCharityItemName] || 0;
+            
+            console.log(`🔍 Matching charity item "${item.name}" (normalized: "${normalizedCharityItemName}") with donations: ${donatedQuantity}`);
+            
             return {
               type: item.name || 'Unknown',
               current: donatedQuantity, // Use donation totals from separate collection
