@@ -43,7 +43,7 @@ const DriveDetailsPage = ({ drive, onBack, user }) => {
   const progressText = formatProgressText(progressData);
 
   return (
-    <div className="max-w-sm mx-auto bg-gray-50 min-h-screen">
+    <div className="max-w-sm mx-auto min-h-screen bg-gradient-to-b from-white via-blue-100 to-blue-200">
       {/* Header */}
       <div className="flex justify-between items-center px-4 py-2 bg-white text-sm font-medium">
         <span>9:30</span>
@@ -86,8 +86,19 @@ const DriveDetailsPage = ({ drive, onBack, user }) => {
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">{drive.name}</h2>
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-              <Users className="w-4 h-4 text-gray-500" />
+            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
+              {user?.imageUrl ? (
+                <img 
+                  src={user.imageUrl} 
+                  alt={user.name || 'Charity Profile'} 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <Users className={`w-4 h-4 text-blue-700 ${user?.imageUrl ? 'hidden' : ''}`} />
             </div>
             <div>
               <p className="font-medium text-gray-900">{drive.vendor}</p>
@@ -97,12 +108,12 @@ const DriveDetailsPage = ({ drive, onBack, user }) => {
 
         {/* Key Info */}
         <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-white rounded-lg p-4 text-center">
+          <div className="bg-white rounded-lg p-4 text-center shadow-sm border-2 border-blue-200">
             <Calendar className="w-6 h-6 text-blue-600 mx-auto mb-2" />
             <p className="text-xs text-gray-500 mb-1">Deadline</p>
             <p className="font-bold text-gray-900">{drive.expiry}</p>
           </div>
-          <div className="bg-white rounded-lg p-4 text-center">
+          <div className="bg-white rounded-lg p-4 text-center shadow-sm border-2 border-blue-200">
             <Package className="w-6 h-6 text-green-600 mx-auto mb-2" />
             <p className="text-xs text-gray-500 mb-1">Items Needed</p>
             <p className="font-bold text-gray-900">{itemsList.length} Types</p>
@@ -110,7 +121,7 @@ const DriveDetailsPage = ({ drive, onBack, user }) => {
         </div>
 
         {/* Progress */}
-        <div className="bg-white rounded-lg p-4 mb-6">
+        <div className="bg-white rounded-lg p-4 mb-6 shadow-sm border-2 border-blue-200">
           <div className="flex justify-between items-center mb-2">
             <p className="text-sm font-medium text-gray-900">Collection Progress</p>
             {loadingDonations ? (
@@ -137,7 +148,7 @@ const DriveDetailsPage = ({ drive, onBack, user }) => {
 
         {/* Items Needed */}
         {itemsList.length > 0 && (
-          <div className="bg-white rounded-lg p-4 mb-6">
+          <div className="bg-white rounded-lg p-4 mb-6 shadow-sm border-2 border-blue-200">
             <h3 className="font-bold text-gray-900 mb-3">Items Needed</h3>
             <div className="space-y-3">
               {itemsList.map((item, index) => (
@@ -159,7 +170,7 @@ const DriveDetailsPage = ({ drive, onBack, user }) => {
         )}
 
         {/* Description */}
-        <div className="bg-white rounded-lg p-4 mb-6">
+        <div className="bg-white rounded-lg p-4 mb-6 shadow-sm border-2 border-blue-200">
           <h3 className="font-bold text-gray-900 mb-3">About This Drive</h3>
           <p className="text-sm text-gray-600 leading-relaxed mb-4">
             {drive.description}
@@ -167,13 +178,12 @@ const DriveDetailsPage = ({ drive, onBack, user }) => {
         </div>
 
         {/* Location */}
-        <div className="bg-white rounded-lg p-4 mb-6">
+        <div className="bg-white rounded-lg p-4 mb-6 shadow-sm border-2 border-blue-200">
           <div className="flex items-center gap-2 mb-2">
             <MapPin className="w-4 h-4 text-gray-500" />
             <h3 className="font-bold text-gray-900">Location</h3>
           </div>
           <p className="text-sm text-gray-600">{user?.location || 'Location not specified'}</p>
-          <p className="text-xs text-gray-500 mt-1">Serving affected areas nationwide</p>
         </div>
 
 

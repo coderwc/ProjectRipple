@@ -28,8 +28,19 @@ const Dashboard = ({
     {/* Header */}
     <div className="bg-white px-4 py-6 border-b border-gray-100 shadow-md">
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-          <User className="w-6 h-6 text-blue-700" />
+        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
+          {user?.imageUrl ? (
+            <img 
+              src={user.imageUrl} 
+              alt={user.name || 'Profile'} 
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+          ) : null}
+          <User className={`w-6 h-6 text-blue-700 ${user?.imageUrl ? 'hidden' : ''}`} />
         </div>
         <div>
           <div className="flex items-center gap-2">
