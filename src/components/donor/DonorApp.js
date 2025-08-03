@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import DonorHome from './DonorHome';
+import DonorHome from './donorhome';
 import CategoryFeed from './CategoryFeed';
-import CharityPost from './CharityPost';
+import CharityPost from './charitypost';
 import CharityProfile from './CharityProfile';
 import AvailableVendors from './AvailableVendors';
 import VendorProducts from './VendorProducts';

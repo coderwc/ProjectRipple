@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Heart, Users, FileText, Camera, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Users, FileText, Camera, ChevronRight } from 'lucide-react';
 import { getDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { getItemDonationTotals } from '../../firebase/posts';
@@ -167,13 +167,7 @@ const CharityPost = ({
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-gray-900">{charityName}</span>
-              <div className="w-2 h-2 bg-black rounded-full" />
             </div>
-            <button onClick={() => setIsLiked(!isLiked)} className="p-1">
-              <Heart
-                className={`w-5 h-5 ${isLiked ? 'text-red-500 fill-red-500' : 'text-gray-400'} hover:text-red-500 cursor-pointer`}
-              />
-            </button>
           </div>
 
           <h2 className="font-semibold text-gray-900 mb-1">{headline}</h2>
@@ -244,7 +238,6 @@ const CharityPost = ({
               <div className="w-8 h-8 bg-gray-300 rounded-full" />
               <div>
                 <p className="font-medium text-gray-900 text-sm">{charityName}</p>
-                <div className="w-2 h-2 bg-black rounded-full mt-1" />
               </div>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -255,7 +248,6 @@ const CharityPost = ({
         <div className="bg-white rounded-lg p-4 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-medium text-gray-900">We currently need</h3>
-            <span className="text-xs text-blue-600">See All</span>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

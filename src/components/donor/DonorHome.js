@@ -11,7 +11,6 @@ import {
   Building2,
   AlertTriangle,
   Filter,
-  SortAsc,
   Droplet,
   User,
   ExternalLink
@@ -20,8 +19,7 @@ import {
 import { useCart } from '../shared/CartContext';
 import { getLatestCharityPosts } from '../../firebase/posts';
 import { auth, db } from '../../firebase/config';
-import { doc, getDoc } from 'firebase/firestore';
-import SortFilterBar from './Donorcomponents/SortFilterBar';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 const categories = [
   { name: 'Natural Disasters', icon: AlertTriangle },
@@ -46,7 +44,30 @@ export default function DonorHome({
   const { getTotalItems } = useCart();
   const [exploreDrives, setExploreDrives] = useState([]);
   const [donorProfile, setDonorProfile] = useState(null);
-  const [sortOption, setSortOption] = useState('default');
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [filterOptions, setFilterOptions] = useState({
+    timeFilter: 'any time',
+    categoryFilter: 'all categories'
+  });
+
+  const timeFilters = [
+    'any time',
+    'ends in a week',
+    'ends in two weeks', 
+    'ends in a month'
+  ];
+
+  const categoryFilters = [
+    'all categories',
+    'Natural Disasters',
+    'Animals', 
+    'Sustainability',
+    'Education',
+    'Medical',
+    'Non-profit',
+    'Orphanage',
+    'Infrastructure'
+  ];
 
   useEffect(() => {
     const fetchExploreDrives = async () => {
@@ -66,6 +87,7 @@ export default function DonorHome({
               progress: post.donationsReceived || 0,
               daysLeft,
               imageUrl: post.imageUrl,
+              category: post.category || 'Uncategorized',
               charityData: {
                 id: post.charityId,
                 name: post.charityName,
@@ -84,25 +106,26 @@ export default function DonorHome({
     fetchExploreDrives();
   }, []);
 
-  // Fetch donor profile data
+  // Real-time donor profile data listener
   useEffect(() => {
-    const fetchDonorProfile = async () => {
-      try {
-        const currentUser = auth.currentUser;
-        if (!currentUser) return;
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
 
-        const docRef = doc(db, "donors", currentUser.uid);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          setDonorProfile(docSnap.data());
-        }
-      } catch (error) {
-        console.error("Error fetching donor profile:", error);
+    const docRef = doc(db, "users", currentUser.uid);
+    
+    // Set up real-time listener
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setDonorProfile(docSnap.data());
+      } else {
+        console.log("No donor profile found");
       }
-    };
+    }, (error) => {
+      console.error("Error listening to donor profile:", error);
+    });
 
-    fetchDonorProfile();
+    // Cleanup listener on component unmount
+    return () => unsubscribe();
   }, []);
 
   const handleLogout = () => {
@@ -111,20 +134,62 @@ export default function DonorHome({
     }
   };
 
-  const sortedDrives = [...exploreDrives].sort((a, b) => {
-    switch (sortOption) {
-      case 'alphabetical':
-        return a.title.localeCompare(b.title);
-      case 'daysLeft':
-        return a.daysLeft - b.daysLeft;
-      case 'progress-high':
-        return b.progress - a.progress;
-      case 'progress-low':
-        return a.progress - b.progress;
-      default:
-        return 0;
+  const handleTimeFilterChange = (timeFilter) => {
+    const newFilterOptions = { ...filterOptions, timeFilter };
+    setFilterOptions(newFilterOptions);
+    
+    // Close popup if both filters are selected (and not default values)
+    if (newFilterOptions.categoryFilter !== 'all categories' && timeFilter !== 'any time') {
+      setShowFilterMenu(false);
     }
-  });
+  };
+
+  const handleCategoryFilterChange = (categoryFilter) => {
+    const newFilterOptions = { ...filterOptions, categoryFilter };
+    setFilterOptions(newFilterOptions);
+    
+    // Close popup if both filters are selected (and not default values)
+    if (newFilterOptions.timeFilter !== 'any time' && categoryFilter !== 'all categories') {
+      setShowFilterMenu(false);
+    }
+  };
+
+  const handleClearFilters = () => {
+    setFilterOptions({
+      timeFilter: 'any time',
+      categoryFilter: 'all categories'
+    });
+    setShowFilterMenu(false);
+  };
+  
+  const filteredDrives = [...exploreDrives]
+    .filter((drive) => {
+      // Time filter
+      let passesTimeFilter = true;
+      if (filterOptions.timeFilter !== 'any time') {
+        switch (filterOptions.timeFilter) {
+          case 'ends in a week':
+            passesTimeFilter = drive.daysLeft <= 7;
+            break;
+          case 'ends in two weeks':
+            passesTimeFilter = drive.daysLeft <= 14;
+            break;
+          case 'ends in a month':
+            passesTimeFilter = drive.daysLeft <= 30;
+            break;
+          default:
+            passesTimeFilter = true;
+        }
+      }
+      
+      // Category filter
+      let passesCategoryFilter = true;
+      if (filterOptions.categoryFilter !== 'all categories') {
+        passesCategoryFilter = drive.category === filterOptions.categoryFilter;
+      }
+      
+      return passesTimeFilter && passesCategoryFilter;
+    });
 
   return (
     <div className="max-w-sm mx-auto bg-gray-50 min-h-screen relative">
@@ -154,7 +219,7 @@ export default function DonorHome({
           <div className="flex flex-col justify-center">
             <p className="text-gray-700 text-xs">Welcome back,</p>
             <h1 className="text-gray-900 text-base font-semibold">
-              {donorProfile?.firstName || user?.displayName || 'John Doe'}
+              {donorProfile?.name || user?.displayName || 'John Doe'}
             </h1>
           </div>
         </div>
@@ -203,15 +268,71 @@ export default function DonorHome({
           ))}
         </div>
 
-        {/* Explore and Sort */}
+        {/* Explore and Filter */}
         <div className="flex justify-between items-center mb-2">
           <h2 className="text-sm font-semibold text-gray-700">Explore</h2>
-          <SortFilterBar onSortChange={setSortOption} />
+          <div className="relative z-10">
+            <div className="relative">
+              <button
+                onClick={() => setShowFilterMenu(prev => !prev)}
+                className="flex items-center gap-1 text-gray-600 text-sm hover:text-gray-800"
+              >
+                <Filter className="w-4 h-4" />
+                Filter
+              </button>
+              {showFilterMenu && (
+                <div className="absolute top-6 right-0 bg-white border border-gray-200 rounded shadow-md text-sm text-gray-700 min-w-[500px]">
+                  <div className="p-4">
+                    {/* Filter Options */}
+                    <div className="flex gap-8 mb-4">
+                      {/* Time Filter Section */}
+                      <div className="flex flex-col gap-2">
+                        <div className="font-semibold mb-1">Time Filter</div>
+                        {timeFilters.map((filter) => (
+                          <button 
+                            key={filter}
+                            onClick={() => handleTimeFilterChange(filter)}
+                            className={`text-left px-3 py-1 rounded hover:bg-gray-100 whitespace-nowrap ${filterOptions.timeFilter === filter ? 'bg-blue-50 text-blue-600' : ''}`}
+                          >
+                            {filter}
+                          </button>
+                        ))}
+                      </div>
+                      
+                      {/* Category Filter Section */}
+                      <div className="flex flex-col gap-2">
+                        <div className="font-semibold mb-1">Category Filter</div>
+                        {categoryFilters.map((filter) => (
+                          <button 
+                            key={filter}
+                            onClick={() => handleCategoryFilterChange(filter)}
+                            className={`text-left px-3 py-1 rounded hover:bg-gray-100 whitespace-nowrap ${filterOptions.categoryFilter === filter ? 'bg-blue-50 text-blue-600' : ''}`}
+                          >
+                            {filter}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Clear Filter Button */}
+                    <div className="border-t border-gray-200 pt-3">
+                      <button 
+                        onClick={() => handleClearFilters()}
+                        className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-center font-medium"
+                      >
+                        Clear Filters
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Explore Posts */}
         <div className="space-y-3 pb-24">
-          {sortedDrives.map((drive) => (
+          {filteredDrives.map((drive) => (
             <div
               key={drive.id}
               className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm relative cursor-pointer hover:shadow-md transition-all duration-200"

@@ -19,6 +19,9 @@ const AvailableVendors = ({ charity, itemFilter, onBack, onSelectVendor, onGoToC
   const [quantity, setQuantity] = useState(1);
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [priceFilter, setPriceFilter] = useState('');
+  const [conditionFilter, setConditionFilter] = useState('');
 
   // Fetch listings from all vendor subcollections
   useEffect(() => {
@@ -229,8 +232,30 @@ const AvailableVendors = ({ charity, itemFilter, onBack, onSelectVendor, onGoToC
     });
   };
 
+  // Apply additional filters (price and condition)
+  const applyAdditionalFilters = (products, priceFilter, conditionFilter) => {
+    let filtered = [...products];
+
+    // Apply price filter
+    if (priceFilter === 'low') {
+      filtered = filtered.filter(product => parseFloat(product.price || 0) <= 5.00);
+    } else if (priceFilter === 'high') {
+      filtered = filtered.filter(product => parseFloat(product.price || 0) > 5.00);
+    }
+
+    // Apply condition filter
+    if (conditionFilter) {
+      filtered = filtered.filter(product => 
+        product.condition?.toLowerCase() === conditionFilter.toLowerCase()
+      );
+    }
+
+    return filtered;
+  };
+
   // Always use real listings from Firestore - no fallback to mock data
-  const products = filterProducts(listings, itemFilter);
+  const baseProducts = filterProducts(listings, itemFilter);
+  const products = applyAdditionalFilters(baseProducts, priceFilter, conditionFilter);
   
   console.log('🛍️ AvailableVendors - Total products to display:', products.length);
   console.log('📦 AvailableVendors - Products:', products.map(p => ({ id: p.id, name: p.name, vendor: p.vendorName || p.vendor })));
@@ -239,7 +264,6 @@ const AvailableVendors = ({ charity, itemFilter, onBack, onSelectVendor, onGoToC
     console.log('❌ No real listings found - check Firestore data');
   }
 
-  const suggestedCategories = ["Blankets", "Rice Bags", "Canned Food"];
 
   const openProductModal = (product) => {
     setSelectedProduct(product);
@@ -274,17 +298,30 @@ const addToCartHandler = async (product, qty = 1) => {
     setQuantity(prev => Math.max(1, prev + change));
   };
 
-  // Handle keyboard events for modal
+  // Handle keyboard events for modal and close dropdown on outside click
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === 'Escape' && selectedProduct) {
         closeProductModal();
       }
+      if (event.key === 'Escape' && showFilterDropdown) {
+        setShowFilterDropdown(false);
+      }
+    };
+
+    const handleClickOutside = (event) => {
+      if (showFilterDropdown && !event.target.closest('.filter-dropdown-container')) {
+        setShowFilterDropdown(false);
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [selectedProduct]);
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [selectedProduct, showFilterDropdown]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -563,18 +600,89 @@ const addToCartHandler = async (product, qty = 1) => {
           </div>
         )}
 
-        {/* Sort and Filter */}
-        <div className="flex justify-end items-center space-x-4 mb-6">
-          <button className="flex items-center space-x-1 text-gray-600">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-            </svg>
-            <span className="text-sm font-medium">Sort</span>
-          </button>
-          <button className="flex items-center space-x-1 text-gray-600">
+        {/* Filter */}
+        <div className="flex justify-end items-center mb-6 relative filter-dropdown-container z-10">
+          <button
+            onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+            className="flex items-center gap-1 text-gray-600 text-sm hover:text-gray-800 border rounded px-2 py-1 bg-white"
+          >
             <Filter className="w-4 h-4" />
-            <span className="text-sm font-medium">Filter</span>
+            Filter
           </button>
+          {showFilterDropdown && (
+            <div className="absolute top-8 right-0 bg-white border border-gray-200 rounded shadow-md text-sm text-gray-700 w-[280px]">
+              <div className="p-4">
+                {/* Filter Options */}
+                <div className="flex gap-4 mb-4">
+                  {/* Price Filter Section */}
+                  <div className="flex flex-col gap-2" style={{width: '120px'}}>
+                    <div className="font-semibold mb-1">Price</div>
+                    <button 
+                      onClick={() => setPriceFilter('')}
+                      className={`text-left px-3 py-1 rounded hover:bg-gray-100 whitespace-nowrap ${priceFilter === '' ? 'bg-blue-50 text-blue-600' : ''}`}
+                    >
+                      All
+                    </button>
+                    <button 
+                      onClick={() => setPriceFilter('low')}
+                      className={`text-left px-3 py-1 rounded hover:bg-gray-100 whitespace-nowrap ${priceFilter === 'low' ? 'bg-blue-50 text-blue-600' : ''}`}
+                    >
+                      Low (≤$5)
+                    </button>
+                    <button 
+                      onClick={() => setPriceFilter('high')}
+                      className={`text-left px-3 py-1 rounded hover:bg-gray-100 whitespace-nowrap ${priceFilter === 'high' ? 'bg-blue-50 text-blue-600' : ''}`}
+                    >
+                      High (>$5)
+                    </button>
+                  </div>
+                  
+                  {/* Condition Filter Section */}
+                  <div className="flex flex-col gap-2" style={{width: '120px'}}>
+                    <div className="font-semibold mb-1">Condition</div>
+                    <button 
+                      onClick={() => setConditionFilter('')}
+                      className={`text-left px-3 py-1 rounded hover:bg-gray-100 whitespace-nowrap ${conditionFilter === '' ? 'bg-blue-50 text-blue-600' : ''}`}
+                    >
+                      All
+                    </button>
+                    <button 
+                      onClick={() => setConditionFilter('used')}
+                      className={`text-left px-3 py-1 rounded hover:bg-gray-100 whitespace-nowrap ${conditionFilter === 'used' ? 'bg-blue-50 text-blue-600' : ''}`}
+                    >
+                      Used
+                    </button>
+                    <button 
+                      onClick={() => setConditionFilter('defect')}
+                      className={`text-left px-3 py-1 rounded hover:bg-gray-100 whitespace-nowrap ${conditionFilter === 'defect' ? 'bg-blue-50 text-blue-600' : ''}`}
+                    >
+                      Defect
+                    </button>
+                    <button 
+                      onClick={() => setConditionFilter('new')}
+                      className={`text-left px-3 py-1 rounded hover:bg-gray-100 whitespace-nowrap ${conditionFilter === 'new' ? 'bg-blue-50 text-blue-600' : ''}`}
+                    >
+                      New
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Clear Filter Button */}
+                <div className="border-t border-gray-200 pt-3">
+                  <button 
+                    onClick={() => {
+                      setPriceFilter('');
+                      setConditionFilter('');
+                      setShowFilterDropdown(false);
+                    }}
+                    className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-center font-medium"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Loading State */}
@@ -610,23 +718,6 @@ const addToCartHandler = async (product, qty = 1) => {
           </div>
         )}
 
-        {/* Suggested Products */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium text-gray-900">
-            Suggested products:
-          </h3>
-          <div className="flex space-x-3">
-            {suggestedCategories.map((category, index) => (
-              <button
-                key={index}
-                className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2 rounded-full flex items-center space-x-1 transition-colors"
-              >
-                <span className="font-medium">{category}</span>
-                <ChevronDown className="w-4 h-4 rotate-[-90deg]" />
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* Product Detail Modal */}

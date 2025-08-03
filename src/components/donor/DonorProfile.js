@@ -18,7 +18,7 @@ const DonorProfile = ({ onBack, onLogout }) => {
         const user = auth.currentUser;
         if (!user) return;
 
-        const docRef = doc(db, "donors", user.uid);
+        const docRef = doc(db, "users", user.uid);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
@@ -27,8 +27,12 @@ const DonorProfile = ({ onBack, onLogout }) => {
           setTempData(data);
         } else {
           // Create initial donor profile if it doesn't exist
+          const displayName = user.displayName || '';
+          const nameParts = displayName.split(' ');
           const initialData = {
-            name: user.displayName || '',
+            firstName: nameParts[0] || '',
+            lastName: nameParts.slice(1).join(' ') || '',
+            name: displayName, // Keep for backward compatibility
             email: user.email || '',
             location: '',
             imageUrl: user.photoURL || '',
@@ -56,9 +60,18 @@ const DonorProfile = ({ onBack, onLogout }) => {
   const handleSave = async () => {
     try {
       const user = auth.currentUser;
-      const docRef = doc(db, "donors", user.uid);
-      await updateDoc(docRef, { ...tempData });
-      setProfileData({ ...tempData });
+      const docRef = doc(db, "users", user.uid);
+      
+      // Update combined name field for backward compatibility
+      const updatedData = {
+        ...tempData,
+        name: tempData.firstName && tempData.lastName 
+          ? `${tempData.firstName} ${tempData.lastName}`
+          : tempData.firstName || tempData.lastName || tempData.name || ''
+      };
+      
+      await updateDoc(docRef, updatedData);
+      setProfileData(updatedData);
       setEditingField(null);
     } catch (error) {
       console.error("Failed to save:", error);
@@ -124,7 +137,7 @@ const DonorProfile = ({ onBack, onLogout }) => {
       console.log("🔗 Donor profile image URL:", downloadURL);
 
       // Update Firestore with new image URL
-      const docRef = doc(db, "donors", user.uid);
+      const docRef = doc(db, "users", user.uid);
       await updateDoc(docRef, { imageUrl: downloadURL });
 
       // Update local state
@@ -196,7 +209,7 @@ const DonorProfile = ({ onBack, onLogout }) => {
                 <img src={profileData.imageUrl} alt="Profile" className="w-full h-full object-cover" />
               ) : (
                 <div className="w-12 h-12 bg-blue-300 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
-                  {profileData.name?.charAt(0)?.toUpperCase() || '?'}
+                  {(profileData.firstName?.charAt(0) || profileData.name?.charAt(0))?.toUpperCase() || '?'}
                 </div>
               )}
               {imageUploading && (
@@ -233,26 +246,41 @@ const DonorProfile = ({ onBack, onLogout }) => {
       {/* Donor Name */}
       <div className="text-center mb-2">
         {editingField === 'name' ? (
-          <div className="flex items-center justify-center gap-2">
-            <input
-              type="text"
-              value={tempData.name}
-              onChange={(e) => setTempData({ ...tempData, name: e.target.value })}
-              className="text-xl font-bold text-center bg-white border border-blue-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter your name"
-            />
-            <Check 
-              onClick={handleSave} 
-              className="w-5 h-5 text-green-600 cursor-pointer hover:text-green-700" 
-            />
-            <X 
-              onClick={handleCancel} 
-              className="w-5 h-5 text-red-600 cursor-pointer hover:text-red-700" 
-            />
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={tempData.firstName || ''}
+                onChange={(e) => setTempData({ ...tempData, firstName: e.target.value })}
+                className="text-lg font-bold text-center bg-white border border-blue-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="First Name"
+              />
+              <input
+                type="text"
+                value={tempData.lastName || ''}
+                onChange={(e) => setTempData({ ...tempData, lastName: e.target.value })}
+                className="text-lg font-bold text-center bg-white border border-blue-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Last Name"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Check 
+                onClick={handleSave} 
+                className="w-5 h-5 text-green-600 cursor-pointer hover:text-green-700" 
+              />
+              <X 
+                onClick={handleCancel} 
+                className="w-5 h-5 text-red-600 cursor-pointer hover:text-red-700" 
+              />
+            </div>
           </div>
         ) : (
           <div className="flex items-center justify-center gap-2">
-            <h2 className="text-xl font-bold text-gray-900">{profileData.name || 'Your Name'}</h2>
+            <h2 className="text-xl font-bold text-gray-900">
+              {profileData.firstName && profileData.lastName 
+                ? `${profileData.firstName} ${profileData.lastName}`
+                : profileData.name || 'Your Name'}
+            </h2>
             <Edit3 
               onClick={() => handleEdit('name')} 
               className="w-4 h-4 text-gray-500 cursor-pointer hover:text-blue-600 transition-colors" 

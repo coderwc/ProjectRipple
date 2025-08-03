@@ -2,17 +2,30 @@ import React, { useEffect, useState } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 
-import { ArrowLeft, ArrowUpDown, Heart } from 'lucide-react';
+import { ArrowLeft, Filter } from 'lucide-react';
 
-const sortOptions = [
-  { label: 'Kindness Cup ↑', value: 'kindness-asc' },
-  { label: 'Kindness Cup ↓', value: 'kindness-desc' }
+const kindnessCupOptions = [
+  { label: 'All', value: 'all' },
+  { label: 'Low (0-33%)', value: 'low' },
+  { label: 'Half (34-66%)', value: 'half' },
+  { label: 'High (67-100%)', value: 'high' }
+];
+
+const timeOptions = [
+  { label: 'All Time', value: 'all' },
+  { label: 'Ending in one week', value: 'week' },
+  { label: 'Ending in two weeks', value: 'two-weeks' },
+  { label: 'Ending in a month', value: 'month' }
 ];
 
 const CategoryFeed = ({ onBack, onSelectPost, categoryName = "Natural Disasters" }) => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [sortOption, setSortOption] = useState(null);
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [filterOptions, setFilterOptions] = useState({
+    kindnessCup: 'all',
+    time: 'all'
+  });
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -66,10 +79,74 @@ const CategoryFeed = ({ onBack, onSelectPost, categoryName = "Natural Disasters"
     }
   };
 
-  const sortedPosts = [...posts].sort((a, b) => {
-    if (sortOption === 'kindness-asc') return a.kindness - b.kindness;
-    if (sortOption === 'kindness-desc') return b.kindness - a.kindness;
-    return 0;
+  const handleKindnessCupFilterChange = (value) => {
+    const newFilters = { ...filterOptions, kindnessCup: value };
+    setFilterOptions(newFilters);
+    
+    // Close popup if both filters are selected (and not default values)
+    if (newFilters.time !== 'all' && value !== 'all') {
+      setShowFilterMenu(false);
+    }
+  };
+
+  const handleTimeFilterChange = (value) => {
+    const newFilters = { ...filterOptions, time: value };
+    setFilterOptions(newFilters);
+    
+    // Close popup if both filters are selected (and not default values)
+    if (newFilters.kindnessCup !== 'all' && value !== 'all') {
+      setShowFilterMenu(false);
+    }
+  };
+
+  const handleClearFilters = () => {
+    setFilterOptions({
+      kindnessCup: 'all',
+      time: 'all'
+    });
+    setShowFilterMenu(false);
+  };
+
+  const filteredPosts = [...posts].filter((post) => {
+    // Kindness Cup filter
+    let passesKindnessFilter = true;
+    if (filterOptions.kindnessCup !== 'all') {
+      const progress = post.progress || 0;
+      switch (filterOptions.kindnessCup) {
+        case 'low':
+          passesKindnessFilter = progress <= 33;
+          break;
+        case 'half':
+          passesKindnessFilter = progress > 33 && progress <= 66;
+          break;
+        case 'high':
+          passesKindnessFilter = progress > 66;
+          break;
+        default:
+          passesKindnessFilter = true;
+      }
+    }
+    
+    // Time filter
+    let passesTimeFilter = true;
+    if (filterOptions.time !== 'all') {
+      const remainingDays = post.remainingDays || 0;
+      switch (filterOptions.time) {
+        case 'week':
+          passesTimeFilter = remainingDays <= 7;
+          break;
+        case 'two-weeks':
+          passesTimeFilter = remainingDays <= 14;
+          break;
+        case 'month':
+          passesTimeFilter = remainingDays <= 30;
+          break;
+        default:
+          passesTimeFilter = true;
+      }
+    }
+    
+    return passesKindnessFilter && passesTimeFilter;
   });
 
   if (loading) {
@@ -96,29 +173,72 @@ const CategoryFeed = ({ onBack, onSelectPost, categoryName = "Natural Disasters"
             </button>
             <h1 className="text-xl font-medium text-gray-900">{categoryName}</h1>
           </div>
-          <div className="relative">
-            <select
-              className="text-sm border rounded px-2 py-1 bg-white text-gray-700"
-              onChange={(e) => setSortOption(e.target.value)}
-              defaultValue=""
+          <div className="relative z-10">
+            <button
+              onClick={() => setShowFilterMenu(prev => !prev)}
+              className="flex items-center gap-1 text-gray-600 text-sm hover:text-gray-800 border rounded px-2 py-1 bg-white"
             >
-              <option value="" disabled>Sort</option>
-              {sortOptions.map(option => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
+              <Filter className="w-4 h-4" />
+              Filter
+            </button>
+            {showFilterMenu && (
+              <div className="absolute top-8 right-0 bg-white border border-gray-200 rounded shadow-md text-sm text-gray-700 min-w-[400px]">
+                <div className="p-4">
+                  {/* Filter Options */}
+                  <div className="flex gap-8 mb-4">
+                    {/* Kindness Cup Filter Section */}
+                    <div className="flex flex-col gap-2">
+                      <div className="font-semibold mb-1">Kindness Cup</div>
+                      {kindnessCupOptions.map((option) => (
+                        <button 
+                          key={option.value}
+                          onClick={() => handleKindnessCupFilterChange(option.value)}
+                          className={`text-left px-3 py-1 rounded hover:bg-gray-100 whitespace-nowrap ${filterOptions.kindnessCup === option.value ? 'bg-blue-50 text-blue-600' : ''}`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                    
+                    {/* Time Filter Section */}
+                    <div className="flex flex-col gap-2">
+                      <div className="font-semibold mb-1">Time Filter</div>
+                      {timeOptions.map((option) => (
+                        <button 
+                          key={option.value}
+                          onClick={() => handleTimeFilterChange(option.value)}
+                          className={`text-left px-3 py-1 rounded hover:bg-gray-100 whitespace-nowrap ${filterOptions.time === option.value ? 'bg-blue-50 text-blue-600' : ''}`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Clear Filter Button */}
+                  <div className="border-t border-gray-200 pt-3">
+                    <button 
+                      onClick={handleClearFilters}
+                      className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-center font-medium"
+                    >
+                      Clear Filters
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* News Items or Empty Message */}
-      {sortedPosts.length === 0 ? (
+      {filteredPosts.length === 0 ? (
         <div className="text-center text-gray-500 mt-20 text-sm">
           No posts found in this category.
         </div>
       ) : (
         <div className="space-y-3">
-          {sortedPosts.map((item) => (
+          {filteredPosts.map((item) => (
             <div
               key={item.id}
               className="bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-all duration-200 border border-gray-100"
@@ -142,9 +262,8 @@ const CategoryFeed = ({ onBack, onSelectPost, categoryName = "Natural Disasters"
                 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="font-semibold text-gray-900 text-base leading-tight line-clamp-2 pr-2">{item.headline}</h3>
-                    <Heart className="w-5 h-5 text-gray-300 hover:text-red-500 cursor-pointer transition-colors flex-shrink-0" />
+                  <div className="mb-3">
+                    <h3 className="font-semibold text-gray-900 text-base leading-tight line-clamp-2">{item.headline}</h3>
                   </div>
                   
                   <p className="text-sm text-blue-600 font-medium mb-3">{item.source}</p>

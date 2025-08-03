@@ -68,10 +68,6 @@ const Story = ({ onBack, postId, postData }) => {
             </div>
           )}
 
-          {/* CTA Button */}
-          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg text-sm font-semibold">
-            DONATE NOW
-          </button>
         </div>
       </div>
     </div>
