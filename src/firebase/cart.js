@@ -12,6 +12,7 @@ import {
   where,
   getDoc
 } from 'firebase/firestore';
+import { recordItemDonations } from './posts';
 
 // ✅ Save item to cart (new or update)
 export const saveCartItem = async (product, quantity, charityId, charityName) => {
@@ -151,7 +152,7 @@ export const createOrdersFromCart = async () => {
     }
 
     // ✅ Create order
-    return addDoc(ordersRef, {
+    const orderDoc = await addDoc(ordersRef, {
       donorId: user.uid,
       charityId,
       charityName,
@@ -160,6 +161,24 @@ export const createOrdersFromCart = async () => {
       status: 'Pending',
       createdAt: serverTimestamp()
     });
+
+    // ✅ Record item donations in separate collection
+    try {
+      const itemDonations = orderItems.map(item => ({
+        itemName: item.name,
+        quantity: item.quantity,
+        itemId: item.productId
+      }));
+      
+      console.log('🎁 Recording item donations for charityId:', charityId, 'items:', itemDonations);
+      await recordItemDonations(charityId, itemDonations, user.uid, user.displayName || user.email);
+      console.log('✅ Item donations recorded successfully');
+    } catch (error) {
+      console.error('❌ Failed to record item donations:', error);
+      // Don't throw error to avoid breaking order creation
+    }
+
+    return orderDoc;
   });
 
   await Promise.all(batchCreates);

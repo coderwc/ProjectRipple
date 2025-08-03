@@ -23,7 +23,7 @@ function DonorApp({ user, onLogout }) {
   const [selectedPostData, setSelectedPostData] = useState(null);
   const [selectedItemFilter, setSelectedItemFilter] = useState(null); // Track selected item for filtering
   const [previousView, setPreviousView] = useState('home'); // Track previous view for cart navigation
-  const { setCharity, clearCart, getTotalItems } = useCart();
+  const { setCharity, clearCart, getTotalItems, getUniqueProducts } = useCart();
 
   const handleSelectCategory = (categoryName) => {
     setSelectedCategory(categoryName);
@@ -234,6 +234,9 @@ const handleViewCharityProfile = (charityId) => {
       {currentView === 'checkout' && (
         <Checkout
           onGoBack={handleBackFromCheckout}
+          selectedCharity={selectedCharity}
+          cartItems={getUniqueProducts()}
+          user={user}
         />
       )}
       

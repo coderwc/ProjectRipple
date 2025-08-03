@@ -1,6 +1,6 @@
 // src/api/posts.js - Updated to use Firebase
-import { createPost as createPostFirebase, getPosts, getPostsByCharity } from '../firebase/posts';
-import { createDonation, getDonationsByPost } from '../firebase/donations';
+import { createPost as createPostFirebase, getPosts, getPostsByCharity, getPostByCharityAndItem } from '../firebase/posts';
+import { createDonation, createItemDonation, getDonationsByPost } from '../firebase/donations';
 
 const API_BASE_URL = 'http://localhost:5001/api';
 
@@ -38,6 +38,17 @@ export const getCharityPosts = async (charityId) => {
   }
 };
 
+// Get specific post by charity and item ID - uses Firebase
+export const getPostByCharityAndItemAPI = async (charityId, itemId) => {
+  try {
+    const post = await getPostByCharityAndItem(charityId, itemId);
+    return { success: true, post };
+  } catch (error) {
+    console.error('Error fetching post by charity and item:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 // Create donation - uses Firebase
 export const createDonationAPI = async (donationData) => {
   try {
@@ -45,6 +56,17 @@ export const createDonationAPI = async (donationData) => {
     return { success: true, donation };
   } catch (error) {
     console.error('Error creating donation:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Create item donation - uses Firebase
+export const createItemDonationAPI = async (donationData) => {
+  try {
+    const result = await createItemDonation(donationData);
+    return result;
+  } catch (error) {
+    console.error('Error creating item donation:', error);
     return { success: false, error: error.message };
   }
 };

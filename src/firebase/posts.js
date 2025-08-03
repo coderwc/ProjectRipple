@@ -4,6 +4,8 @@ import {
   addDoc, 
   getDocs, 
   doc, 
+  getDoc,
+  setDoc,
   updateDoc, 
   deleteDoc,
   increment,
@@ -81,13 +83,16 @@ export const createPost = async (postData) => {
       authorId: user.uid, // ← REQUIRED for security rules
       authorName: user.displayName || user.email || 'Anonymous',
       authorEmail: user.email,
-      charityId: postData.charityId || user.uid,
+      charityId: user.uid, // ← Always use authenticated user's UID for consistency
       charityName: postData.charityName || user.displayName || 'Anonymous Charity',
       category: postData.category || 'Uncategorized', // ← Add category field
       headline: postData.headline,
       storyDescription: postData.storyDescription,
       deadline: postData.deadline || '',
-      items: postData.items || [],
+      items: postData.items?.map(item => ({
+        ...item,
+        donatedQuantity: 0 // Track how many of this item have been donated
+      })) || [],
       imageUrl: imageUrl,
       status: 'active',
       donationsReceived: 0,
@@ -102,8 +107,12 @@ export const createPost = async (postData) => {
     console.log('🔍 User UID (should match charityId):', user.uid);
     console.log('🔍 Post charityId:', newPost.charityId);
     
-    // Store posts directly in charities collection
-    const docRef = await addDoc(collection(db, 'charities'), newPost);
+    // Store posts directly in charities collection using charityID_itemID format
+    // Generate post ID by combining charity UID with first item ID (or timestamp if no items)
+    const firstItemId = postData.items?.[0]?.id || Date.now();
+    const postId = `${user.uid}_${firstItemId}`;
+    const docRef = doc(db, 'charities', postId);
+    await setDoc(docRef, newPost);
     
     console.log('✅ Post created with ID:', docRef.id);
     console.log('✅ Post saved to collection: charities');
@@ -113,7 +122,7 @@ export const createPost = async (postData) => {
     return {
       success: true,
       post: {
-        id: docRef.id,
+        id: postId,
         ...newPost,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -221,10 +230,39 @@ export const getPostsByCharity = async (charityId) => {
   }
 };
 
+// Get a specific post by charityID_itemID format
+export const getPostByCharityAndItem = async (charityId, itemId) => {
+  try {
+    const postId = `${charityId}_${itemId}`;
+    console.log('🔍 Fetching post with constructed ID:', postId);
+    
+    const docRef = doc(db, 'charities', postId);
+    const docSnap = await getDoc(docRef);
+    
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      console.log('✅ Post found:', data);
+      
+      return {
+        id: docSnap.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt
+      };
+    } else {
+      console.warn('❌ No post found with ID:', postId);
+      return null;
+    }
+  } catch (error) {
+    console.error('❌ Error fetching post by charity and item:', error);
+    throw new Error('Failed to fetch post');
+  }
+};
+
 // Update post statistics (when donations are made)
 export const updatePostStats = async (postId, donationAmount = 0) => {
   try {
-    const postRef = doc(db, 'posts', postId);
+    const postRef = doc(db, 'charities', postId); // Updated to use charities collection
     
     const updateData = {
       donorCount: increment(1),
@@ -241,6 +279,64 @@ export const updatePostStats = async (postId, donationAmount = 0) => {
   } catch (error) {
     console.error('❌ Post stats update error:', error);
     throw new Error('Failed to update post statistics');
+  }
+};
+
+// Record item donations in separate collection (avoids permission issues)
+export const recordItemDonations = async (postId, itemDonations, donorId, donorName) => {
+  try {
+    console.log('🔄 Recording item donations for post:', postId, 'with data:', itemDonations);
+    
+    // Create individual donation records for each item
+    const donationPromises = itemDonations.map(async (item) => {
+      const donationRecord = {
+        postId: postId,
+        donorId: donorId,
+        donorName: donorName,
+        itemName: item.itemName,
+        quantity: item.quantity,
+        itemId: item.itemId || null,
+        createdAt: serverTimestamp()
+      };
+      
+      return addDoc(collection(db, 'item_donations'), donationRecord);
+    });
+    
+    await Promise.all(donationPromises);
+    console.log('✅ Item donations recorded successfully for post:', postId);
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Item donations record error:', error);
+    throw new Error(`Failed to record item donations: ${error.message}`);
+  }
+};
+
+// Get total donated quantities for a charity post
+export const getItemDonationTotals = async (postId) => {
+  try {
+    const q = query(
+      collection(db, 'item_donations'),
+      where('postId', '==', postId)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const donationTotals = {};
+    
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      const itemName = data.itemName;
+      
+      if (!donationTotals[itemName]) {
+        donationTotals[itemName] = 0;
+      }
+      donationTotals[itemName] += data.quantity;
+    });
+    
+    console.log('✅ Retrieved donation totals for post:', postId, donationTotals);
+    return donationTotals;
+  } catch (error) {
+    console.error('❌ Error fetching donation totals:', error);
+    return {};
   }
 };
 
@@ -398,7 +494,7 @@ export const createImpactPost = async (impactData) => {
       authorId: user.uid,
       authorName: user.displayName || user.email || 'Anonymous',
       authorEmail: user.email,
-      charityId: impactData.charityId || user.uid,
+      charityId: user.uid, // ← Always use authenticated user's UID for consistency
       charityName: impactData.charityName || user.displayName || 'Anonymous Charity',
       caption: impactData.caption || '',
       drive: impactData.drive || '',
@@ -413,8 +509,11 @@ export const createImpactPost = async (impactData) => {
     
     console.log('🔍 Impact post data being sent to Firestore:', newImpactPost);
     
-    // Store in charities collection (same as regular posts)
-    const docRef = await addDoc(collection(db, 'charities'), newImpactPost);
+    // Store in charities collection using charityID_impact_timestamp format
+    // Generate a unique impact post ID by combining user UID with 'impact' and timestamp
+    const impactPostId = `${user.uid}_impact_${Date.now()}`;
+    const docRef = doc(db, 'charities', impactPostId);
+    await setDoc(docRef, newImpactPost);
     
     console.log('✅ Impact post created with ID:', docRef.id);
     console.log('✅ Impact post saved to collection: charities');
@@ -422,7 +521,7 @@ export const createImpactPost = async (impactData) => {
     return {
       success: true,
       impact: {
-        id: docRef.id,
+        id: impactPostId,
         ...newImpactPost,
         images: imageUrls, // Return Firebase URLs
         createdAt: new Date().toISOString(),
