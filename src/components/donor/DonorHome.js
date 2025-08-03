@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Search,
   ShoppingCart,
@@ -10,11 +10,12 @@ import {
   Stethoscope,
   Building2,
   AlertTriangle,
-  Filter,
-  SortAsc,
-  Droplet,
   LogOut
 } from 'lucide-react';
+
+import { useCart } from '../shared/CartContext';
+import { getLatestCharityPosts } from '../../firebase/posts';
+import SortFilterBar from './Donorcomponents/SortFilterBar';
 
 const categories = [
   { name: 'Natural Disasters', icon: AlertTriangle },
@@ -27,34 +28,80 @@ const categories = [
   { name: 'Infrastructure', icon: Building2 },
 ];
 
-const urgentPosts = [
-  { title: 'Emergency Shelter', ngo: 'Relief Org', progress: 82 },
-  { title: 'Animal Rescue Fund', ngo: 'PawSafe', progress: 61 },
-  { title: 'Flood Relief Supplies', ngo: 'NGO WaterAid', progress: 92 },
-];
+export default function DonorHome({
+  user,
+  onSelectCategory,
+  onSelectPost,
+  onCharitySelect,
+  onGoToCart,
+  onLogout
+}) {
+  const { getTotalItems } = useCart();
+  const [exploreDrives, setExploreDrives] = useState([]);
+  const [sortOption, setSortOption] = useState(null);
 
-const exploreDrives = [
-  { id: 4, title: 'Books for Kids', org: 'EduFuture', progress: 45, daysLeft: 12 },
-  { id: 5, title: 'Medical Camp Aid', org: 'CureMore', progress: 73, daysLeft: 28 },
-  { id: 6, title: 'New Shelter Homes', org: 'SafeHaven', progress: 35, daysLeft: 20 },
-];
+  useEffect(() => {
+    const fetchExploreDrives = async () => {
+      try {
+        const response = await getLatestCharityPosts(8);
+        if (response.success && response.posts) {
+          const formattedPosts = response.posts.map(post => {
+            const today = new Date();
+            const target = new Date(post.deadline);
+            const diffDays = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+            const daysLeft = diffDays > 0 ? diffDays : 0;
 
-export default function DonorHome({ user, onSelectCategory, onSelectPost, onLogout }) {
+            return {
+              id: post.id,
+              title: post.headline,
+              org: post.charityName || 'Unknown Org',
+              progress: post.donationsReceived || 0,
+              daysLeft,
+              charityData: {
+                id: post.charityId,
+                name: post.charityName,
+                description: post.storyDescription
+              }
+            };
+          });
+
+          setExploreDrives(formattedPosts);
+        }
+      } catch (error) {
+        console.error('❌ Failed to load explore posts:', error);
+      }
+    };
+
+    fetchExploreDrives();
+  }, []);
+
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to log out?")) {
+      onLogout();
+    }
+  };
+
+  const sortedDrives = [...exploreDrives].sort((a, b) => {
+    switch (sortOption) {
+      case 'alphabetical':
+        return a.title.localeCompare(b.title);
+      case 'daysLeft':
+        return a.daysLeft - b.daysLeft;
+      case 'progress-high':
+        return b.progress - a.progress;
+      case 'progress-low':
+        return a.progress - b.progress;
+      default:
+        return 0;
+    }
+  });
+
   return (
     <div className="max-w-sm mx-auto p-4 bg-gray-50 min-h-screen relative">
-      {/* Logout Button */}
-      <button
-        onClick={onLogout}
-        className="absolute top-4 right-4 text-gray-500 hover:text-red-600 transition-colors"
-        title="Logout"
-      >
-        <LogOut className="w-5 h-5" />
-      </button>
-
-      {/* Top Bar */}
-      <div className="flex justify-between items-center mb-4">
+      {/* Top Navigation */}
+      <div className="flex items-center mb-4">
         <div className="w-10 h-10 bg-gray-300 rounded-full" />
-        <div className="flex-1 mx-3 relative">
+        <div className="flex-1 mx-2 mr-4 relative">
           <Search className="absolute left-2 top-2.5 text-gray-400 w-4 h-4" />
           <input
             type="text"
@@ -62,10 +109,29 @@ export default function DonorHome({ user, onSelectCategory, onSelectPost, onLogo
             className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-full"
           />
         </div>
-        <ShoppingCart className="text-gray-600 w-6 h-6" />
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={onGoToCart}
+            className="relative text-gray-600 hover:text-blue-600 transition-colors"
+          >
+            <ShoppingCart className="w-6 h-6" />
+            {getTotalItems() > 0 && (
+              <span className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                {getTotalItems()}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={handleLogout}
+            className="text-gray-500 hover:text-red-600 transition-colors"
+            title="Logout"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
-      {/* Category Grid */}
+      {/* Category Selection */}
       <h2 className="text-sm font-semibold text-gray-700 mb-2">Donate by Category</h2>
       <div className="grid grid-cols-4 gap-3 mb-4">
         {categories.map(({ name, icon: Icon }) => (
@@ -80,52 +146,38 @@ export default function DonorHome({ user, onSelectCategory, onSelectPost, onLogo
         ))}
       </div>
 
-      {/* Most Urgent */}
-      <div className="mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-2">Most Urgent</h2>
-        <div className="flex space-x-4 overflow-x-auto pb-2">
-          {urgentPosts.map((post, index) => (
-            <div
-              key={index}
-              className="min-w-[160px] shrink-0 p-4 bg-white rounded-lg shadow-sm border border-gray-200"
-            >
-              <div className="w-full h-24 bg-gray-100 rounded mb-2"></div>
-              <h3 className="text-sm font-semibold">{post.title}</h3>
-              <p className="text-xs text-gray-500">{post.ngo}</p>
-              <p className="text-xs text-blue-600 mt-1">{post.progress}% full</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Explore + Sort/Filter */}
+      {/* Explore and Sort */}
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-sm font-semibold text-gray-700">Explore</h2>
-        <div className="flex items-center gap-2 text-gray-500 text-xs">
-          <SortAsc className="w-4 h-4" />
-          <span>Sort</span>
-          <Filter className="w-4 h-4 ml-4" />
-          <span>Filter</span>
-        </div>
+        <SortFilterBar onSortChange={setSortOption} />
       </div>
 
-      {/* Explore Feed */}
+      {/* Explore Posts */}
       <div className="space-y-3 pb-24">
-        {exploreDrives.map((drive) => (
+        {sortedDrives.map((drive) => (
           <div
             key={drive.id}
+            className="bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-all duration-200 border border-gray-100"
             onClick={() => onSelectPost(drive.id)}
-            className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm cursor-pointer"
           >
-            <div className="h-20 bg-gray-200 rounded mb-2" />
-            <h3 className="text-sm font-semibold mb-1">{drive.title}</h3>
-            <p className="text-xs text-gray-500 mb-1">{drive.org}</p>
-            <div className="flex justify-between items-center text-xs text-gray-500">
-              <div className="flex items-center gap-1">
-                <Droplet className="w-3 h-3 text-blue-500" />
-                <span>Kindness Cup: {drive.progress}%</span>
+            <div className="flex gap-4 items-start">
+              <div className="w-20 h-20 bg-gray-300 rounded-lg flex-shrink-0"></div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-gray-900 text-base leading-tight mb-1 line-clamp-2 pr-2">{drive.title}</h3>
+                <p className="text-sm text-blue-600 font-medium mb-3">{drive.org}</p>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-blue-600 font-medium">Kindness Cup: {drive.progress}%</span>
+                    <span className="text-gray-500">Remaining Days <strong className="text-gray-800">{drive.daysLeft}</strong></span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="bg-blue-500 h-full rounded-full transition-all duration-500 ease-out"
+                      style={{ width: `${drive.progress}%` }}
+                    ></div>
+                  </div>
+                </div>
               </div>
-              <span>{drive.daysLeft} days left</span>
             </div>
           </div>
         ))}

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Plus, Calendar, ChevronUp, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Plus, Calendar, ChevronUp, ChevronDown, Camera } from 'lucide-react';
 
 const CreatePostPage = ({
   selectedImage,
@@ -11,8 +11,11 @@ const CreatePostPage = ({
   onBack = () => {},
   onAddItems = () => {},
   onPostNeed = () => {},
-  onAIRecommendation = () => {}
+  onAIRecommendation = () => {},
+  onImageUpload
 }) => {
+  
+  // Add missing state variables
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const calendarRef = useRef(null);
@@ -106,6 +109,15 @@ const CreatePostPage = ({
       newDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), dayObj.day);
     }
     
+    // Validate date is within allowed range (today to 3 months from today)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time for comparison
+    const maxDate = new Date(today.getFullYear(), today.getMonth() + 3, today.getDate());
+    
+    if (newDate < today || newDate > maxDate) {
+      return; // Don't allow selection of invalid dates
+    }
+    
     setFormData({...formData, deadline: formatDate(newDate)});
     setIsCalendarOpen(false);
   };
@@ -113,6 +125,19 @@ const CreatePostPage = ({
   const navigateMonth = (direction) => {
     const newMonth = new Date(currentMonth);
     newMonth.setMonth(newMonth.getMonth() + direction);
+    
+    // Limit navigation to 3 months from today
+    const today = new Date();
+    const maxDate = new Date(today.getFullYear(), today.getMonth() + 3, today.getDate());
+    
+    if (direction > 0 && newMonth > maxDate) {
+      return; // Don't navigate beyond 3 months
+    }
+    
+    if (direction < 0 && newMonth < new Date(today.getFullYear(), today.getMonth(), 1)) {
+      return; // Don't navigate before current month
+    }
+    
     setCurrentMonth(newMonth);
   };
 
@@ -147,6 +172,44 @@ const CreatePostPage = ({
            currentMonth.getFullYear() === selectedYear;
   };
 
+  const isDateDisabled = (dayObj) => {
+    let checkDate;
+    
+    if (!dayObj.isCurrentMonth) {
+      const newMonth = new Date(currentMonth);
+      if (dayObj.isPrevMonth) {
+        newMonth.setMonth(newMonth.getMonth() - 1);
+      } else {
+        newMonth.setMonth(newMonth.getMonth() + 1);
+      }
+      newMonth.setDate(dayObj.day);
+      checkDate = newMonth;
+    } else {
+      checkDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), dayObj.day);
+    }
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const maxDate = new Date(today.getFullYear(), today.getMonth() + 3, today.getDate());
+    
+    return checkDate < today || checkDate > maxDate;
+  };
+
+  // Fixed image upload handler
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Use the parent function if provided, otherwise handle locally
+      if (onImageUpload) {
+        onImageUpload(file);
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => setSelectedImage(e.target.result);
+        reader.readAsDataURL(file);
+      }
+    }
+  };
+
   const days = getDaysInMonth();
 
   return (
@@ -172,19 +235,12 @@ const CreatePostPage = ({
 
       {/* Form Content */}
       <div className="px-4 py-6 pb-24">
-        {/* Add Image Section */}
+        {/* Image Upload Section */}
         <div className="mb-6">
           <input 
             type="file" 
             accept="image/*" 
-            onChange={(e) => {
-              const file = e.target.files[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => setSelectedImage(e.target.result);
-                reader.readAsDataURL(file);
-              }
-            }}
+            onChange={handleImageUpload}
             className="hidden" 
             id="image-upload" 
           />
@@ -199,7 +255,7 @@ const CreatePostPage = ({
               ) : (
                 <>
                   <div className="w-16 h-16 bg-gray-400 rounded-full flex items-center justify-center mb-3">
-                    <Plus className="w-8 h-8 text-white" />
+                    <Camera className="w-8 h-8 text-white" />
                   </div>
                   <span className="text-gray-400 font-medium">Add Image</span>
                 </>
@@ -240,6 +296,27 @@ const CreatePostPage = ({
           />
         </div>
 
+{/* Post Category Dropdown */}
+<div className="mb-6">
+  <label className="block text-lg font-bold text-gray-900 mb-2">Select Category</label>
+  <select
+    value={formData.category || ''}
+    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+    className="w-full p-3 bg-white border border-gray-300 rounded-md"
+    required
+  >
+    <option value="">Select a category</option>
+    <option value="Natural Disasters">Natural Disasters</option>
+    <option value="Animals">Animals</option>
+    <option value="Sustainability">Sustainability</option>
+    <option value="Education">Education</option>
+    <option value="Medical">Medical</option>
+    <option value="Non-profit">Non-profit</option>
+    <option value="Orphanage">Orphanage</option>
+    <option value="Infrastructure">Infrastructure</option>
+  </select>
+</div>
+
         {/* Deadline with Calendar */}
         <div className="mb-6">
           <label className="block text-lg font-bold text-gray-900 mb-2">Deadline</label>
@@ -279,23 +356,29 @@ const CreatePostPage = ({
 
                 {/* Calendar grid */}
                 <div className="grid grid-cols-7 gap-1 p-2">
-                  {days.map((dayObj, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleDateClick(dayObj)}
-                      className={`
-                        w-8 h-8 text-sm rounded flex items-center justify-center
-                        ${dayObj.isCurrentMonth 
-                          ? 'text-gray-900 hover:bg-gray-100' 
-                          : 'text-gray-400 hover:bg-gray-50'
-                        }
-                        ${isSelected(dayObj) ? 'bg-blue-500 text-white hover:bg-blue-600' : ''}
-                        ${isToday(dayObj) && !isSelected(dayObj) ? 'bg-gray-100 font-medium' : ''}
-                      `}
-                    >
-                      {dayObj.day}
-                    </button>
-                  ))}
+                  {days.map((dayObj, index) => {
+                    const disabled = isDateDisabled(dayObj);
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => !disabled && handleDateClick(dayObj)}
+                        disabled={disabled}
+                        className={`
+                          w-8 h-8 text-sm rounded flex items-center justify-center
+                          ${disabled 
+                            ? 'text-gray-300 cursor-not-allowed' 
+                            : dayObj.isCurrentMonth 
+                              ? 'text-gray-900 hover:bg-gray-100' 
+                              : 'text-gray-400 hover:bg-gray-50'
+                          }
+                          ${!disabled && isSelected(dayObj) ? 'bg-blue-500 text-white hover:bg-blue-600' : ''}
+                          ${!disabled && isToday(dayObj) && !isSelected(dayObj) ? 'bg-gray-100 font-medium' : ''}
+                        `}
+                      >
+                        {dayObj.day}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 {/* Footer */}

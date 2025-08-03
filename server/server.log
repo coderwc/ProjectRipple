@@ -1,0 +1,11 @@
+
+> charity-backend@1.0.0 start
+> node server.js
+
+🚀 Unified server running on http://localhost:5001
+📡 Available endpoints:
+   - Charity AI: POST /api/ai-recommendation
+   - Vendor API: /api/vendor/* (role-protected)
+   - Charity API: /api/charity/* (role-protected)
+   - Donor API: /api/donor/* (role-protected)
+🔥 Ready for Firebase integration with role-based access

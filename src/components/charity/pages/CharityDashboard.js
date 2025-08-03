@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { LogOut } from 'lucide-react';
 import Dashboard from './Dashboard';
 import CreatePostPage from './CreatePostPage';
 import AddItemsPage from './AddItemsPage';
@@ -7,10 +6,14 @@ import SuccessPage from './SuccessPage';
 import AIAnalysisPage from './AIAnalysisPage';
 import ProfilePage from './ProfilePage';
 import DriveDetailsPage from './DriveDetailsPage';
-import { createPost, getAIRecommendations } from '../../../api/posts';
+import SelectPostType from './SelectPostType';
+import ImpactPostDrafting from './ImpactPostDrafting';
+import ImpactGallery from './ImpactGallery';
+import { createPost, getAIRecommendations, getCharityPosts } from '../../../api/posts';
+import { deletePost, createImpactPost, getImpactPosts, deleteImpactPost } from '../../../firebase/posts';
 import { itemCategories } from '../constants/categories';
 
-const CharityDashboard = ({ user, onLogout }) => {
+const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
   // Page navigation
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [loading, setLoading] = useState(false);
@@ -36,59 +39,84 @@ const CharityDashboard = ({ user, onLogout }) => {
 
   // Dashboard state
   const [showMore, setShowMore] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('Natural Disasters');
   const [selectedDrive, setSelectedDrive] = useState(null);
-const [ongoingDrives, setOngoingDrives] = useState([
-  {
-    id: 1,
-    name: "Emergency Food Relief",
-    vendor: "Local Food Bank",
-    description: "Providing essential food supplies to families affected by recent flooding",
-    expiry: "2 Months",
-    image: "/api/placeholder/120/100",
-    items: [
-      { name: "Canned Food", quantity: 100 },
-      { name: "Rice Bags", quantity: 50 },
-      { name: "Water Bottles", quantity: 200 }
-    ]
-  },
-  {
-    id: 2,
-    name: "Winter Clothing Drive",
-    vendor: "Community Center",
-    description: "Collecting warm clothing for homeless individuals during winter season",
-    expiry: "3 Months",
-    image: "/api/placeholder/120/100",
-    items: [
-      { name: "Winter Coats", quantity: 30 },
-      { name: "Blankets", quantity: 50 },
-      { name: "Gloves", quantity: 100 }
-    ]
-  },
-  {
-    id: 3,
-    name: "School Supplies Support",
-    vendor: "Education Foundation",
-    description: "Supporting underprivileged students with essential school materials",
-    expiry: "1 Month",
-    image: "/api/placeholder/120/100",
-    items: [
-      { name: "Notebooks", quantity: 200 },
-      { name: "Pens", quantity: 500 },
-      { name: "Backpacks", quantity: 50 }
-    ]
-  }
-]);
 
-  // Logout handler with confirmation
-  const handleLogout = () => {
-    const confirmLogout = window.confirm("Are you sure you want to log out?");
-    if (confirmLogout) {
-      onLogout();
+  // Impact posts state
+  const [impactPosts, setImpactPosts] = useState([]);
+  const [selectedImpactPost, setSelectedImpactPost] = useState(null);
+
+  // State for real backend data only
+  const [ongoingDrives, setOngoingDrives] = useState([]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
+
+  // Load user's posts and impact posts on component mount
+  React.useEffect(() => {
+    const loadUserData = async () => {
+      if (user?.id) {
+        try {
+          setLoadingPosts(true);
+          console.log('🔍 Loading posts for user:', user.id);
+          
+          // Load fundraising posts
+          const response = await getCharityPosts(user.id);
+          console.log('📥 Loaded posts from Firebase:', response);
+          
+          // Load impact posts
+          const impactResponse = await getImpactPosts(user.id);
+          console.log('📥 Loaded impact posts from Firebase:', impactResponse);
+          
+          // Process impact posts (keep separate from drives)
+          if (impactResponse.success && impactResponse.impacts) {
+            setImpactPosts(impactResponse.impacts);
+            console.log('✅ Loaded impact posts:', impactResponse.impacts);
+          }
+          
+          // Process fundraising posts only (not impact posts)
+          if (response.success && response.posts && response.posts.length > 0) {
+            const posts = response.posts;
+            const formattedPosts = posts.map(post => ({
+              id: post.id,
+              name: post.headline,
+              vendor: post.charityName || user.name,
+              description: post.storyDescription,
+              expiry: post.deadline,
+              image: post.imageUrl || null,
+              items: post.items || [],
+              donationsReceived: post.donationsReceived || 0,
+              donorCount: post.donorCount || 0,
+              isUserPost: true
+            }));
+            
+            console.log('✅ Formatted user posts:', formattedPosts);
+            
+            // Set only real backend data
+            setOngoingDrives(formattedPosts);
+          } else {
+            console.log('📭 No user posts found');
+            setOngoingDrives([]);
+          }
+        } catch (error) {
+          console.error('❌ Error loading user posts:', error);
+        } finally {
+          setLoadingPosts(false);
+        }
+      } else {
+        setLoadingPosts(false);
+      }
+    };
+
+    loadUserData();
+  }, [user?.id]);
+
+  // Image upload handler
+  const handleImageUpload = (file) => {
+    if (file) {
+      setSelectedImage(URL.createObjectURL(file));
     }
   };
 
-  // MISSING FUNCTIONS - ADD THESE:
+
+  // Add item function
   const handleAddItem = () => {
     if (!selectedItemCategory || !itemName || quantity <= 0) {
       alert('Please fill in all fields correctly!');
@@ -109,76 +137,155 @@ const [ongoingDrives, setOngoingDrives] = useState([
     setItemName('');
     setQuantity(0);
     
-    // Go back to create post page
-    setCurrentPage('createPost');
+    // Go back to create post page  
+    setCurrentPage('RequestHelp');
   };
 
-const handlePostNeed = async () => {
-  if (!formData.headline || !formData.storyDescription || !formData.deadline) {
-    alert('Please fill in all required fields!');
-    return;
-  }
+  // Post creation function with image support
+  const handlePostNeed = async () => {
+    if (!formData.headline || !formData.storyDescription || !formData.deadline) {
+      alert('Please fill in all required fields!');
+      return;
+    }
 
-  if (addedItems.length === 0) {
-    alert('Please add at least one item to your post!');
-    return;
-  }
+    if (addedItems.length === 0) {
+      alert('Please add at least one item to your post!');
+      return;
+    }
 
-  try {
-    setLoading(true);
-    
-    const postData = {
-      headline: formData.headline,
-      storyDescription: formData.storyDescription,
-      deadline: formData.deadline,
-      items: addedItems,
-      image: selectedImage,
-      author: user?.name || 'Anonymous',
-      location: 'Singapore',
-      charityId: user?.id || Date.now(),
-      charityName: user?.name || 'Test Charity'
-    };
+    try {
+      setLoading(true);
+      
+  const postData = {
+  headline: formData.headline,
+  storyDescription: formData.storyDescription,
+  deadline: formData.deadline,
+  category: formData.category, // ✅ ADD THIS LINE
+  items: addedItems,
+  image: selectedImage,
+  author: user?.name || 'Anonymous',
+  location: 'Singapore',
+  charityId: user?.id,
+  charityName: user?.name
+};
 
-    // Call your API to create the post
-    const response = await createPost(postData);
-    
-    if (response.success) {
-      // 🎯 ADD THE NEW POST TO DASHBOARD
-      const newPost = {
-        id: Date.now(),
-        name: formData.headline,
-        vendor: user?.name || 'Hope Foundation',
-        description: formData.storyDescription,
-        expiry: formData.deadline,
-        image: selectedImage || "/api/placeholder/120/100",
-        items: addedItems
+      // Call your API to create the post
+      const response = await createPost(postData);
+      
+      if (response.success) {
+        // Create new post for dashboard with uploaded image
+        const newPost = {
+          id: response.post.id,
+          name: formData.headline,
+          vendor: user?.name,
+          description: formData.storyDescription,
+          expiry: formData.deadline,
+          image: response.post.imageUrl || selectedImage,
+          items: addedItems,
+          isUserPost: true // Mark as user post for delete button
+        };
+        
+        // Add to the top of ongoing drives
+        setOngoingDrives([newPost, ...ongoingDrives]);
+
+        // Reset form data
+        setFormData({
+          headline: '',
+          storyDescription: '',
+          deadline: ''
+        });
+        setAddedItems([]);
+        setSelectedImage(null);
+        
+        // Navigate to success page
+        setCurrentPage('success');
+      } else {
+        throw new Error(response.error || 'Failed to create post');
+      }
+      
+    } catch (error) {
+      console.error('Error creating post:', error);
+      alert(`Failed to create post: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle impact post creation (Firebase for text and images)
+  const handleImpactPost = async (postData) => {
+    try {
+      setLoading(true);
+      
+      const impactData = {
+        images: postData.images || [],
+        caption: postData.caption || '',
+        drive: postData.drive || '',
+        location: postData.location || '',
+        charityId: user?.id,
+        charityName: user?.name
       };
       
-      // Add to the top of ongoing drives
-      setOngoingDrives([newPost, ...ongoingDrives]);
-
-      // Reset form data
-      setFormData({
-        headline: '',
-        storyDescription: '',
-        deadline: ''
-      });
-      setAddedItems([]);
-      setSelectedImage(null);
+      // Save both text and images to Firebase
+      const response = await createImpactPost(impactData);
+      
+      if (response.success) {
+        // Firebase save successful
+        const newImpactPost = {
+          ...response.impact,
+          author: user?.name || 'Anonymous',
+          authorName: user?.name || 'Anonymous',
+          timestamp: response.impact.createdAt,
+          syncedToFirebase: true
+        };
+        
+        setImpactPosts([newImpactPost, ...impactPosts]);
+        console.log('✅ Impact post saved to Firebase (text and images)');
+        
+      } else {
+        // Firebase save failed - local fallback with blob URLs
+        console.log('⚠️ Firebase save failed, using local fallback');
+        const localImpactPost = {
+          id: Date.now(),
+          caption: postData.caption || '',
+          drive: postData.drive || '',
+          location: postData.location || '',
+          author: user?.name || 'Anonymous',
+          authorName: user?.name || 'Anonymous',
+          timestamp: new Date().toISOString(),
+          images: postData.images?.map(img => img.url) || [],
+          localOnly: true // Mark as completely local-only
+        };
+        
+        setImpactPosts([localImpactPost, ...impactPosts]);
+        console.log('✅ Impact post saved locally');
+      }
       
       // Navigate to success page
       setCurrentPage('success');
-    } else {
-      throw new Error(response.error || 'Failed to create post');
+      
+    } catch (error) {
+      console.error('Error creating impact post:', error);
+      
+      // Complete fallback - save everything locally
+      const fallbackPost = {
+        id: Date.now(),
+        caption: postData.caption || '',
+        drive: postData.drive || '',
+        location: postData.location || '',
+        author: user?.name || 'Anonymous',
+        authorName: user?.name || 'Anonymous',
+        timestamp: new Date().toISOString(),
+        images: postData.images?.map(img => img.url) || [],
+        localOnly: true
+      };
+      
+      setImpactPosts([fallbackPost, ...impactPosts]);
+      setCurrentPage('success');
+      console.log('✅ Impact post saved locally (complete fallback)');
+    } finally {
+      setLoading(false);
     }
-    
-  } catch (error) {
-    console.error('Error creating post:', error);
-    alert(`Failed to create post: ${error.message}`);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // AI Analysis Functions
   const analyzeArticle = async () => {
@@ -237,7 +344,7 @@ const handlePostNeed = async () => {
     });
 
     setAddedItems([...addedItems, ...convertedItems]);
-    setCurrentPage('createPost');
+    setCurrentPage('RequestHelp');
 
     // Reset AI state
     setArticleText('');
@@ -250,22 +357,57 @@ const handlePostNeed = async () => {
     setCurrentPage('driveDetails');
   };
 
-  // Logout Icon Component
-  const LogoutIcon = () => (
-    <button
-      onClick={handleLogout}
-      className="absolute top-6 right-4 flex items-center gap-1 text-sm text-gray-500 hover:text-red-600 transition-colors"
-      aria-label="Log out"
-      title="Logout"
-    >
-      <LogOut className="w-5 h-5" />
-    </button>
-  );
+  const handleImpactPostClick = (post) => {
+    setSelectedImpactPost(post);
+    setCurrentPage('impactGallery');
+  };
+
+  const handleDeleteDrive = async (drive) => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete "${drive.name}"?\n\nThis action cannot be undone.`
+    );
+    
+    if (!confirmDelete) return;
+    
+    try {
+      setLoading(true);
+      
+      await deletePost(user.id, drive.id);
+      
+      // Remove from local state
+      setOngoingDrives(prev => prev.filter(d => d.id !== drive.id));
+      
+      alert('Drive deleted successfully!');
+      
+    } catch (error) {
+      console.error('Error deleting drive:', error);
+      alert(`Failed to delete drive: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteImpactPost = async (post) => {
+    try {
+      setLoading(true);
+      
+      await deleteImpactPost(user.id, post.id);
+      
+      // Remove from local state
+      setImpactPosts(prev => prev.filter(p => p.id !== post.id));
+      
+      console.log('✅ Impact post deleted successfully');
+      
+    } catch (error) {
+      console.error('Error deleting impact post:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
-      {/* Logout Icon - Always visible */}
-      <LogoutIcon />
       
       {currentPage === 'driveDetails' && (
         <DriveDetailsPage
@@ -283,19 +425,48 @@ const handlePostNeed = async () => {
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
           onLogout={onLogout}
+          user={user}
+          onUserUpdate={onUserUpdate}
         />
       )}
       
-      {currentPage === 'aiAnalysis' && (
+{currentPage === 'aiAnalysis' && (
         <AIAnalysisPage
           articleText={articleText}
           setArticleText={setArticleText}
           aiAnalysis={aiAnalysis}
           generatedItems={generatedItems}
           setGeneratedItems={setGeneratedItems}
-          onBack={() => setCurrentPage('createPost')}
+          onBack={() => setCurrentPage('RequestHelp')}
           onAnalyze={analyzeArticle}
           onUseItems={useGeneratedItems}
+        />
+      )}
+
+      {currentPage === 'selectPostType' && (
+        <SelectPostType
+          setCurrentPage={setCurrentPage}
+          onBack={() => setCurrentPage('dashboard')}
+        />
+      )}
+
+      {currentPage === 'ImpactPostDrafting' && (
+        <ImpactPostDrafting
+          onBack={() => setCurrentPage('selectPostType')}
+          onShare={handleImpactPost}
+          availableDrives={ongoingDrives.map(drive => drive.name)}
+        />
+      )}
+
+      {currentPage === 'impactGallery' && (
+        <ImpactGallery
+          impactPosts={impactPosts}
+          selectedPost={selectedImpactPost}
+          onBack={() => {
+            setSelectedImpactPost(null);
+            setCurrentPage('dashboard');
+          }}
+          onDeletePost={handleDeleteImpactPost}
         />
       )}
       
@@ -307,14 +478,14 @@ const handlePostNeed = async () => {
           setItemName={setItemName}
           quantity={quantity}
           setQuantity={setQuantity}
-          onBack={() => setCurrentPage('createPost')}
+          onBack={() => setCurrentPage('RequestHelp')}
           onAddItem={handleAddItem}
           onPostNeed={handlePostNeed}
           itemCategories={itemCategories}
         />
       )}
       
-      {currentPage === 'createPost' && (
+      {currentPage === 'RequestHelp' && (
         <CreatePostPage
           selectedImage={selectedImage}
           setSelectedImage={setSelectedImage}
@@ -322,10 +493,11 @@ const handlePostNeed = async () => {
           setFormData={setFormData}
           addedItems={addedItems}
           setAddedItems={setAddedItems}
-          onBack={() => setCurrentPage('dashboard')}
+          onBack={() => setCurrentPage('selectPostType')}
           onAddItems={() => setCurrentPage('addItems')}
           onPostNeed={handlePostNeed}
           onAIRecommendation={() => setCurrentPage('aiAnalysis')}
+          onImageUpload={handleImageUpload}
         />
       )}
       
@@ -333,12 +505,15 @@ const handlePostNeed = async () => {
         <Dashboard
           showMore={showMore}
           setShowMore={setShowMore}
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
           ongoingDrives={ongoingDrives}
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
           onDriveClick={handleDriveClick}
+          onDeleteDrive={handleDeleteDrive}
+          user={user}
+          loadingPosts={loadingPosts}
+          impactPosts={impactPosts}
+          onImpactPostClick={handleImpactPostClick}
         />
       )}
     </>

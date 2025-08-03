@@ -1,18 +1,14 @@
-// src/api/posts.js
-const API_BASE_URL = 'http://localhost:5001/api';
+// src/api/posts.js - Updated to use Firebase
+import { createPost as createPostFirebase, getPosts, getPostsByCharity } from '../firebase/posts';
+import { createDonation, getDonationsByPost } from '../firebase/donations';
 
-// Create a new post
+const API_BASE_URL = 'http://localhost:3001/api';
+
+// Create a new post - now uses Firebase
 export const createPost = async (postData) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/posts/base64`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(postData)
-    });
-    
-    const result = await response.json();
+    // Use Firebase function instead of API call
+    const result = await createPostFirebase(postData);
     return result;
   } catch (error) {
     console.error('Error creating post:', error);
@@ -20,7 +16,51 @@ export const createPost = async (postData) => {
   }
 };
 
-// Get AI recommendations
+// Get posts - uses Firebase
+export const getPostsAPI = async (filters = {}) => {
+  try {
+    const posts = await getPosts(filters);
+    return { success: true, posts };
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Get posts by charity - uses Firebase
+export const getCharityPosts = async (charityId) => {
+  try {
+    const posts = await getPostsByCharity(charityId);
+    return { success: true, posts };
+  } catch (error) {
+    console.error('Error fetching charity posts:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Create donation - uses Firebase
+export const createDonationAPI = async (donationData) => {
+  try {
+    const donation = await createDonation(donationData);
+    return { success: true, donation };
+  } catch (error) {
+    console.error('Error creating donation:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Get donations for a post - uses Firebase
+export const getPostDonations = async (postId) => {
+  try {
+    const donations = await getDonationsByPost(postId);
+    return { success: true, donations };
+  } catch (error) {
+    console.error('Error fetching donations:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Get AI recommendations - still uses your backend server
 export const getAIRecommendations = async (description, headline, location) => {
   try {
     const response = await fetch(`${API_BASE_URL}/ai-recommendation`, {
@@ -39,7 +79,55 @@ export const getAIRecommendations = async (description, headline, location) => {
   }
 };
 
-// Register user
+// Get public charity profile by ID
+export const getCharityProfile = async (charityId) => {
+  try {
+    console.log('🔍 Fetching charity profile from API for ID:', charityId);
+    const response = await fetch(`${API_BASE_URL}/charity/public/${charityId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    
+    console.log('📡 API Response status:', response.status);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch charity profile');
+    }
+    
+    const result = await response.json();
+    console.log('✅ API Response data:', result);
+    return { success: true, charity: result };
+  } catch (error) {
+    console.error('❌ Error fetching charity profile:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Get post details by ID
+export const getPostDetails = async (postId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/donor/posts/${postId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch post details');
+    }
+    
+    const result = await response.json();
+    return { success: true, post: result };
+  } catch (error) {
+    console.error('Error fetching post details:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// User registration - now handled by Firebase Auth (you can remove these if using Firebase auth completely)
 export const registerUser = async (userData) => {
   try {
     const response = await fetch(`${API_BASE_URL}/users/register`, {
@@ -58,7 +146,7 @@ export const registerUser = async (userData) => {
   }
 };
 
-// Login user
+// User login - now handled by Firebase Auth (you can remove these if using Firebase auth completely)
 export const loginUser = async (email) => {
   try {
     const response = await fetch(`${API_BASE_URL}/users/login`, {
@@ -66,6 +154,7 @@ export const loginUser = async (email) => {
       headers: {
         'Content-Type': 'application/json',
       },
+    
       body: JSON.stringify({ email })
     });
     
