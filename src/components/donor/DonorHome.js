@@ -16,10 +16,12 @@ import {
   Package,
   User
 } from 'lucide-react';
+
 import { useCart } from '../shared/CartContext';
 import { getLatestCharityPosts } from '../../firebase/posts';
 import { auth, db } from '../../firebase/config';
 import { doc, getDoc } from 'firebase/firestore';
+import SortFilterBar from './Donorcomponents/SortFilterBar';
 
 const categories = [
   { name: 'Natural Disasters', icon: AlertTriangle },
@@ -44,6 +46,7 @@ export default function DonorHome({
   const { getTotalItems } = useCart();
   const [exploreDrives, setExploreDrives] = useState([]);
   const [donorProfile, setDonorProfile] = useState(null);
+  const [sortOption, setSortOption] = useState('default');
 
   useEffect(() => {
     const fetchExploreDrives = async () => {
@@ -51,18 +54,17 @@ export default function DonorHome({
         const response = await getLatestCharityPosts(8);
         if (response.success && response.posts) {
           const formattedPosts = response.posts.map(post => {
-            const remainingDays = (() => {
-              const today = new Date();
-              const target = new Date(post.deadline);
-              const diff = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
-              return diff > 0 ? diff : 0;
-            })();
+            const today = new Date();
+            const target = new Date(post.deadline);
+            const diffDays = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+            const daysLeft = diffDays > 0 ? diffDays : 0;
+
             return {
               id: post.id,
               title: post.headline,
               org: post.charityName || 'Unknown Org',
-              progress: Math.floor(Math.random() * 50) + 30,
-              daysLeft: remainingDays,
+              progress: post.donationsReceived || 0,
+              daysLeft,
               charityData: {
                 id: post.charityId,
                 name: post.charityName,
@@ -70,6 +72,7 @@ export default function DonorHome({
               }
             };
           });
+
           setExploreDrives(formattedPosts);
         }
       } catch (error) {
@@ -101,39 +104,34 @@ export default function DonorHome({
     fetchDonorProfile();
   }, []);
 
-  const urgentPosts = [
-    { 
-      id: 1,
-      title: 'Emergency Shelter', 
-      ngo: 'Relief Org', 
-      progress: 82,
-      charityData: { id: 1, name: 'Relief Org', description: 'Emergency relief organization' }
-    },
-    { 
-      id: 2,
-      title: 'Animal Rescue Fund', 
-      ngo: 'PawSafe', 
-      progress: 61,
-      charityData: { id: 2, name: 'PawSafe', description: 'Animal rescue and protection' }
-    },
-    { 
-      id: 3,
-      title: 'Flood Relief Supplies', 
-      ngo: 'NGO WaterAid', 
-      progress: 92,
-      charityData: { id: 3, name: 'NGO WaterAid', description: 'Water and sanitation aid' }
-    },
-  ];
-
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to log out?")) {
+      onLogout();
+    }
+  };
 
   const handleShopForCharity = (charityData, event) => {
     event.stopPropagation(); // Prevent triggering the post selection
     onCharitySelect(charityData);
   };
 
+  const sortedDrives = [...exploreDrives].sort((a, b) => {
+    switch (sortOption) {
+      case 'alphabetical':
+        return a.title.localeCompare(b.title);
+      case 'daysLeft':
+        return a.daysLeft - b.daysLeft;
+      case 'progress-high':
+        return b.progress - a.progress;
+      case 'progress-low':
+        return a.progress - b.progress;
+      default:
+        return 0;
+    }
+  });
   return (
     <div className="max-w-sm mx-auto p-4 bg-gray-50 min-h-screen relative">
-      {/* Top Bar */}
+      {/* Top Navigation */}
       <div className="flex items-center mb-4">
         <button 
           onClick={onGoToProfile}
@@ -179,7 +177,7 @@ export default function DonorHome({
         </div>
       </div>
 
-      {/* Category Grid */}
+      {/* Category Selection */}
       <h2 className="text-sm font-semibold text-gray-700 mb-2">Donate by Category</h2>
       <div className="grid grid-cols-4 gap-3 mb-4">
         {categories.map(({ name, icon: Icon }) => (
@@ -194,45 +192,35 @@ export default function DonorHome({
         ))}
       </div>
 
-      {/* Explore + Sort/Filter */}
+      {/* Explore and Sort */}
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-sm font-semibold text-gray-700">Explore</h2>
-        <div className="flex items-center gap-2 text-gray-500 text-xs">
-          <SortAsc className="w-4 h-4" />
-          <span>Sort</span>
-          <Filter className="w-4 h-4 ml-4" />
-          <span>Filter</span>
-        </div>
+        <SortFilterBar onSortChange={setSortOption} />
       </div>
 
-      {/* Explore Feed - UPDATED WITH STANDARDIZED STYLING */}
+      {/* Explore Posts */}
       <div className="space-y-3 pb-24">
-        {exploreDrives.map((drive) => (
+        {sortedDrives.map((drive) => (
           <div
             key={drive.id}
-            className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm relative"
+            className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm relative cursor-pointer hover:shadow-md transition-all duration-200"
+            onClick={() => onSelectPost(drive.id)}
           >
-            <div 
-              onClick={() => onSelectPost(drive.id)}
-              className="cursor-pointer hover:shadow-md transition-all duration-200"
-            >
-              {/* Grey placeholder - Standardized uniform size */}
-              <div className="w-full h-20 bg-gray-300 rounded-lg mb-3" />
-              
-              {/* Content section */}
-              <div className="space-y-2">
-                <h3 className="text-base font-semibold text-gray-900 leading-tight line-clamp-2">{drive.title}</h3>
-                <p className="text-sm text-blue-600 font-medium">{drive.org}</p>
-                
-                {/* Progress and days info */}
-                <div className="flex justify-between items-center text-xs">
-                  <div className="flex items-center gap-2">
-                    <Droplet className="w-4 h-4 text-blue-500" />
+            <div className="flex gap-4 items-start">
+              <div className="w-20 h-20 bg-gray-300 rounded-lg flex-shrink-0"></div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-gray-900 text-base leading-tight mb-1 line-clamp-2 pr-2">{drive.title}</h3>
+                <p className="text-sm text-blue-600 font-medium mb-3">{drive.org}</p>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-xs">
                     <span className="text-blue-600 font-medium">Kindness Cup: {drive.progress}%</span>
+                    <span className="text-gray-500">Remaining Days <strong className="text-gray-800">{drive.daysLeft}</strong></span>
                   </div>
-                  <div className="text-right">
-                    <span className="text-gray-500">Remaining Days</span>
-                    <span className="font-semibold text-gray-800 ml-1">{drive.daysLeft}</span>
+                  <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="bg-blue-500 h-full rounded-full transition-all duration-500 ease-out"
+                      style={{ width: `${drive.progress}%` }}
+                    ></div>
                   </div>
                 </div>
               </div>
