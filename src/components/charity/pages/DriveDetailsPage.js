@@ -3,7 +3,7 @@ import { ArrowLeft, MapPin, Calendar, DollarSign, Users, CheckCircle2, Package }
 import { calculateDriveProgress, formatProgressText, getProgressBarColor } from '../../../utils/progressCalculation';
 import { getDonationsByPost } from '../../../firebase/donations'; // ✅ Fixed path
 
-const DriveDetailsPage = ({ drive, onBack, user }) => {
+const DriveDetailsPage = ({ drive, onBack, user, onDriveImpactClick, impactPosts = [] }) => {
   const [donations, setDonations] = useState([]);
   const [loadingDonations, setLoadingDonations] = useState(true);
 
@@ -186,6 +186,55 @@ const DriveDetailsPage = ({ drive, onBack, user }) => {
           <p className="text-sm text-gray-600">{user?.location || 'Location not specified'}</p>
         </div>
 
+        {/* Impact Posts for this Drive */}
+        {(() => {
+          const driveImpactPosts = impactPosts?.filter(post => post.drive === drive?.name) || [];
+          
+          return (
+            <div className="bg-white rounded-lg p-4 mb-6 shadow-sm border-2 border-blue-200">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-gray-900">Impact Stories</h3>
+                {driveImpactPosts.length > 0 && (
+                  <button
+                    onClick={() => onDriveImpactClick && onDriveImpactClick(drive.name)}
+                    className="text-blue-600 text-sm font-medium hover:text-blue-700 transition-colors"
+                  >
+                    View All ({driveImpactPosts.length})
+                  </button>
+                )}
+              </div>
+              
+              {driveImpactPosts.length === 0 ? (
+                <div className="text-center py-6">
+                  <Package className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                  <p className="text-gray-500 text-sm">No impact stories shared yet</p>
+                  <p className="text-gray-400 text-xs">Share your first impact story for this drive!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  {driveImpactPosts.slice(0, 4).map((post) => (
+                    <button
+                      key={post.id}
+                      onClick={() => onDriveImpactClick && onDriveImpactClick(drive.name)}
+                      className="bg-gray-50 rounded-lg p-2 text-left hover:bg-gray-100 transition-colors"
+                    >
+                      {post.images && post.images.length > 0 && (
+                        <img
+                          src={post.images[0]}
+                          alt="Impact"
+                          className="w-full h-16 object-cover rounded-md mb-2"
+                        />
+                      )}
+                      <p className="text-xs text-gray-600 line-clamp-2">
+                        {post.caption || 'Impact shared'}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
       </div>
     </div>

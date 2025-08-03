@@ -60,17 +60,27 @@ const Dashboard = ({
           <div className="text-center py-4">
             <div className="text-gray-500 text-sm">Loading your posts...</div>
           </div>
-        ) : null}
-        
-        {ongoingDrives.slice(0, showMore ? ongoingDrives.length : 3).map((drive) => (
-          <DriveCard 
-            key={drive.id} 
-            drive={drive} 
-            onClick={onDriveClick}
-            onDelete={onDeleteDrive}
-            showDeleteButton={drive.isUserPost === true} // Only show delete for user's posts
-          />
-        ))}
+        ) : ongoingDrives.length === 0 ? (
+          <div className="bg-white rounded-lg p-6 text-center border border-gray-100">
+            <p className="text-gray-500 text-sm mb-2">No ongoing drives yet</p>
+            <button
+              onClick={() => setCurrentPage('selectPostType')}
+              className="text-blue-600 text-sm font-medium hover:text-blue-700 transition-colors"
+            >
+              Create your first drive
+            </button>
+          </div>
+        ) : (
+          ongoingDrives.slice(0, showMore ? ongoingDrives.length : 3).map((drive) => (
+            <DriveCard 
+              key={drive.id} 
+              drive={drive} 
+              onClick={onDriveClick}
+              onDelete={onDeleteDrive}
+              showDeleteButton={drive.isUserPost === true} // Only show delete for user's posts
+            />
+          ))
+        )}
         
         {ongoingDrives.length > 3 && (
           <button 

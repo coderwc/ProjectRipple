@@ -44,6 +44,7 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
   // Impact posts state
   const [impactPosts, setImpactPosts] = useState([]);
   const [selectedImpactPost, setSelectedImpactPost] = useState(null);
+  const [driveFilter, setDriveFilter] = useState(null); // For filtering impact posts by drive
 
   // State for real backend data only
   const [ongoingDrives, setOngoingDrives] = useState([]);
@@ -359,6 +360,13 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
 
   const handleImpactPostClick = (post) => {
     setSelectedImpactPost(post);
+    setDriveFilter(null); // Show all impact posts
+    setCurrentPage('impactGallery');
+  };
+
+  const handleDriveImpactClick = (driveName) => {
+    setSelectedImpactPost(null);
+    setDriveFilter(driveName); // Filter impact posts by drive name
     setCurrentPage('impactGallery');
   };
 
@@ -437,6 +445,8 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
           drive={selectedDrive}
           onBack={() => setCurrentPage('dashboard')}
           user={user}
+          onDriveImpactClick={handleDriveImpactClick}
+          impactPosts={impactPosts}
         />
       )}
 
@@ -486,8 +496,10 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
         <ImpactGallery
           impactPosts={impactPosts}
           selectedPost={selectedImpactPost}
+          driveFilter={driveFilter}
           onBack={() => {
             setSelectedImpactPost(null);
+            setDriveFilter(null);
             setCurrentPage('dashboard');
           }}
           onDeletePost={handleDeleteImpactPost}
