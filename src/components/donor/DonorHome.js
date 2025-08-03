@@ -13,7 +13,6 @@ import {
   Filter,
   SortAsc,
   Droplet,
-  Package,
   User
 } from 'lucide-react';
 
@@ -65,6 +64,7 @@ export default function DonorHome({
               org: post.charityName || 'Unknown Org',
               progress: post.donationsReceived || 0,
               daysLeft,
+              imageUrl: post.imageUrl, // Include the image URL
               charityData: {
                 id: post.charityId,
                 name: post.charityName,
@@ -110,10 +110,6 @@ export default function DonorHome({
     }
   };
 
-  const handleShopForCharity = (charityData, event) => {
-    event.stopPropagation(); // Prevent triggering the post selection
-    onCharitySelect(charityData);
-  };
 
   const sortedDrives = [...exploreDrives].sort((a, b) => {
     switch (sortOption) {
@@ -206,34 +202,46 @@ export default function DonorHome({
             className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm relative cursor-pointer hover:shadow-md transition-all duration-200"
             onClick={() => onSelectPost(drive.id)}
           >
-            <div className="flex gap-4 items-start">
-              <div className="w-20 h-20 bg-gray-300 rounded-lg flex-shrink-0"></div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 text-base leading-tight mb-1 line-clamp-2 pr-2">{drive.title}</h3>
-                <p className="text-sm text-blue-600 font-medium mb-3">{drive.org}</p>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center text-xs">
+            {/* Charity image - Standardized uniform size */}
+            <div className="w-full h-20 bg-gray-300 rounded-lg mb-3 overflow-hidden">
+              {drive.imageUrl ? (
+                <img 
+                  src={drive.imageUrl} 
+                  alt={drive.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                  <span className="text-gray-500 text-xs">No Image</span>
+                </div>
+              )}
+            </div>
+            
+            {/* Content section */}
+            <div className="space-y-2">
+              <h3 className="text-base font-semibold text-gray-900 leading-tight line-clamp-2">{drive.title}</h3>
+              <p className="text-sm text-blue-600 font-medium">{drive.org}</p>
+              
+              {/* Progress and days info */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <div className="flex items-center gap-2">
+                    <Droplet className="w-4 h-4 text-blue-500" />
                     <span className="text-blue-600 font-medium">Kindness Cup: {drive.progress}%</span>
-                    <span className="text-gray-500">Remaining Days <strong className="text-gray-800">{drive.daysLeft}</strong></span>
                   </div>
-                  <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                    <div
-                      className="bg-blue-500 h-full rounded-full transition-all duration-500 ease-out"
-                      style={{ width: `${drive.progress}%` }}
-                    ></div>
+                  <div className="text-right">
+                    <span className="text-gray-500">Remaining Days</span>
+                    <span className="font-semibold text-gray-800 ml-1">{drive.daysLeft}</span>
                   </div>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-blue-500 h-2 rounded-full transition-all"
+                    style={{ width: `${Math.min(drive.progress || 0, 100)}%` }}
+                  />
                 </div>
               </div>
             </div>
-            
-            {/* Shop Button */}
-            <button
-              onClick={(e) => handleShopForCharity(drive.charityData, e)}
-              className="w-full bg-green-500 hover:bg-green-600 text-white text-xs py-2 px-3 rounded flex items-center justify-center space-x-1 transition-colors"
-            >
-              <Package className="w-3 h-3" />
-              <span>Shop for {drive.org}</span>
-            </button>
           </div>
         ))}
       </div>

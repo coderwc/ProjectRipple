@@ -37,7 +37,8 @@ const CategoryFeed = ({ onBack, onSelectPost, categoryName = "Natural Disasters"
               source: data.charityName || 'Unknown Charity',
               progress: donations,
               kindness: donations,
-              remainingDays
+              remainingDays,
+              imageUrl: data.imageUrl // Include the image URL
             });
           }
         });
@@ -124,13 +125,31 @@ const CategoryFeed = ({ onBack, onSelectPost, categoryName = "Natural Disasters"
               onClick={() => onSelectPost && onSelectPost(item.id)}
             >
               <div className="flex gap-4 items-start">
-                <div className="w-20 h-20 bg-gray-300 rounded-lg flex-shrink-0" />
+                {/* Charity image - uniform size */}
+                <div className="w-20 h-20 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden">
+                  {item.imageUrl ? (
+                    <img 
+                      src={item.imageUrl} 
+                      alt={item.headline}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                      <span className="text-gray-500 text-xs">No Image</span>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start mb-3">
                     <h3 className="font-semibold text-gray-900 text-base leading-tight line-clamp-2 pr-2">{item.headline}</h3>
                     <Heart className="w-5 h-5 text-gray-300 hover:text-red-500 cursor-pointer transition-colors flex-shrink-0" />
                   </div>
+                  
                   <p className="text-sm text-blue-600 font-medium mb-3">{item.source}</p>
+                  
+                  {/* Progress section */}
                   <div className="space-y-2">
                     <div className="flex justify-between items-center text-xs">
                       <span className="text-blue-600 font-medium">Kindness Cup: {item.progress}% Full</span>
@@ -139,11 +158,13 @@ const CategoryFeed = ({ onBack, onSelectPost, categoryName = "Natural Disasters"
                         <span className="font-semibold text-gray-800 min-w-[2ch]">{item.remainingDays}</span>
                       </div>
                     </div>
+                    
+                    {/* Progress bar */}
                     <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                      <div
-                        className="bg-blue-500 h-full rounded-full transition-all duration-500 ease-out"
+                      <div 
+                        className="bg-blue-500 h-full rounded-full transition-all duration-500 ease-out" 
                         style={{ width: `${item.progress}%` }}
-                      />
+                      ></div>
                     </div>
                   </div>
                 </div>
