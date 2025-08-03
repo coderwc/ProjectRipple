@@ -19,9 +19,10 @@ function DonorApp({ user, onLogout }) {
   const [selectedCharity, setSelectedCharity] = useState(null);
   const [selectedCharityId, setSelectedCharityId] = useState(null);
   const [selectedVendor, setSelectedVendor] = useState(null);
-  const [selectedPostData, setSelectedPostData] = useState(null);
-  const [selectedItemFilter, setSelectedItemFilter] = useState(null); // Track selected item for filtering
-  const [previousView, setPreviousView] = useState('home'); // Track previous view for cart navigation
+  const [selectedItemFilter, setSelectedItemFilter] = useState(null);
+  const [previousView, setPreviousView] = useState('home');
+  const [postOrigin, setPostOrigin] = useState(null); // 'home' or 'category'
+
   const { setCharity, clearCart, getTotalItems } = useCart();
 
   const handleSelectCategory = (categoryName) => {
@@ -43,101 +44,90 @@ function DonorApp({ user, onLogout }) {
     setSelectedPost(null);
   };
 
-  const handleSelectPost = (postId) => {
+  const handleSelectPost = (postId, origin = currentView) => {
     setSelectedPost(postId);
+    setPostOrigin(origin); // Track where post was opened from
     setCurrentView('post');
   };
 
-  // New function to handle charity selection for shopping
   const handleCharitySelect = (charity) => {
     setSelectedCharity(charity);
-    setCharity(charity); // Set charity in cart context
-    setSelectedItemFilter(charity.selectedItem || null); // Store the selected item filter
-    setPreviousView(currentView); // Remember where we came from
+    setCharity(charity);
+    setSelectedItemFilter(charity.selectedItem || null);
+    setPreviousView(currentView);
     setCurrentView('shop');
   };
 
-  // New function to handle vendor selection
   const handleVendorSelect = (vendor) => {
     setSelectedVendor(vendor);
-    setPreviousView(currentView); // Remember where we came from
+    setPreviousView(currentView);
     setCurrentView('vendor');
   };
 
-  // Function to handle vendor profile navigation (shows all vendor's listings)
   const handleVendorProfile = (vendor) => {
     setSelectedVendor(vendor);
     setPreviousView(currentView);
     setCurrentView('vendorProfile');
   };
 
-  // New function to go back to available vendors
   const handleBackToVendors = () => {
     setCurrentView('shop');
     setSelectedVendor(null);
   };
 
-  // New function to go back from available vendors to charity post
   const handleBackFromVendors = () => {
-    setCurrentView('post'); // Go back to charity post
+    setCurrentView('post');
     setSelectedVendor(null);
-    setSelectedItemFilter(null); // Clear filter when going back
+    setSelectedItemFilter(null);
   };
 
-  // Updated function to go to cart/shopping
   const handleGoToCart = () => {
-    // Check if there are items in cart
     if (getTotalItems() === 0) {
       alert('Your cart is empty. Add some items first!');
       return;
     }
-    
-    setPreviousView(currentView); // Remember where we came from
+    setPreviousView(currentView);
     setCurrentView('cart');
   };
 
-  // New function to go back from cart
   const handleBackFromCart = () => {
-    // Go back to the previous view or home if no previous view
     setCurrentView(previousView || 'home');
   };
 
-  // New function to go to checkout from cart
   const handleGoToCheckout = () => {
-    setPreviousView('cart'); // Remember we came from cart
+    setPreviousView('cart');
     setCurrentView('checkout');
   };
 
-  // New function to go back from checkout to cart
   const handleBackFromCheckout = () => {
     setCurrentView('cart');
   };
 
   const handleLogout = () => {
-    clearCart(); // Clear cart on logout
-    onLogout(); // Call the parent logout function
+    clearCart();
+    onLogout();
   };
 
   const handleViewDonors = (postId) => {
-  setSelectedPost(postId);
-  setCurrentView('donorsAndMessages');
-};
+    setSelectedPost(postId);
+    setCurrentView('donorsAndMessages');
+  };
 
   const handleViewStory = (postId) => {
-  setSelectedPost(postId);
-  setCurrentView('story');
-};
+    setSelectedPost(postId);
+    setCurrentView('story');
+  };
 
-const handleViewImpactGallery = (postId) => {
-  setSelectedPost(postId);
-  setCurrentView('impactGallery');
-};
+  const handleViewImpactGallery = (postId) => {
+    setSelectedPost(postId);
+    setCurrentView('impactGallery');
+  };
 
-const handleViewCharityProfile = (charityId) => {
-  setSelectedCharityId(charityId);
-  setPreviousView(currentView);
-  setCurrentView('charityProfile');
-};
+  const handleViewCharityProfile = (charityId) => {
+    setSelectedCharityId(charityId);
+    setPreviousView(currentView);
+    setCurrentView('charityProfile');
+  };
 
   return (
     <div className="App">
@@ -145,32 +135,35 @@ const handleViewCharityProfile = (charityId) => {
         <DonorHome
           user={user}
           onSelectCategory={handleSelectCategory}
-          onSelectPost={handleSelectPost}
+          onSelectPost={(id) => handleSelectPost(id, 'home')}
           onCharitySelect={handleCharitySelect}
           onGoToCart={handleGoToCart}
           onLogout={handleLogout}
         />
       )}
-      
+
       {currentView === 'category' && (
         <CategoryFeed
           categoryName={selectedCategory}
           onBack={handleBackToHome}
-          onSelectPost={handleSelectPost}
+          onSelectPost={(id) => handleSelectPost(id, 'category')}
         />
       )}
-      
+
       {currentView === 'post' && (
-  <CharityPost
-  postId={selectedPost}
-  onBack={handleBackToCategory}
-  onCharitySelect={handleCharitySelect}
-  onViewDonors={handleViewDonors}
-  onViewStory={handleViewStory}
-  onViewImpactGallery={handleViewImpactGallery}
-  onViewCharityProfile={handleViewCharityProfile}
-/>
-)}
+        <CharityPost
+          postId={selectedPost}
+          onBack={() => {
+            if (postOrigin === 'category') handleBackToCategory();
+            else handleBackToHome();
+          }}
+          onCharitySelect={handleCharitySelect}
+          onViewDonors={handleViewDonors}
+          onViewStory={handleViewStory}
+          onViewImpactGallery={handleViewImpactGallery}
+          onViewCharityProfile={handleViewCharityProfile}
+        />
+      )}
 
       {currentView === 'shop' && (
         <AvailableVendors
@@ -215,35 +208,34 @@ const handleViewCharityProfile = (charityId) => {
           onGoBack={handleBackFromCheckout}
         />
       )}
-      
+
       {currentView === 'donorsAndMessages' && (
-  <DonorsAndMessages
-    postId={selectedPost}
-    onBack={() => setCurrentView('post')}
-  />
-)}
+        <DonorsAndMessages
+          postId={selectedPost}
+          onBack={() => setCurrentView('post')}
+        />
+      )}
 
-{currentView === 'story' && (
-  <Story 
-    postId={selectedPost} 
-    onBack={() => setCurrentView('post')} 
-  />
-)}
+      {currentView === 'story' && (
+        <Story 
+          postId={selectedPost} 
+          onBack={() => setCurrentView('post')} 
+        />
+      )}
 
-{currentView === 'impactGallery' && (
-  <ImpactGallery 
-    postId={selectedPost} 
-    onBack={() => setCurrentView('post')} 
-  />
-)}
+      {currentView === 'impactGallery' && (
+        <ImpactGallery 
+          postId={selectedPost} 
+          onBack={() => setCurrentView('post')} 
+        />
+      )}
 
-{currentView === 'charityProfile' && (
-  <CharityProfile 
-    charityId={selectedCharityId} 
-    onBack={() => setCurrentView(previousView || 'post')} 
-  />
-)}
-
+      {currentView === 'charityProfile' && (
+        <CharityProfile 
+          charityId={selectedCharityId} 
+          onBack={() => setCurrentView(previousView || 'post')} 
+        />
+      )}
     </div>
   );
 }
