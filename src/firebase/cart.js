@@ -9,8 +9,7 @@ import {
   query,
   doc,
   serverTimestamp,
-  where,
-  getDoc
+  where
 } from 'firebase/firestore';
 
 // ✅ Save item to cart (new or update)
@@ -108,7 +107,7 @@ export const clearUserCart = async () => {
   await Promise.all(deletions);
 };
 
-// ✅ Create Orders on Checkout + reduce stock
+// ✅ Create Orders on Checkout - donor creates order, vendor processing happens later
 export const createOrdersFromCart = async () => {
   const user = auth.currentUser;
   if (!user) throw new Error("User not signed in");
@@ -129,8 +128,9 @@ export const createOrdersFromCart = async () => {
   const ordersRef = collection(db, 'orders');
 
   const batchCreates = Object.entries(grouped).map(async ([key, items]) => {
-    const [charityId, vendorId] = key.split('|');
+    const [charityId, vendorName] = key.split('|');
     const charityName = items[0].charityName || 'Unknown Charity';
+    const totalAmount = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
     const orderItems = items.map(item => ({
       productId: item.productId,
@@ -139,25 +139,17 @@ export const createOrdersFromCart = async () => {
       price: item.price,
     }));
 
-    // ✅ Reduce stock from listings
-    for (const item of items) {
-      const listingRef = doc(db, 'vendors', vendorId, 'listings', item.productId);
-      const listingSnap = await getDoc(listingRef);
-      if (listingSnap.exists()) {
-        const currentQty = listingSnap.data().quantity || 0;
-        const newQty = Math.max(0, currentQty - item.quantity);
-        await updateDoc(listingRef, { quantity: newQty });
-      }
-    }
-
-    // ✅ Create order
+    // ✅ Create order that vendor will process later
+    // Note: vendorId in the order is actually the vendor's name (to match Firestore rules)
     return addDoc(ordersRef, {
       donorId: user.uid,
       charityId,
       charityName,
-      vendorId,
+      vendorId: vendorName, // This is actually the vendor name (matches Firestore rules)
       items: orderItems,
+      totalAmount,
       status: 'Pending',
+      requiresProcessing: true,
       createdAt: serverTimestamp()
     });
   });
