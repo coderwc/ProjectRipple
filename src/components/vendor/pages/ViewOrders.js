@@ -12,6 +12,7 @@ import {
   getDoc,
   getDocs
 } from 'firebase/firestore';
+import { processOrderOnShipped } from '../../../firebase/wallet';
 
 const ViewOrders = ({ onNavigateToHome }) => {
   const [orders, setOrders] = useState([]);
@@ -185,22 +186,30 @@ const ViewOrders = ({ onNavigateToHome }) => {
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
+      // If marking as shipped, process the order (update stock and wallet)
+      if (newStatus === 'Shipped') {
+        console.log('📦 Processing order on shipped:', orderId);
+        await processOrderOnShipped(orderId);
+      }
+      
+      // Update the order status
       await updateDoc(doc(db, 'orders', orderId), {
         status: newStatus,
         updatedAt: serverTimestamp()
       });
+      
+      console.log(`✅ Order ${orderId} marked as ${newStatus}`);
       // Order will automatically update via the real-time listener
     } catch (error) {
-      console.error('Error updating order status:', error);
-      alert('Failed to update order status');
+      console.error('❌ Error updating order status:', error);
+      alert(`Failed to update order status: ${error.message}`);
     }
   };
 
   const statusOrder = {
     Pending: 1,
     Shipped: 2,
-    Completed: 3,
-    Cancelled: 4,
+    Cancelled: 3,
   };
   
   const filteredOrders = orders
@@ -268,7 +277,7 @@ const ViewOrders = ({ onNavigateToHome }) => {
       {/* Filters */}
       <div className="px-4 pt-6">
         <div className="flex flex-wrap gap-2">
-        {['All', 'Pending', 'Shipped', 'Completed', 'Cancelled'].map((status) => (
+        {['All', 'Pending', 'Shipped', 'Cancelled'].map((status) => (
             <button
               key={status}
               className={`px-3 py-1 text-sm rounded-full border ${
@@ -318,8 +327,6 @@ const ViewOrders = ({ onNavigateToHome }) => {
                         ? 'bg-yellow-100 text-yellow-700 border border-yellow-200'
                         : order.status === 'Shipped'
                         ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                        : order.status === 'Completed'
-                        ? 'bg-green-100 text-green-700 border border-green-200'
                         : order.status === 'Cancelled'
                         ? 'bg-red-100 text-red-700 border border-red-200'
                         : 'bg-gray-100 text-gray-700 border border-gray-200'
@@ -358,17 +365,6 @@ const ViewOrders = ({ onNavigateToHome }) => {
                     onClick={() => updateOrderStatus(order.id, 'Cancelled')}
                   >
                     Cancel Order
-                  </button>
-                </div>
-              )}
-
-              {order.status === 'Shipped' && (
-                <div className="mt-4">
-                  <button
-                    className="w-full text-sm px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-                    onClick={() => updateOrderStatus(order.id, 'Completed')}
-                  >
-                    Mark as Completed
                   </button>
                 </div>
               )}
