@@ -311,6 +311,30 @@ export const recordItemDonations = async (postId, itemDonations, donorId, donorN
   }
 };
 
+// Helper function to normalize item names for matching
+const normalizeItemName = (itemName) => {
+  if (!itemName) return '';
+  
+  // Remove vendor names and common variations
+  let normalized = itemName
+    .toLowerCase()
+    .trim()
+    // Remove vendor names
+    .replace(/\s*-\s*(gomgom|premium mart|vendor\d+).*$/i, '')
+    // Remove brand prefixes 
+    .replace(/^(gomgom|premium mart)\s*/i, '')
+    // Normalize plural/singular
+    .replace(/s$/, '') // Remove trailing 's'
+    .replace(/ies$/, 'y') // flies -> fly
+    .replace(/es$/, '') // boxes -> box
+    // Remove extra spaces
+    .replace(/\s+/g, ' ')
+    .trim();
+    
+  console.log(`🔄 Normalized "${itemName}" -> "${normalized}"`);
+  return normalized;
+};
+
 // Get total donated quantities for a charity post
 export const getItemDonationTotals = async (postId) => {
   try {
@@ -324,12 +348,15 @@ export const getItemDonationTotals = async (postId) => {
     
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      const itemName = data.itemName;
+      const rawItemName = data.itemName;
+      const normalizedItemName = normalizeItemName(rawItemName);
       
-      if (!donationTotals[itemName]) {
-        donationTotals[itemName] = 0;
+      if (!donationTotals[normalizedItemName]) {
+        donationTotals[normalizedItemName] = 0;
       }
-      donationTotals[itemName] += data.quantity;
+      donationTotals[normalizedItemName] += data.quantity;
+      
+      console.log(`🎁 Added ${data.quantity} for "${rawItemName}" -> normalized: "${normalizedItemName}"`);
     });
     
     console.log('✅ Retrieved donation totals for post:', postId, donationTotals);
