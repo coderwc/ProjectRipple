@@ -44,6 +44,10 @@ export default function DonorHome({
   const { getTotalItems } = useCart();
   const [exploreDrives, setExploreDrives] = useState([]);
   const [donorProfile, setDonorProfile] = useState(null);
+  const [timeFilter, setTimeFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [allPosts, setAllPosts] = useState([]);
 
   useEffect(() => {
     const fetchExploreDrives = async () => {
@@ -63,6 +67,7 @@ export default function DonorHome({
               org: post.charityName || 'Unknown Org',
               progress: Math.floor(Math.random() * 50) + 30,
               daysLeft: remainingDays,
+              category: post.category || 'Natural Disasters',
               charityData: {
                 id: post.charityId,
                 name: post.charityName,
@@ -70,6 +75,7 @@ export default function DonorHome({
               }
             };
           });
+          setAllPosts(formattedPosts);
           setExploreDrives(formattedPosts);
         }
       } catch (error) {
@@ -101,6 +107,31 @@ export default function DonorHome({
     fetchDonorProfile();
   }, []);
 
+  // Combined filter effect
+  useEffect(() => {
+    let filteredPosts = [...allPosts];
+
+    // Apply time filter
+    if (timeFilter === 'week') {
+      filteredPosts = filteredPosts.filter(post => post.daysLeft <= 7);
+    } else if (timeFilter === '2weeks') {
+      filteredPosts = filteredPosts.filter(post => post.daysLeft <= 14);
+    } else if (timeFilter === 'month') {
+      filteredPosts = filteredPosts.filter(post => post.daysLeft <= 30);
+    }
+    // If timeFilter === 'all', no time filtering applied
+
+    // Apply category filter
+    if (categoryFilter !== 'all') {
+      filteredPosts = filteredPosts.filter(post => post.category === categoryFilter);
+    }
+
+    // Always sort by urgency (days remaining)
+    filteredPosts.sort((a, b) => a.daysLeft - b.daysLeft);
+
+    setExploreDrives(filteredPosts);
+  }, [allPosts, timeFilter, categoryFilter]);
+
   const urgentPosts = [
     { 
       id: 1,
@@ -130,6 +161,18 @@ export default function DonorHome({
     event.stopPropagation(); // Prevent triggering the post selection
     onCharitySelect(charityData);
   };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.relative')) {
+        setShowFilterDropdown(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   return (
     <div className="max-w-sm mx-auto p-4 bg-gray-50 min-h-screen relative">
@@ -194,14 +237,124 @@ export default function DonorHome({
         ))}
       </div>
 
-      {/* Explore + Sort/Filter */}
+      {/* Explore + Filter */}
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-sm font-semibold text-gray-700">Explore</h2>
-        <div className="flex items-center gap-2 text-gray-500 text-xs">
-          <SortAsc className="w-4 h-4" />
-          <span>Sort</span>
-          <Filter className="w-4 h-4 ml-4" />
-          <span>Filter</span>
+        <div className="flex items-center gap-2 text-gray-500 text-xs relative">
+          {/* Combined Filter Dropdown */}
+          <div className="relative">
+            <button 
+              onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+              className="flex items-center gap-1 hover:text-gray-700 transition-colors"
+            >
+              <Filter className="w-4 h-4" />
+              <span>Filter</span>
+            </button>
+            {showFilterDropdown && (
+              <div className="absolute top-6 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-80">
+                <div className="flex">
+                  {/* Time filters column */}
+                  <div className="flex-1 border-r border-gray-200">
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-600 bg-gray-50 rounded-tl-lg border-b border-gray-200">
+                      BY TIME
+                    </div>
+                    <div className="p-2 space-y-1">
+                      <label className="flex items-center px-2 py-1.5 text-xs hover:bg-gray-50 rounded cursor-pointer">
+                        <input
+                          type="radio"
+                          name="timeFilter"
+                          value="all"
+                          checked={timeFilter === 'all'}
+                          onChange={(e) => setTimeFilter(e.target.value)}
+                          className="mr-2 text-blue-600 w-3 h-3"
+                        />
+                        All Time
+                      </label>
+                      <label className="flex items-center px-2 py-1.5 text-xs hover:bg-gray-50 rounded cursor-pointer">
+                        <input
+                          type="radio"
+                          name="timeFilter"
+                          value="week"
+                          checked={timeFilter === 'week'}
+                          onChange={(e) => setTimeFilter(e.target.value)}
+                          className="mr-2 text-blue-600 w-3 h-3"
+                        />
+                        Ending in a Week
+                      </label>
+                      <label className="flex items-center px-2 py-1.5 text-xs hover:bg-gray-50 rounded cursor-pointer">
+                        <input
+                          type="radio"
+                          name="timeFilter"
+                          value="2weeks"
+                          checked={timeFilter === '2weeks'}
+                          onChange={(e) => setTimeFilter(e.target.value)}
+                          className="mr-2 text-blue-600 w-3 h-3"
+                        />
+                        Ending in Two Weeks
+                      </label>
+                      <label className="flex items-center px-2 py-1.5 text-xs hover:bg-gray-50 rounded cursor-pointer">
+                        <input
+                          type="radio"
+                          name="timeFilter"
+                          value="month"
+                          checked={timeFilter === 'month'}
+                          onChange={(e) => setTimeFilter(e.target.value)}
+                          className="mr-2 text-blue-600 w-3 h-3"
+                        />
+                        Ending in a Month
+                      </label>
+                    </div>
+                  </div>
+                  
+                  {/* Category filters column */}
+                  <div className="flex-1">
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-600 bg-gray-50 rounded-tr-lg border-b border-gray-200">
+                      BY CATEGORY
+                    </div>
+                    <div className="p-2 space-y-1 max-h-48 overflow-y-auto">
+                      <label className="flex items-center px-2 py-1.5 text-xs hover:bg-gray-50 rounded cursor-pointer">
+                        <input
+                          type="radio"
+                          name="categoryFilter"
+                          value="all"
+                          checked={categoryFilter === 'all'}
+                          onChange={(e) => setCategoryFilter(e.target.value)}
+                          className="mr-2 text-blue-600 w-3 h-3"
+                        />
+                        All Categories
+                      </label>
+                      {categories.map((category) => (
+                        <label key={category.name} className="flex items-center px-2 py-1.5 text-xs hover:bg-gray-50 rounded cursor-pointer">
+                          <input
+                            type="radio"
+                            name="categoryFilter"
+                            value={category.name}
+                            checked={categoryFilter === category.name}
+                            onChange={(e) => setCategoryFilter(e.target.value)}
+                            className="mr-2 text-blue-600 w-3 h-3"
+                          />
+                          <span className="truncate">{category.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Clear all filters button */}
+                <div className="border-t border-gray-200 p-2">
+                  <button 
+                    onClick={() => {
+                      setTimeFilter('all');
+                      setCategoryFilter('all');
+                    }}
+                    className="w-full text-center px-3 py-2 text-xs hover:bg-gray-50 text-gray-500 rounded transition-colors"
+                  >
+                    Clear All Filters
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ShoppingCart, Plus, ChevronDown, Filter, X, Minus } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Plus, Filter, X, Minus } from 'lucide-react';
 import { useCart } from '../shared/CartContext';
 import { saveCartItem } from '../../firebase/cart';
 import { 
@@ -19,6 +19,10 @@ const AvailableVendors = ({ charity, itemFilter, onBack, onSelectVendor, onGoToC
   const [quantity, setQuantity] = useState(1);
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [priceSort, setPriceSort] = useState('default');
+  const [conditionFilter, setConditionFilter] = useState('all');
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [allProducts, setAllProducts] = useState([]);
 
   // Fetch listings from all vendor subcollections
   useEffect(() => {
@@ -229,8 +233,48 @@ const AvailableVendors = ({ charity, itemFilter, onBack, onSelectVendor, onGoToC
     });
   };
 
-  // Always use real listings from Firestore - no fallback to mock data
-  const products = filterProducts(listings, itemFilter);
+  // Store all products after initial filtering
+  useEffect(() => {
+    const filteredProducts = filterProducts(listings, itemFilter);
+    setAllProducts(filteredProducts);
+  }, [listings, itemFilter]);
+
+  // Apply sorting based on price and stock filters
+  const [products, setProducts] = useState([]);
+  
+  useEffect(() => {
+    let filteredProducts = [...allProducts];
+
+    // Apply condition filtering
+    if (conditionFilter !== 'all') {
+      filteredProducts = filteredProducts.filter(product => {
+        const productCondition = (product.condition || 'new').toLowerCase();
+        return productCondition === conditionFilter.toLowerCase();
+      });
+    }
+
+    // Apply price sorting
+    if (priceSort === 'low-high') {
+      filteredProducts.sort((a, b) => parseFloat(a.price || 0) - parseFloat(b.price || 0));
+    } else if (priceSort === 'high-low') {
+      filteredProducts.sort((a, b) => parseFloat(b.price || 0) - parseFloat(a.price || 0));
+    }
+    // If priceSort === 'default', no sorting applied
+
+    setProducts(filteredProducts);
+  }, [allProducts, priceSort, conditionFilter]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.relative')) {
+        setShowFilterDropdown(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
   
   console.log('🛍️ AvailableVendors - Total products to display:', products.length);
   console.log('📦 AvailableVendors - Products:', products.map(p => ({ id: p.id, name: p.name, vendor: p.vendorName || p.vendor })));
@@ -239,7 +283,6 @@ const AvailableVendors = ({ charity, itemFilter, onBack, onSelectVendor, onGoToC
     console.log('❌ No real listings found - check Firestore data');
   }
 
-  const suggestedCategories = ["Blankets", "Rice Bags", "Canned Food"];
 
   const openProductModal = (product) => {
     setSelectedProduct(product);
@@ -563,18 +606,117 @@ const addToCartHandler = async (product, qty = 1) => {
           </div>
         )}
 
-        {/* Sort and Filter */}
+        {/* Filter */}
         <div className="flex justify-end items-center space-x-4 mb-6">
-          <button className="flex items-center space-x-1 text-gray-600">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-            </svg>
-            <span className="text-sm font-medium">Sort</span>
-          </button>
-          <button className="flex items-center space-x-1 text-gray-600">
-            <Filter className="w-4 h-4" />
-            <span className="text-sm font-medium">Filter</span>
-          </button>
+          <div className="relative">
+            <button 
+              onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+              className="flex items-center space-x-1 text-gray-600 hover:text-gray-800"
+            >
+              <Filter className="w-4 h-4" />
+              <span className="text-sm font-medium">Filter</span>
+            </button>
+            {showFilterDropdown && (
+              <div className="absolute top-6 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-80">
+                <div className="flex">
+                  {/* Price column */}
+                  <div className="flex-1 border-r border-gray-200">
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-600 bg-gray-50 rounded-tl-lg border-b border-gray-200">
+                      BY PRICE
+                    </div>
+                    <div className="p-2 space-y-1">
+                      <label className="flex items-center px-2 py-1.5 text-xs hover:bg-gray-50 rounded cursor-pointer">
+                        <input
+                          type="radio"
+                          name="priceSort"
+                          value="default"
+                          checked={priceSort === 'default'}
+                          onChange={(e) => setPriceSort(e.target.value)}
+                          className="mr-2 text-blue-600 w-3 h-3"
+                        />
+                        Default Order
+                      </label>
+                      <label className="flex items-center px-2 py-1.5 text-xs hover:bg-gray-50 rounded cursor-pointer">
+                        <input
+                          type="radio"
+                          name="priceSort"
+                          value="low-high"
+                          checked={priceSort === 'low-high'}
+                          onChange={(e) => setPriceSort(e.target.value)}
+                          className="mr-2 text-blue-600 w-3 h-3"
+                        />
+                        Low to High
+                      </label>
+                      <label className="flex items-center px-2 py-1.5 text-xs hover:bg-gray-50 rounded cursor-pointer">
+                        <input
+                          type="radio"
+                          name="priceSort"
+                          value="high-low"
+                          checked={priceSort === 'high-low'}
+                          onChange={(e) => setPriceSort(e.target.value)}
+                          className="mr-2 text-blue-600 w-3 h-3"
+                        />
+                        High to Low
+                      </label>
+                    </div>
+                  </div>
+                  
+                  {/* Condition column */}
+                  <div className="flex-1">
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-600 bg-gray-50 rounded-tr-lg border-b border-gray-200">
+                      BY CONDITION
+                    </div>
+                    <div className="p-2 space-y-1">
+                      <label className="flex items-center px-2 py-1.5 text-xs hover:bg-gray-50 rounded cursor-pointer">
+                        <input
+                          type="radio"
+                          name="conditionFilter"
+                          value="all"
+                          checked={conditionFilter === 'all'}
+                          onChange={(e) => setConditionFilter(e.target.value)}
+                          className="mr-2 text-blue-600 w-3 h-3"
+                        />
+                        All Conditions
+                      </label>
+                      <label className="flex items-center px-2 py-1.5 text-xs hover:bg-gray-50 rounded cursor-pointer">
+                        <input
+                          type="radio"
+                          name="conditionFilter"
+                          value="new"
+                          checked={conditionFilter === 'new'}
+                          onChange={(e) => setConditionFilter(e.target.value)}
+                          className="mr-2 text-blue-600 w-3 h-3"
+                        />
+                        New
+                      </label>
+                      <label className="flex items-center px-2 py-1.5 text-xs hover:bg-gray-50 rounded cursor-pointer">
+                        <input
+                          type="radio"
+                          name="conditionFilter"
+                          value="used"
+                          checked={conditionFilter === 'used'}
+                          onChange={(e) => setConditionFilter(e.target.value)}
+                          className="mr-2 text-blue-600 w-3 h-3"
+                        />
+                        Used
+                      </label>
+                      <label className="flex items-center px-2 py-1.5 text-xs hover:bg-gray-50 rounded cursor-pointer">
+                        <input
+                          type="radio"
+                          name="conditionFilter"
+                          value="defect"
+                          checked={conditionFilter === 'defect'}
+                          onChange={(e) => setConditionFilter(e.target.value)}
+                          className="mr-2 text-blue-600 w-3 h-3"
+                        />
+                        Defect
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Loading State */}
@@ -610,23 +752,6 @@ const addToCartHandler = async (product, qty = 1) => {
           </div>
         )}
 
-        {/* Suggested Products */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium text-gray-900">
-            Suggested products:
-          </h3>
-          <div className="flex space-x-3">
-            {suggestedCategories.map((category, index) => (
-              <button
-                key={index}
-                className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2 rounded-full flex items-center space-x-1 transition-colors"
-              >
-                <span className="font-medium">{category}</span>
-                <ChevronDown className="w-4 h-4 rotate-[-90deg]" />
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* Product Detail Modal */}

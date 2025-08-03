@@ -219,7 +219,6 @@ const CharityPost = ({
         <div className="bg-white rounded-lg p-4 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-medium text-gray-900">We currently need</h3>
-            <span className="text-xs text-blue-600">See All</span>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

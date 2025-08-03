@@ -3,12 +3,16 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/config'; // adjust this path to your actual config file
 
 import React from 'react';
-import { ArrowLeft, SlidersHorizontal, ArrowUpDown, Heart } from 'lucide-react';
+import { ArrowLeft, Filter, Heart } from 'lucide-react';
 
 const CategoryFeed = ({ onBack, onSelectPost, categoryName = "Natural Disasters" }) => {
   // Generate different content based on category
   const [posts, setPosts] = useState([]);
-const [loading, setLoading] = useState(true);
+  const [allPosts, setAllPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [kindnessSort, setKindnessSort] = useState('default');
+  const [timeSort, setTimeSort] = useState('all');
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
 useEffect(() => {
   const fetchPosts = async () => {
@@ -33,6 +37,7 @@ useEffect(() => {
         }
       });
 
+      setAllPosts(fetchedPosts);
       setPosts(fetchedPosts);
     } catch (error) {
       console.error("Error fetching posts:", error);
@@ -43,6 +48,47 @@ useEffect(() => {
 
   fetchPosts();
 }, [categoryName]);
+
+// Combined sort effect
+useEffect(() => {
+  let sortedPosts = [...allPosts];
+
+  // Apply time filter first
+  if (timeSort === 'week') {
+    sortedPosts = sortedPosts.filter(post => post.remainingDays <= 7);
+  } else if (timeSort === '2weeks') {
+    sortedPosts = sortedPosts.filter(post => post.remainingDays <= 14);
+  } else if (timeSort === 'month') {
+    sortedPosts = sortedPosts.filter(post => post.remainingDays <= 30);
+  }
+  // If timeSort === 'all', no time filtering applied
+
+  // Apply kindness sorting
+  if (kindnessSort === 'high') {
+    sortedPosts.sort((a, b) => b.progress - a.progress);
+  } else if (kindnessSort === 'low') {
+    sortedPosts.sort((a, b) => a.progress - b.progress);
+  } else if (kindnessSort === 'default') {
+    // Keep original order, but if we have time filtering, sort by urgency
+    if (timeSort !== 'all') {
+      sortedPosts.sort((a, b) => a.remainingDays - b.remainingDays);
+    }
+  }
+
+  setPosts(sortedPosts);
+}, [allPosts, kindnessSort, timeSort]);
+
+// Close dropdown when clicking outside
+useEffect(() => {
+  const handleClickOutside = (event) => {
+    if (!event.target.closest('.relative')) {
+      setShowFilterDropdown(false);
+    }
+  };
+
+  document.addEventListener('click', handleClickOutside);
+  return () => document.removeEventListener('click', handleClickOutside);
+}, []);
 
 const calculateRemainingDays = (deadlineStr) => {
   try {
@@ -80,16 +126,117 @@ const calculateRemainingDays = (deadlineStr) => {
           </div>
         </div>
         
-        {/* Sort and Filter */}
+        {/* Filter */}
         <div className="flex items-center justify-end gap-4 mt-4">
-          <button className="flex items-center gap-2 text-gray-600 text-sm hover:text-gray-800">
-            <ArrowUpDown className="w-4 h-4" />
-            Sort
-          </button>
-          <button className="flex items-center gap-2 text-gray-600 text-sm hover:text-gray-800">
-            <SlidersHorizontal className="w-4 h-4" />
-            Filter
-          </button>
+          <div className="relative">
+            <button 
+              onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+              className="flex items-center gap-2 text-gray-600 text-sm hover:text-gray-800"
+            >
+              <Filter className="w-4 h-4" />
+              Filter
+            </button>
+            {showFilterDropdown && (
+              <div className="absolute top-6 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-80">
+                <div className="flex">
+                  {/* Kindness Cup column */}
+                  <div className="flex-1 border-r border-gray-200">
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-600 bg-gray-50 rounded-tl-lg border-b border-gray-200">
+                      BY KINDNESS CUP
+                    </div>
+                    <div className="p-2 space-y-1">
+                      <label className="flex items-center px-2 py-1.5 text-xs hover:bg-gray-50 rounded cursor-pointer">
+                        <input
+                          type="radio"
+                          name="kindnessSort"
+                          value="default"
+                          checked={kindnessSort === 'default'}
+                          onChange={(e) => setKindnessSort(e.target.value)}
+                          className="mr-2 text-blue-600 w-3 h-3"
+                        />
+                        Default Order
+                      </label>
+                      <label className="flex items-center px-2 py-1.5 text-xs hover:bg-gray-50 rounded cursor-pointer">
+                        <input
+                          type="radio"
+                          name="kindnessSort"
+                          value="high"
+                          checked={kindnessSort === 'high'}
+                          onChange={(e) => setKindnessSort(e.target.value)}
+                          className="mr-2 text-blue-600 w-3 h-3"
+                        />
+                        High to Low
+                      </label>
+                      <label className="flex items-center px-2 py-1.5 text-xs hover:bg-gray-50 rounded cursor-pointer">
+                        <input
+                          type="radio"
+                          name="kindnessSort"
+                          value="low"
+                          checked={kindnessSort === 'low'}
+                          onChange={(e) => setKindnessSort(e.target.value)}
+                          className="mr-2 text-blue-600 w-3 h-3"
+                        />
+                        Low to High
+                      </label>
+                    </div>
+                  </div>
+                  
+                  {/* Time column */}
+                  <div className="flex-1">
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-600 bg-gray-50 rounded-tr-lg border-b border-gray-200">
+                      BY TIME
+                    </div>
+                    <div className="p-2 space-y-1">
+                      <label className="flex items-center px-2 py-1.5 text-xs hover:bg-gray-50 rounded cursor-pointer">
+                        <input
+                          type="radio"
+                          name="timeSort"
+                          value="all"
+                          checked={timeSort === 'all'}
+                          onChange={(e) => setTimeSort(e.target.value)}
+                          className="mr-2 text-blue-600 w-3 h-3"
+                        />
+                        All Time
+                      </label>
+                      <label className="flex items-center px-2 py-1.5 text-xs hover:bg-gray-50 rounded cursor-pointer">
+                        <input
+                          type="radio"
+                          name="timeSort"
+                          value="week"
+                          checked={timeSort === 'week'}
+                          onChange={(e) => setTimeSort(e.target.value)}
+                          className="mr-2 text-blue-600 w-3 h-3"
+                        />
+                        Ending in a Week
+                      </label>
+                      <label className="flex items-center px-2 py-1.5 text-xs hover:bg-gray-50 rounded cursor-pointer">
+                        <input
+                          type="radio"
+                          name="timeSort"
+                          value="2weeks"
+                          checked={timeSort === '2weeks'}
+                          onChange={(e) => setTimeSort(e.target.value)}
+                          className="mr-2 text-blue-600 w-3 h-3"
+                        />
+                        Ending in Two Weeks
+                      </label>
+                      <label className="flex items-center px-2 py-1.5 text-xs hover:bg-gray-50 rounded cursor-pointer">
+                        <input
+                          type="radio"
+                          name="timeSort"
+                          value="month"
+                          checked={timeSort === 'month'}
+                          onChange={(e) => setTimeSort(e.target.value)}
+                          className="mr-2 text-blue-600 w-3 h-3"
+                        />
+                        Ending in a Month
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
