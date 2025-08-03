@@ -34,7 +34,7 @@ const LandingPage = ({ onSelectUserType }) => {
   ];
 
   return (
-    <div className="max-w-md mx-auto bg-gradient-to-br from-blue-900 via-indigo-800 to-purple-900 min-h-screen flex flex-col items-center justify-center px-6 relative overflow-hidden pt-12">
+    <div className="max-w-sm mx-auto bg-gradient-to-br from-blue-900 via-indigo-800 to-purple-900 min-h-screen flex flex-col items-center justify-center px-6 relative overflow-hidden pt-12">
       {/* Animated Background Elements */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
@@ -70,8 +70,8 @@ const LandingPage = ({ onSelectUserType }) => {
 
         {/* User Type Selection */}
         <div className="w-full space-y-4 mb-10">
-          <h3 className="text-white text-xl font-semibold mb-8 text-center opacity-90">
-            Choose your path
+          <h3 className="text-white text-xl font-semibold mb-6 text-center opacity-90">
+            Sign in as
           </h3>
           
           {userTypes.map((userType) => {

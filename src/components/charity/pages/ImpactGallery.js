@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Heart, ChevronLeft, ChevronRight, Trash2, MoreHorizontal, Edit3 } from 'lucide-react';
 
-const ImpactGallery = ({ impactPosts = [], selectedPost: initialSelectedPost = null, onBack, onDeletePost, onUpdatePost }) => {
+const ImpactGallery = ({ impactPosts = [], selectedPost: initialSelectedPost = null, driveFilter = null, onBack, onDeletePost, onUpdatePost }) => {
   const [selectedPost, setSelectedPost] = useState(initialSelectedPost);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showDeleteMenu, setShowDeleteMenu] = useState(null);
@@ -317,23 +317,38 @@ const ImpactGallery = ({ impactPosts = [], selectedPost: initialSelectedPost = n
           <button onClick={onBack}>
             <ArrowLeft className="w-6 h-6 text-gray-700" />
           </button>
-          <h1 className="text-lg font-semibold text-gray-900">Impact Gallery</h1>
+          <h1 className="text-lg font-semibold text-gray-900">
+            {driveFilter ? `Impact: ${driveFilter}` : 'Impact Gallery'}
+          </h1>
         </div>
       </div>
 
       {/* Gallery Content */}
       <div className="p-4">
-        {impactPosts.length === 0 ? (
-          <div className="text-center py-12">
-            <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Impact Stories Yet</h3>
-            <p className="text-gray-500">Share your first impact story to inspire others!</p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {impactPosts
-              .sort((a, b) => new Date(b.timestamp || b.createdAt) - new Date(a.timestamp || a.createdAt))
-              .map((post) => (
+        {(() => {
+          // Filter impact posts by drive if driveFilter is set
+          const filteredPosts = driveFilter 
+            ? impactPosts.filter(post => post.drive === driveFilter)
+            : impactPosts;
+          
+          return filteredPosts.length === 0 ? (
+            <div className="text-center py-12">
+              <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {driveFilter ? `No Impact Stories for "${driveFilter}"` : 'No Impact Stories Yet'}
+              </h3>
+              <p className="text-gray-500">
+                {driveFilter 
+                  ? 'No impact posts have been shared for this drive yet.' 
+                  : 'Share your first impact story to inspire others!'
+                }
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {filteredPosts
+                .sort((a, b) => new Date(b.timestamp || b.createdAt) - new Date(a.timestamp || a.createdAt))
+                .map((post) => (
               <div key={post.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                 {/* Post Header */}
                 <div className="p-4 border-b border-gray-100">
@@ -502,7 +517,8 @@ const ImpactGallery = ({ impactPosts = [], selectedPost: initialSelectedPost = n
               </div>
             ))}
           </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );
