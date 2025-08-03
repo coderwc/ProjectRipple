@@ -19,5 +19,5 @@ reportWebVitals();
 export { default as DriveCard } from './components/charity/common/DriveCard';
 export { default as SuccessPage } from './components/charity/pages/SuccessPage';
 export { default as AddItemsPage } from './components/charity/pages/AddItemsPage';
-export { default as CreatePostPage } from './components/charity/pages/CreatePostPage';
+export { default as RequestItemPage } from './components/charity/pages/AddItemsPage';
 export { default as DashboardPage } from './components/charity/pages/Dashboard';
