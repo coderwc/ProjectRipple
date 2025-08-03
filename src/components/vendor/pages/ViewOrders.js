@@ -117,6 +117,14 @@ const ViewOrders = ({ onNavigateToHome }) => {
 
         const vendorData = vendorDoc.data();
         const vendorName = vendorData.name;
+        
+        console.log('🏪 Vendor data:', { uid: user.uid, name: vendorName });
+        
+        if (!vendorName) {
+          setError('Vendor name not found in profile');
+          setLoading(false);
+          return;
+        }
 
         // Query orders where vendorId matches the vendor's name
         const ordersRef = collection(db, 'orders');
@@ -124,6 +132,8 @@ const ViewOrders = ({ onNavigateToHome }) => {
           ordersRef,
           where('vendorId', '==', vendorName)
         );
+        
+        console.log('🔍 Querying orders with vendorId:', vendorName);
 
         // Set up real-time listener for live updates
         const unsubscribe = onSnapshot(q, 
@@ -157,8 +167,10 @@ const ViewOrders = ({ onNavigateToHome }) => {
             setLoading(false);
           },
           (err) => {
-            console.error('Error fetching orders:', err);
-            setError('Failed to load orders');
+            console.error('❌ Error fetching orders:', err);
+            console.error('Error code:', err.code);
+            console.error('Error message:', err.message);
+            setError(`Failed to load orders: ${err.message}`);
             setLoading(false);
           }
         );
