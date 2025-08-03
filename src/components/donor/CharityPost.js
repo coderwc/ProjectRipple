@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Heart, Users, FileText, Camera, ChevronRight } from 'lucide-react';
 import { getDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { getItemDonationTotals } from '../../firebase/posts';
 
 const CharityPost = ({
   onBack,
@@ -28,12 +29,19 @@ const CharityPost = ({
           console.log('✅ Post data retrieved:', rawData);
           setPostData(rawData);
 
-          const formatted = rawData.items?.map((item) => ({
-            type: item.name || 'Unknown',
-            current: 0, // Placeholder for now
-            target: item.quantity || 0,
-            available: item.quantity > 0
-          })) || [];
+          // Fetch donation totals from separate collection
+          const donationTotals = await getItemDonationTotals(postId);
+          console.log('🎁 Donation totals retrieved:', donationTotals);
+
+          const formatted = rawData.items?.map((item) => {
+            const donatedQuantity = donationTotals[item.name] || 0;
+            return {
+              type: item.name || 'Unknown',
+              current: donatedQuantity, // Use donation totals from separate collection
+              target: item.quantity || 0,
+              available: item.quantity > 0 && donatedQuantity < item.quantity
+            };
+          }) || [];
 
           setTransformedItems(formatted);
         } else {

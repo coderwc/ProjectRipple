@@ -1,13 +1,20 @@
 import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
+import { createItemDonationAPI } from '../../../api/posts';
 
-const DonationCheckout = ({ onGoBack }) => {
-  const [email, setEmail] = useState('example@gmail.com');
+const DonationCheckout = ({ onGoBack, selectedCharity, cartItems, user }) => {
+  const [email, setEmail] = useState(user?.email || 'example@gmail.com');
   const [emailConsent, setEmailConsent] = useState(false);
   const [prayerMessage, setPrayerMessage] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  // Sample data from the cart - in a real app this would be passed as props
-  const donationItems = [
+  // Use real cart items or fallback to sample data
+  const donationItems = cartItems?.length > 0 ? cartItems.map(item => ({
+    name: item.name || item.title,
+    quantity: item.quantity || 1,
+    total: (item.price || 0) * (item.quantity || 1),
+    itemId: item.id
+  })) : [
     { name: "Dasani Water (2L)", quantity: 10, total: 20.00 },
     { name: "Cotton Blankets", quantity: 8, total: 44.00 },
     { name: "Purified Water", quantity: 25, total: 20.00 }
@@ -16,6 +23,54 @@ const DonationCheckout = ({ onGoBack }) => {
   const subtotal = donationItems.reduce((sum, item) => sum + item.total, 0);
   const deliveryFee = 14.00;
   const finalAmount = subtotal + deliveryFee;
+
+  const handleCompleteDonation = async () => {
+    if (!selectedCharity || !user) {
+      alert('Missing required information for donation');
+      return;
+    }
+
+    if (!emailConsent) {
+      alert('Please confirm your email is accurate');
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      // Create the item donation record
+      const donationData = {
+        postId: selectedCharity.id,
+        donorId: user.id,
+        donorName: user.name || user.displayName,
+        donorEmail: email,
+        items: donationItems.map(item => ({
+          itemName: item.name,
+          quantity: item.quantity,
+          itemId: item.itemId
+        })),
+        message: prayerMessage,
+      };
+
+      console.log('🎁 Submitting donation:', donationData);
+      
+      const result = await createItemDonationAPI(donationData);
+      
+      if (result.success) {
+        alert('🎉 Donation completed successfully! The charity will be notified.');
+        // Clear form and go back
+        setPrayerMessage('');
+        onGoBack();
+      } else {
+        throw new Error(result.error || 'Failed to complete donation');
+      }
+    } catch (error) {
+      console.error('❌ Donation completion error:', error);
+      alert(`Failed to complete donation: ${error.message}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <div className="max-w-sm mx-auto bg-gray-50 min-h-screen">
@@ -122,8 +177,12 @@ const DonationCheckout = ({ onGoBack }) => {
 
       {/* Fixed Bottom Button */}
       <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-white px-4 py-4">
-        <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-lg font-semibold text-base transition-colors">
-          CONTINUE
+        <button 
+          onClick={handleCompleteDonation}
+          disabled={isProcessing || !emailConsent}
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-4 rounded-lg font-semibold text-base transition-colors"
+        >
+          {isProcessing ? 'PROCESSING...' : 'COMPLETE DONATION'}
         </button>
       </div>
     </div>

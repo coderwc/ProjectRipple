@@ -25,7 +25,7 @@ function DonorApp({ user, onLogout }) {
   const [postOrigin, setPostOrigin] = useState(null); // 'home' or 'category'
   const [selectedPostData, setSelectedPostData] = useState(null);
 
-  const { setCharity, clearCart, getTotalItems } = useCart();
+  const { setCharity, clearCart, getTotalItems, getUniqueProducts } = useCart();
 
   const handleSelectCategory = (categoryName) => {
     setSelectedCategory(categoryName);
@@ -225,6 +225,9 @@ function DonorApp({ user, onLogout }) {
       {currentView === 'checkout' && (
         <Checkout
           onGoBack={handleBackFromCheckout}
+          selectedCharity={selectedCharity}
+          cartItems={getUniqueProducts()}
+          user={user}
         />
       )}
 
