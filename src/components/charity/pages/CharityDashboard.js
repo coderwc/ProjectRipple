@@ -10,7 +10,7 @@ import SelectPostType from './SelectPostType';
 import ImpactPostDrafting from './ImpactPostDrafting';
 import ImpactGallery from './ImpactGallery';
 import { createPost, getAIRecommendations, getCharityPosts } from '../../../api/posts';
-import { deletePost, createImpactPost, getImpactPosts, deleteImpactPost } from '../../../firebase/posts';
+import { deletePost, createImpactPost, getImpactPosts, deleteImpactPost, updateImpactPost } from '../../../firebase/posts';
 import { itemCategories } from '../constants/categories';
 
 const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
@@ -406,6 +406,29 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
     }
   };
 
+  const handleUpdateImpactPost = async (postId, updateData) => {
+    try {
+      setLoading(true);
+      
+      await updateImpactPost(postId, updateData);
+      
+      // Update local state
+      setImpactPosts(prev => prev.map(post => 
+        post.id === postId 
+          ? { ...post, ...updateData, updatedAt: new Date().toISOString() }
+          : post
+      ));
+      
+      console.log('✅ Impact post updated successfully');
+      
+    } catch (error) {
+      console.error('Error updating impact post:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       
@@ -413,6 +436,7 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
         <DriveDetailsPage
           drive={selectedDrive}
           onBack={() => setCurrentPage('dashboard')}
+          user={user}
         />
       )}
 
@@ -467,6 +491,7 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
             setCurrentPage('dashboard');
           }}
           onDeletePost={handleDeleteImpactPost}
+          onUpdatePost={handleUpdateImpactPost}
         />
       )}
       

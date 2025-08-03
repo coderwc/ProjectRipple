@@ -13,9 +13,8 @@ const DriveCard = ({ drive, onClick, onDelete, showDeleteButton = false }) => {
     }
     
     console.log('Formatting items:', items);
-    return items.slice(0, 3).map(item => 
-      `${item.name} (${item.quantity})`
-    ).join(', ') + (items.length > 3 ? '...' : '');
+    const firstItem = `${items[0].name} (${items[0].quantity})`;
+    return firstItem + (items.length > 1 ? '...' : '');
   };
 
   const handleDelete = (e) => {
@@ -31,7 +30,7 @@ const DriveCard = ({ drive, onClick, onDelete, showDeleteButton = false }) => {
       {showDeleteButton && (
         <button
           onClick={handleDelete}
-          className="absolute top-2 right-2 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors z-10"
+          className="absolute top-3 right-3 p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors z-10"
           title="Delete this drive"
         >
           <Trash2 className="w-4 h-4" />
@@ -42,6 +41,7 @@ const DriveCard = ({ drive, onClick, onDelete, showDeleteButton = false }) => {
       <button 
         onClick={() => onClick && onClick(drive)}
         className="w-full text-left hover:scale-[1.02] transition-transform duration-200"
+        style={{ paddingRight: showDeleteButton ? '48px' : '0' }}
       >
       <div className="flex gap-3">
         <div className="w-20 h-16 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
@@ -59,23 +59,21 @@ const DriveCard = ({ drive, onClick, onDelete, showDeleteButton = false }) => {
             <div className="w-full h-full bg-gray-200"></div>
           )}
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <div className="flex justify-between items-start mb-1">
-            <h3 className="font-semibold text-gray-900 text-sm">{drive.name}</h3>
+            <h3 className="font-semibold text-gray-900 text-sm break-words overflow-wrap-anywhere">{drive.name}</h3>
           </div>
-          <p className="text-xs text-gray-500 mb-1">{drive.vendor}</p>
-          <p className="text-xs text-gray-400 mb-2 leading-relaxed">{drive.description}</p>
-          <div className="flex justify-between items-center">
-            <div className="flex-1 mr-4">
-              <p className="text-xs text-gray-400">Raising for:</p>
-              <p className="font-semibold text-sm text-gray-900 break-words">
-                {formatItemsList(drive.items)}
-              </p>
-            </div>
-            <div className="text-right flex-shrink-0">
-              <p className="text-xs text-gray-400">Deadline:</p>
-              <p className="font-semibold text-sm text-gray-900">{drive.expiry}</p>
-            </div>
+          <p className="text-xs text-gray-500 mb-1 truncate">{drive.vendor}</p>
+          <p className="text-xs text-gray-400 mb-2 leading-relaxed truncate">{drive.description}</p>
+          <div className="flex-1 mr-16 min-w-0">
+            <p className="text-xs text-gray-400">Raising for:</p>
+            <p className="font-semibold text-sm text-gray-900 truncate">
+              {formatItemsList(drive.items)}
+            </p>
+          </div>
+          <div className="absolute bottom-3 right-3 text-right">
+            <p className="text-xs text-gray-400">Deadline:</p>
+            <p className="font-semibold text-sm text-gray-900">{drive.expiry}</p>
           </div>
         </div>
       </div>

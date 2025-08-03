@@ -6,7 +6,7 @@ import { storage } from "../../../firebase/config";
 
 const ProfilePage = ({ currentPage, setCurrentPage, onLogout, user, onUserUpdate }) => {
   const [editingField, setEditingField] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [imageUploading, setImageUploading] = useState(false);
   
@@ -19,6 +19,7 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout, user, onUserUpdate
     queries: user?.queries || '',
     tagline: user?.tagline || '',
     aboutUs: user?.aboutUs || '',
+    focusAreas: user?.focusAreas || [],
     imageUrl: user?.imageUrl || ''
   });
 
@@ -35,6 +36,7 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout, user, onUserUpdate
         queries: user.queries || '',
         tagline: user.tagline || '',
         aboutUs: user.aboutUs || '',
+        focusAreas: user.focusAreas || [],
         imageUrl: user.imageUrl || ''
       };
       setProfileData(updatedProfile);
@@ -74,6 +76,7 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout, user, onUserUpdate
       setEditingField(null);
       
       // Notify parent component about user update
+      console.log('🔄 ProfilePage: Notifying parent of user update:', updatedUser);
       if (onUserUpdate) {
         onUserUpdate(updatedUser);
       }
@@ -98,29 +101,6 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout, user, onUserUpdate
     }
   };
 
-  const addFocusArea = () => {
-    setTempData({
-      ...tempData,
-      focusAreas: [...tempData.focusAreas, "New Focus Area"]
-    });
-  };
-
-  const updateFocusArea = (index, value) => {
-    const newFocusAreas = [...tempData.focusAreas];
-    newFocusAreas[index] = value;
-    setTempData({
-      ...tempData,
-      focusAreas: newFocusAreas
-    });
-  };
-
-  const removeFocusArea = (index) => {
-    const newFocusAreas = tempData.focusAreas.filter((_, i) => i !== index);
-    setTempData({
-      ...tempData,
-      focusAreas: newFocusAreas
-    });
-  };
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -184,6 +164,7 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout, user, onUserUpdate
       setTempData((prev) => ({ ...prev, imageUrl: downloadURL }));
 
       // Notify parent component about user update
+      console.log('🔄 ProfilePage: Notifying parent of user update:', updatedUser);
       if (onUserUpdate) {
         onUserUpdate(updatedUser);
       }

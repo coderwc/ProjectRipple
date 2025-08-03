@@ -6,7 +6,7 @@ import {
   updateProfile,
   signOut
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from './config';
 
 // 🔥 Sync with vendor backend
@@ -58,6 +58,32 @@ export const signUpUser = async (userData, userType) => {
     const collection = userType === 'vendor' ? 'vendors' : 'users';
     await setDoc(doc(db, collection, user.uid), userDocData);
 
+    // If this is a charity signup, also create public profile
+    if (userType === 'charity') {
+      try {
+        await setDoc(doc(db, 'publicCharities', user.uid), {
+          id: user.uid,
+          name: userDocData.name,
+          email: userDocData.email,
+          type: 'charity',
+          phone: userDocData.phone || '',
+          location: userDocData.location || '',
+          socials: userDocData.socials || '',
+          tagline: userDocData.tagline || '',
+          aboutUs: userDocData.aboutUs || '',
+          focusAreas: userDocData.focusAreas || [],
+          imageUrl: userDocData.imageUrl || '',
+          isVerified: userDocData.isVerified || false,
+          createdAt: userDocData.createdAt,
+          updatedAt: userDocData.updatedAt
+        });
+        console.log('✅ Public charity profile created for:', user.uid);
+      } catch (publicProfileError) {
+        console.log('⚠️ Failed to create public charity profile:', publicProfileError.message);
+        // Don't fail signup if public profile creation fails
+      }
+    }
+
     if (userType === 'vendor') {
       await initVendorProfile(userData.fullName, user.email);
     }
@@ -102,6 +128,10 @@ export const signInUser = async (email, password, expectedRole = null) => {
           location: userData.location || '',
           socials: userData.socials || '',
           queries: userData.queries || '',
+          tagline: userData.tagline || '',
+          aboutUs: userData.aboutUs || '',
+          focusAreas: userData.focusAreas || [],
+          imageUrl: userData.imageUrl || '',
           isVerified: userData.isVerified || false
         };
       }
@@ -130,6 +160,10 @@ export const signInUser = async (email, password, expectedRole = null) => {
           location: userData.location || '',
           socials: userData.socials || '',
           queries: userData.queries || '',
+          tagline: userData.tagline || '',
+          aboutUs: userData.aboutUs || '',
+          focusAreas: userData.focusAreas || [],
+          imageUrl: userData.imageUrl || '',
           isVerified: userData.isVerified || false
         };
       }
@@ -181,6 +215,10 @@ export const signInWithGoogle = async (expectedRole) => {
           location: userData.location || '',
           socials: userData.socials || '',
           queries: userData.queries || '',
+          tagline: userData.tagline || '',
+          aboutUs: userData.aboutUs || '',
+          focusAreas: userData.focusAreas || [],
+          imageUrl: userData.imageUrl || '',
           isVerified: userData.isVerified || false
         };
       }
@@ -206,6 +244,10 @@ export const signInWithGoogle = async (expectedRole) => {
           location: userData.location || '',
           socials: userData.socials || '',
           queries: userData.queries || '',
+          tagline: userData.tagline || '',
+          aboutUs: userData.aboutUs || '',
+          focusAreas: userData.focusAreas || [],
+          imageUrl: userData.imageUrl || '',
           isVerified: userData.isVerified || false
         };
       }
@@ -231,6 +273,32 @@ export const signInWithGoogle = async (expectedRole) => {
 
       const collection = expectedRole === 'vendor' ? 'vendors' : 'users';
       await setDoc(doc(db, collection, user.uid), userDocData);
+
+      // If this is a charity signup via Google, also create public profile
+      if (expectedRole === 'charity') {
+        try {
+          await setDoc(doc(db, 'publicCharities', user.uid), {
+            id: user.uid,
+            name: userDocData.name,
+            email: userDocData.email,
+            type: 'charity',
+            phone: '',
+            location: '',
+            socials: '',
+            tagline: '',
+            aboutUs: '',
+            focusAreas: [],
+            imageUrl: '',
+            isVerified: userDocData.isVerified || false,
+            createdAt: userDocData.createdAt,
+            updatedAt: userDocData.createdAt
+          });
+          console.log('✅ Public charity profile created via Google sign-in for:', user.uid);
+        } catch (publicProfileError) {
+          console.log('⚠️ Failed to create public charity profile via Google:', publicProfileError.message);
+          // Don't fail signup if public profile creation fails
+        }
+      }
 
       if (expectedRole === 'vendor') {
         await initVendorProfile(user.displayName, user.email);
@@ -262,19 +330,65 @@ export const updateUserProfile = async (userId, newData) => {
       });
     }
 
+    // Check which collection the user belongs to
+    let userRef;
+    let collection = 'users'; // default
+    
+    // First check if user is in vendors collection
+    const vendorDoc = await getDoc(doc(db, 'vendors', userId));
+    if (vendorDoc.exists()) {
+      collection = 'vendors';
+    }
+
     // Update Firestore document with all profile data
-    const userRef = doc(db, 'users', userId);
+    userRef = doc(db, collection, userId);
     await setDoc(userRef, {
       ...newData,
       updatedAt: new Date().toISOString()
     }, { merge: true });
 
-    // Return updated user data
+    console.log(`✅ Profile updated in ${collection} collection for user:`, userId);
+
+    // If this is a charity profile update, also update public charity profile
     const updatedDoc = await getDoc(userRef);
-    return {
+    const updatedUserData = updatedDoc.data();
+    
+    if (updatedUserData.type === 'charity') {
+      try {
+        // Create/update public charity profile in a publicly readable collection
+        const publicCharityRef = doc(db, 'publicCharities', userId);
+        await setDoc(publicCharityRef, {
+          id: userId,
+          name: updatedUserData.name,
+          email: updatedUserData.email,
+          type: 'charity',
+          phone: updatedUserData.phone || '',
+          location: updatedUserData.location || '',
+          socials: updatedUserData.socials || '',
+          tagline: updatedUserData.tagline || '',
+          aboutUs: updatedUserData.aboutUs || '',
+          focusAreas: updatedUserData.focusAreas || [],
+          imageUrl: updatedUserData.imageUrl || '',
+          isVerified: updatedUserData.isVerified || false,
+          createdAt: updatedUserData.createdAt,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+        
+        console.log(`✅ Public charity profile updated for:`, userId);
+      } catch (publicProfileError) {
+        console.log('⚠️ Failed to update public charity profile:', publicProfileError.message);
+        // Don't fail the main update if public profile update fails
+      }
+    }
+
+    // Return updated user data
+    const finalUserData = {
       id: updatedDoc.id,
       ...updatedDoc.data()
     };
+    
+    console.log('✅ Returning updated user data:', finalUserData);
+    return finalUserData;
   } catch (error) {
     console.error('Error updating user profile:', error);
     throw error;

@@ -3,7 +3,7 @@ import { ArrowLeft, MapPin, Calendar, DollarSign, Users, CheckCircle2, Package }
 import { calculateDriveProgress, formatProgressText, getProgressBarColor } from '../../../utils/progressCalculation';
 import { getDonationsByPost } from '../../../firebase/donations'; // ✅ Fixed path
 
-const DriveDetailsPage = ({ drive, onBack }) => {
+const DriveDetailsPage = ({ drive, onBack, user }) => {
   const [donations, setDonations] = useState([]);
   const [loadingDonations, setLoadingDonations] = useState(true);
 
@@ -172,33 +172,11 @@ const DriveDetailsPage = ({ drive, onBack }) => {
             <MapPin className="w-4 h-4 text-gray-500" />
             <h3 className="font-bold text-gray-900">Location</h3>
           </div>
-          <p className="text-sm text-gray-600">Singapore, Central Region</p>
+          <p className="text-sm text-gray-600">{user?.location || 'Location not specified'}</p>
           <p className="text-xs text-gray-500 mt-1">Serving affected areas nationwide</p>
         </div>
 
-        {/* Impact Stats */}
-        <div className="bg-white rounded-lg p-4 mb-6">
-          <h3 className="font-bold text-gray-900 mb-3">Impact So Far</h3>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <p className="text-lg font-bold text-blue-600">{progressData.itemsCollected}</p>
-              <p className="text-xs text-gray-500">Items Collected</p>
-            </div>
-            <div>
-              <p className="text-lg font-bold text-green-600">{progressData.donorCount}</p>
-              <p className="text-xs text-gray-500">Supporters</p>
-            </div>
-            <div>
-              <p className="text-lg font-bold text-purple-600">{progressData.percentage}%</p>
-              <p className="text-xs text-gray-500">Goal Progress</p>
-            </div>
-          </div>
-        </div>
 
-        {/* CTA */}
-        <button className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-blue-700 transition-colors">
-          Support This Drive
-        </button>
       </div>
     </div>
   );
