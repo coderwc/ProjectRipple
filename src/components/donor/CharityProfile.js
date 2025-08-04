@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; 
 import { ArrowLeft, MapPin, Globe, Phone, Heart, Loader } from 'lucide-react';
 import { getCharityProfile } from '../../api/posts';
 
@@ -179,37 +179,6 @@ const CharityProfile = ({ charityId, onBack }) => {
               )}
             </div>
           </div>
-
-          {/* Impact Statistics - Only show if charity has provided impact stats */}
-          {charityData.impactStats ? (
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-4 text-white">
-              <h3 className="text-lg font-bold mb-3">Our Impact</h3>
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <div className="text-2xl font-bold">
-                    {(charityData.impactStats.familiesHelped || 0).toLocaleString()}
-                  </div>
-                  <div className="text-xs opacity-90">Families Helped</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">
-                    {charityData.impactStats.communitiesReached || 0}
-                  </div>
-                  <div className="text-xs opacity-90">Communities Reached</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">
-                    {charityData.impactStats.yearsActive || 1}
-                  </div>
-                  <div className="text-xs opacity-90">Years Active</div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-gray-100 rounded-lg p-4 text-center">
-              <p className="text-gray-500 italic">Impact statistics not yet provided</p>
-            </div>
-          )}
         </div>
       </div>
     </div>
