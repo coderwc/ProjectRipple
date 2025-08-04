@@ -339,9 +339,9 @@ const CategoryFeed = ({ onBack, onSelectPost, categoryName = "Natural Disasters"
               className="bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-all duration-200 border border-gray-100"
               onClick={() => onSelectPost && onSelectPost(item.id)}
             >
-              <div className="flex gap-4 items-start">
-                {/* Charity image - uniform size */}
-                <div className="w-20 h-20 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden">
+              <div className="flex gap-3 items-start">
+                {/* Charity image - keep same size but improve styling */}
+                <div className="w-20 h-20 bg-gray-300 rounded-xl flex-shrink-0 overflow-hidden shadow-sm">
                   {item.imageUrl ? (
                     <img 
                       src={item.imageUrl} 
@@ -349,34 +349,34 @@ const CategoryFeed = ({ onBack, onSelectPost, categoryName = "Natural Disasters"
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                      <span className="text-gray-500 text-xs">No Image</span>
+                    <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                      <span className="text-gray-500 text-xs font-medium">No Image</span>
                     </div>
                   )}
                 </div>
                 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="mb-3">
-                    <h3 className="font-semibold text-gray-900 text-base leading-tight line-clamp-2">{item.headline}</h3>
+                {/* Content - improved spacing and hierarchy */}
+                <div className="flex-1 min-w-0 flex flex-col justify-between h-20">
+                  {/* Title and source with better spacing */}
+                  <div className="space-y-1.5">
+                    <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2">{item.headline}</h3>
+                    <p className="text-xs text-blue-600 font-medium">{item.source}</p>
                   </div>
                   
-                  <p className="text-sm text-blue-600 font-medium mb-3">{item.source}</p>
-                  
-                  {/* Progress section */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-blue-600 font-medium">Kindness Cup: {item.progress}% Full</span>
-                      <div className="flex items-center gap-1 text-right">
-                        <span className="text-gray-500">Remaining Days</span>
-                        <span className="font-semibold text-gray-800 min-w-[2ch]">{item.remainingDays}</span>
+                  {/* Progress section - more compact */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-blue-600 font-medium">Kindness Cup: {item.progress}%</span>
+                      <div className="flex items-center gap-1 bg-gray-50 px-2 py-0.5 rounded-full">
+                        <span className="text-xs text-gray-500">Days:</span>
+                        <span className="text-xs font-bold text-gray-800">{item.remainingDays}</span>
                       </div>
                     </div>
                     
-                    {/* Progress bar */}
-                    <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                    {/* Progress bar - slightly thinner */}
+                    <div className="w-full bg-gray-200 rounded-full h-1 overflow-hidden">
                       <div 
-                        className="bg-blue-500 h-full rounded-full transition-all duration-500 ease-out" 
+                        className="bg-gradient-to-r from-blue-500 to-purple-600 h-full rounded-full transition-all duration-500 ease-out" 
                         style={{ width: `${item.progress}%` }}
                       ></div>
                     </div>
