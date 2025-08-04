@@ -45,6 +45,7 @@ const CharityPost = ({
   const [postData, setPostData] = useState(null);
   const [transformedItems, setTransformedItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [charityImageUrl, setCharityImageUrl] = useState(null);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -59,6 +60,18 @@ const CharityPost = ({
         if (docSnap.exists()) {
           const rawData = docSnap.data();
           setPostData(rawData);
+
+          // ⬇️ Fetch updated charity profile image from publicCharities
+const publicCharityId = rawData.charityId || rawData.authorId;
+if (publicCharityId) {
+  const publicProfileRef = doc(db, 'users', publicCharityId);
+  const publicProfileSnap = await getDoc(publicProfileRef);
+
+  if (publicProfileSnap.exists()) {
+    const publicProfileData = publicProfileSnap.data();
+    setCharityImageUrl(publicProfileData.imageUrl || null);
+  }
+}
 
           // Fetch donation totals from separate collection
           const donationTotals = await getItemDonationTotals(postId);
@@ -329,7 +342,17 @@ const CharityPost = ({
             className="w-full flex items-center justify-between py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors rounded"
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gray-300 rounded-full" />
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+  {charityImageUrl ? (
+    <img
+      src={charityImageUrl}
+      alt="Charity Profile"
+      className="w-full h-full object-cover"
+    />
+  ) : (
+    <div className="w-4 h-4 bg-gray-400 rounded-full" />
+  )}
+</div>
               <div>
                 <p className="font-medium text-gray-900 text-sm">{charityName}</p>
               </div>
