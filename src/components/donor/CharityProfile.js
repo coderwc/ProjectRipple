@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'; 
 import { ArrowLeft, MapPin, Globe, Phone, Heart, Loader } from 'lucide-react';
-import { getCharityProfile } from '../../api/posts';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../firebase/config';
 
 const CharityProfile = ({ charityId, onBack }) => {
   const [charityData, setCharityData] = useState(null);
@@ -18,14 +19,18 @@ const CharityProfile = ({ charityId, onBack }) => {
       try {
         setLoading(true);
         console.log('🔍 Fetching charity profile for ID:', charityId);
-        const response = await getCharityProfile(charityId);
-        console.log('📥 Charity profile response:', response);
         
-        if (response.success) {
-          setCharityData(response.charity);
+        // Fetch from publicCharities collection (synced from ProfilePage.js)
+        const publicCharityDoc = await getDoc(doc(db, 'publicCharities', charityId));
+        
+        if (publicCharityDoc.exists()) {
+          const charityData = publicCharityDoc.data();
+          console.log('📥 Public charity profile data:', charityData);
+          setCharityData(charityData);
           setError(null);
         } else {
-          setError(response.error || "Failed to load charity profile");
+          console.log('❌ No public charity profile found for ID:', charityId);
+          setError("Charity profile not found. The charity may need to update their profile first.");
         }
       } catch (err) {
         console.error("Error fetching charity profile:", err);
@@ -103,10 +108,20 @@ const CharityProfile = ({ charityId, onBack }) => {
         <div className="bg-white rounded-3xl p-6 relative mt-4">
           {/* Profile Picture */}
           <div className="flex justify-center mb-4">
-            <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center border-4 border-white -mt-12">
-              <Heart className="w-12 h-12 text-gray-400" />
+            <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center border-4 border-white -mt-12 overflow-hidden">
+              {charityData.imageUrl ? (
+                <img 
+                  src={charityData.imageUrl} 
+                  alt={charityData.name || 'Charity'} 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Heart className="w-12 h-12 text-gray-400" />
+              )}
             </div>
           </div>
+
+
 
           {/* Charity Name & Tagline */}
           <div className="text-center mb-6">
@@ -146,6 +161,19 @@ const CharityProfile = ({ charityId, onBack }) => {
               </span>
             </div>
           </div>
+
+          {/* Contact/Queries Section - only show if queries has content */}
+          {charityData.queries && (
+            <div className="mb-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-3">How to Contact Us</h3>
+              <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                <Phone className="w-5 h-5 text-gray-500 mt-0.5 flex-shrink-0" />
+                <p className="text-gray-700 text-sm leading-relaxed">
+                  {charityData.queries}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* About Us Section */}
           <div className="mb-6">

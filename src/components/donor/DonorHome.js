@@ -67,20 +67,20 @@ const calculateKindnessCupPercentage = async (post) => {
     // Fetch donation totals from separate collection
     const donationTotals = await getItemDonationTotals(post.id);
     
-    let totalNeeded = 0;
-let totalDonated = 0;
-
-post.items.forEach(item => {
-  if (item.quantity > 0) {
-    const normalizedItemName = normalizeItemName(item.name);
-    const donatedQuantity = donationTotals[normalizedItemName] || 0;
-
-    totalNeeded += item.quantity;
-    totalDonated += Math.min(donatedQuantity, item.quantity); // Prevents overcounting
-  }
-});
-
-return totalNeeded > 0 ? Math.round((totalDonated / totalNeeded) * 100) : 0;
+    let totalFulfillment = 0;
+    let itemCount = 0;
+    
+    post.items.forEach(item => {
+      if (item.quantity > 0) {
+        const normalizedItemName = normalizeItemName(item.name);
+        const donatedQuantity = donationTotals[normalizedItemName] || 0;
+        const itemFulfillment = Math.min((donatedQuantity / item.quantity) * 100, 100);
+        totalFulfillment += itemFulfillment;
+        itemCount++;
+      }
+    });
+    
+    return itemCount > 0 ? Math.round(totalFulfillment / itemCount) : 0;
   } catch (error) {
     console.error('❌ Error calculating kindness cup percentage:', error);
     return 0;
@@ -106,14 +106,14 @@ export default function DonorHome({
   });
 
   const timeFilters = [
-    'any time',
-    'ends in a week',
-    'ends in two weeks', 
-    'ends in a month'
+    'Any time',
+    'Ends in a week',
+    'Ends in two weeks', 
+    'Ends in a month'
   ];
 
   const categoryFilters = [
-    'all categories',
+    'All categories',
     'Natural Disasters',
     'Animals', 
     'Sustainability',
@@ -275,8 +275,8 @@ export default function DonorHome({
 
   return (
     <div className="max-w-sm mx-auto bg-gray-50 min-h-screen relative">
-      {/* Top Header Section with Blue-Purple Gradient */}
-      <div className="bg-gradient-to-r from-blue-400 to-purple-500 px-4 pt-4 pb-3 rounded-b-3xl">
+      {/* Top Blue Header Section - Made shorter and more proportional */}
+      <div className="bg-blue-300 px-4 pt-4 pb-3 rounded-b-3xl">
         {/* Top row with profile - Reduced spacing */}
         <div className="flex items-center gap-3 mb-3">
           {/* Profile Picture - Made smaller */}
@@ -412,62 +412,51 @@ export default function DonorHome({
           </div>
         </div>
 
-        {/* Explore Posts - Updated with consistent formatting */}
+        {/* Explore Posts */}
         <div className="space-y-3 pb-24">
           {filteredDrives.map((drive) => (
             <div
               key={drive.id}
-              className="bg-white rounded-xl border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-all duration-200 overflow-hidden"
+              className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm relative cursor-pointer hover:shadow-md transition-all duration-200"
               onClick={() => onSelectPost(drive.id)}
             >
-              {/* Fixed height container for consistent sizing */}
-              <div className="h-48 flex flex-col">
-                {/* Image section - Fixed height with consistent aspect ratio */}
-                <div className="h-24 w-full bg-gray-200 flex-shrink-0 overflow-hidden">
-                  {drive.imageUrl ? (
-                    <img 
-                      src={drive.imageUrl} 
-                      alt={drive.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                      <div className="text-center">
-                        <Heart className="w-8 h-8 text-gray-400 mx-auto mb-1" />
-                        <span className="text-gray-500 text-xs font-medium">{drive.org}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Content section - Fixed height to ensure consistency */}
-                <div className="flex-1 p-4 flex flex-col justify-between">
-                  {/* Title and org */}
-                  <div className="mb-3">
-                    <h3 className="text-sm font-semibold text-gray-900 leading-tight mb-1 line-clamp-2 min-h-[2.5rem]">
-                      {drive.title}
-                    </h3>
-                    <p className="text-xs text-blue-600 font-medium truncate">{drive.org}</p>
+              {/* Charity image - Larger size for better visual impact */}
+              <div className="w-full h-40 bg-gray-300 rounded-lg mb-3 overflow-hidden">
+                {drive.imageUrl ? (
+                  <img 
+                    src={drive.imageUrl} 
+                    alt={drive.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                    <span className="text-gray-500 text-sm">No Image</span>
                   </div>
-                  
-                  {/* Progress and days info - Fixed at bottom */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center text-xs">
-                      <div className="flex items-center gap-1.5">
-                        <Droplet className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
-                        <span className="text-blue-600 font-medium">Kindness Cup: {drive.progress}%</span>
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <span className="text-gray-500">Days: </span>
-                        <span className="font-semibold text-gray-800">{drive.daysLeft}</span>
-                      </div>
+                )}
+              </div>
+              
+              {/* Content section */}
+              <div className="space-y-2">
+                <h3 className="text-base font-semibold text-gray-900 leading-tight line-clamp-2">{drive.title}</h3>
+                <p className="text-sm text-blue-600 font-medium">{drive.org}</p>
+                
+                {/* Progress and days info */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <div className="flex items-center gap-2">
+                      <Droplet className="w-4 h-4 text-blue-500" />
+                      <span className="text-blue-600 font-medium">Kindness Cup: {drive.progress}%</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-1.5">
-                      <div
-                        className="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
-                        style={{ width: `${Math.min(drive.progress || 0, 100)}%` }}
-                      />
+                    <div className="text-right">
+                      <span className="text-gray-500">Remaining Days</span>
+                      <span className="font-semibold text-gray-800 ml-1">{drive.daysLeft}</span>
                     </div>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all"
+                      style={{ width: `${Math.min(drive.progress || 0, 100)}%` }}
+                    />
                   </div>
                 </div>
               </div>

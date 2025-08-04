@@ -64,12 +64,19 @@ const CharityPost = ({
           // ⬇️ Fetch updated charity profile image from publicCharities
 const publicCharityId = rawData.charityId || rawData.authorId;
 if (publicCharityId) {
-  const publicProfileRef = doc(db, 'users', publicCharityId);
-  const publicProfileSnap = await getDoc(publicProfileRef);
+  try {
+    const publicProfileRef = doc(db, 'publicCharities', publicCharityId);
+    const publicProfileSnap = await getDoc(publicProfileRef);
 
-  if (publicProfileSnap.exists()) {
-    const publicProfileData = publicProfileSnap.data();
-    setCharityImageUrl(publicProfileData.imageUrl || null);
+    if (publicProfileSnap.exists()) {
+      const publicProfileData = publicProfileSnap.data();
+      console.log('📥 Charity profile data for image:', publicProfileData);
+      setCharityImageUrl(publicProfileData.imageUrl || null);
+    } else {
+      console.log('⚠️ No public charity profile found for ID:', publicCharityId);
+    }
+  } catch (error) {
+    console.log('⚠️ Error fetching charity profile image:', error);
   }
 }
 
