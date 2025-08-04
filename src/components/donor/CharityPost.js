@@ -80,6 +80,16 @@ const CharityPost = ({
           }) || [];
 
           setTransformedItems(formatted);
+          
+          // Calculate total donations received across all items
+          const totalDonationsReceived = Object.values(donationTotals).reduce((sum, quantity) => sum + quantity, 0);
+          console.log(`🎁 Total donations received for post: ${totalDonationsReceived}`);
+          
+          // Update the post data with actual donation count
+          setPostData(prevData => ({
+            ...prevData,
+            actualDonationsReceived: totalDonationsReceived
+          }));
         }
       } catch (error) {
         console.error('❌ Error loading post:', error);
@@ -139,16 +149,51 @@ const CharityPost = ({
     charityId,
     authorId,
     donationsReceived,
+    actualDonationsReceived,
     deadline,
     imageUrl
   } = postData;
 
   const remainingDays = (() => {
     if (!deadline) return 0;
-    const today = new Date();
-    const target = new Date(deadline);
-    const diff = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
-    return diff > 0 ? diff : 0;
+    
+    try {
+      // Create dates at midnight to avoid timezone issues
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      let target;
+      if (typeof deadline === 'string') {
+        // Handle different string formats
+        if (deadline.includes('/')) {
+          // Format: DD/MM/YYYY or MM/DD/YYYY
+          const parts = deadline.split('/');
+          if (parts.length === 3) {
+            // Assume DD/MM/YYYY format (European)
+            const [day, month, year] = parts.map(Number);
+            target = new Date(year, month - 1, day);
+          } else {
+            target = new Date(deadline);
+          }
+        } else {
+          target = new Date(deadline);
+        }
+      } else {
+        target = new Date(deadline);
+      }
+      
+      target.setHours(23, 59, 59, 999); // End of target day
+      
+      const diffTime = target - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      console.log(`📅 Deadline calculation: today=${today.toDateString()}, target=${target.toDateString()}, days=${diffDays}`);
+      
+      return diffDays > 0 ? diffDays : 0;
+    } catch (error) {
+      console.error('❌ Error calculating remaining days:', error);
+      return 0;
+    }
   })();
 
   // Calculate kindness cup percentage based on 'we currently need' items fulfillment
@@ -220,7 +265,7 @@ const CharityPost = ({
           </div>
 
           <h2 className="font-semibold text-gray-900 mb-1">{headline}</h2>
-          <p className="text-sm text-blue-600 mb-3">{donationsReceived} Donated</p>
+          <p className="text-sm text-blue-600 mb-3">{actualDonationsReceived || donationsReceived || 0} Items Donated</p>
 
           <div className="space-y-2">
             <div className="flex justify-between items-center text-sm">

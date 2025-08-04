@@ -134,14 +134,42 @@ const CategoryFeed = ({ onBack, onSelectPost, categoryName = "Natural Disasters"
     fetchPosts();
   }, [categoryName]);
 
-  const calculateRemainingDays = (deadlineStr) => {
+  const calculateRemainingDays = (deadline) => {
+    if (!deadline) return 0;
+    
     try {
-      const [day, month, year] = deadlineStr.split('/').map(Number);
-      const deadline = new Date(year, month - 1, day);
-      const now = new Date();
-      const diff = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
-      return diff > 0 ? diff : 0;
-    } catch {
+      // Create dates at midnight to avoid timezone issues
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      let target;
+      if (typeof deadline === 'string') {
+        // Handle different string formats
+        if (deadline.includes('/')) {
+          // Format: DD/MM/YYYY or MM/DD/YYYY
+          const parts = deadline.split('/');
+          if (parts.length === 3) {
+            // Assume DD/MM/YYYY format (European)
+            const [day, month, year] = parts.map(Number);
+            target = new Date(year, month - 1, day);
+          } else {
+            target = new Date(deadline);
+          }
+        } else {
+          target = new Date(deadline);
+        }
+      } else {
+        target = new Date(deadline);
+      }
+      
+      target.setHours(23, 59, 59, 999); // End of target day
+      
+      const diffTime = target - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      return diffDays > 0 ? diffDays : 0;
+    } catch (error) {
+      console.error('❌ Error calculating remaining days:', error);
       return 0;
     }
   };

@@ -11,7 +11,7 @@ import { useCart } from '../../shared/CartContext';
 
 // Replace mock data with real data from firestore
 const ShoppingCart = ({ onGoBack, onGoToCheckout, onCheckoutSuccess }) => {
-  const { removeFromCart } = useCart();
+  const { removeFromCart, reloadCart } = useCart();
   const [cartItems, setCartItems] = useState([]); // ← real data will load here
   const [selectAll, setSelectAll] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -286,8 +286,14 @@ const deleteItem = async (id) => {
     try {
       await createOrdersFromCart();
       alert('✅ Order placed successfully!');
-      const items = await getUserCartItems();
-      setCartItems(items); // reload cart
+      
+      // Reload both local cart state and global cart context with small delay
+      setTimeout(async () => {
+        const items = await getUserCartItems();
+        setCartItems(items); // reload local cart state
+        await reloadCart(); // reload global cart context (for badge)
+        console.log('✅ Cart state reloaded after checkout');
+      }, 100);
       
       // Navigate back to charity post after successful checkout
       if (onCheckoutSuccess) {

@@ -130,10 +130,39 @@ export default function DonorHome({
         const response = await getLatestCharityPosts(8);
         if (response.success && response.posts) {
           const formattedPosts = await Promise.all(response.posts.map(async post => {
-            const today = new Date();
-            const target = new Date(post.deadline);
-            const diffDays = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
-            const daysLeft = diffDays > 0 ? diffDays : 0;
+            // Robust date calculation
+            let daysLeft = 0;
+            if (post.deadline) {
+              try {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                let target;
+                if (typeof post.deadline === 'string') {
+                  if (post.deadline.includes('/')) {
+                    const parts = post.deadline.split('/');
+                    if (parts.length === 3) {
+                      const [day, month, year] = parts.map(Number);
+                      target = new Date(year, month - 1, day);
+                    } else {
+                      target = new Date(post.deadline);
+                    }
+                  } else {
+                    target = new Date(post.deadline);
+                  }
+                } else {
+                  target = new Date(post.deadline);
+                }
+                
+                target.setHours(23, 59, 59, 999);
+                const diffTime = target - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                daysLeft = diffDays > 0 ? diffDays : 0;
+              } catch (error) {
+                console.error('❌ Error calculating days left:', error);
+                daysLeft = 0;
+              }
+            }
 
             // Calculate kindness cup percentage based on items fulfillment
             const progress = await calculateKindnessCupPercentage(post);

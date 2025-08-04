@@ -5,7 +5,7 @@ import { useCart } from '../../shared/CartContext';
 import { clearUserCart } from '../../../firebase/cart';
 
 const DonationCheckout = ({ onGoBack, onCheckoutSuccess, selectedCharity, cartItems, user }) => {
-  const { clearCart } = useCart();
+  const { clearCart, reloadCart } = useCart();
   const [email, setEmail] = useState(user?.email || 'example@gmail.com');
   const [emailConsent, setEmailConsent] = useState(false);
   const [prayerMessage, setPrayerMessage] = useState('');
@@ -66,6 +66,11 @@ const DonationCheckout = ({ onGoBack, onCheckoutSuccess, selectedCharity, cartIt
         try {
           await clearUserCart(); // Clear from Firestore
           clearCart(); // Clear from local context
+          // Add small delay to ensure Firestore operations are complete
+          setTimeout(async () => {
+            await reloadCart(); // Reload cart context to update badge
+            console.log('✅ Cart cleared and reloaded successfully after donation');
+          }, 100);
           console.log('✅ Cart cleared successfully after donation');
         } catch (cartError) {
           console.error('❌ Error clearing cart:', cartError);
