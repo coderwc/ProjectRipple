@@ -18,13 +18,13 @@ const DonorsAndMessages = ({ postId, onBack }) => {
   ];
 
   return (
-    <div className="max-w-sm mx-auto p-4 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="bg-white px-4 py-2 border-b border-gray-200 -mx-4 mb-4 flex items-center">
+    <div className="max-w-sm mx-auto p-4 bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+      {/* Header - Clean vendor-style header */}
+      <div className="bg-white px-4 py-6 border-b border-gray-100 shadow-md -mx-4 mb-4 flex items-center">
         <button onClick={onBack} className="p-1 hover:bg-gray-100 rounded mr-3">
           <ArrowLeft className="w-6 h-6 text-gray-700" />
         </button>
-        <h1 className="text-lg font-medium text-gray-900">Donors & Messages</h1>
+        <h1 className="text-xl font-bold text-gray-900">Donors & Messages</h1>
       </div>
 
       {/* Tabs */}
@@ -73,11 +73,6 @@ const DonorsAndMessages = ({ postId, onBack }) => {
           ))}
         </div>
       )}
-
-      {/* Donate Now Button */}
-      <button className="mt-6 w-full py-3 text-white font-semibold bg-blue-600 rounded shadow hover:bg-blue-700">
-        DONATE NOW
-      </button>
     </div>
   );
 };

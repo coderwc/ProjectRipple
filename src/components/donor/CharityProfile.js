@@ -45,7 +45,7 @@ const CharityProfile = ({ charityId, onBack }) => {
 
   if (loading) {
     return (
-      <div className="max-w-sm mx-auto bg-gray-50 min-h-screen flex items-center justify-center">
+      <div className="max-w-sm mx-auto bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader className="w-8 h-8 animate-spin text-blue-600" />
           <p className="text-gray-600">Loading charity profile...</p>
@@ -56,14 +56,14 @@ const CharityProfile = ({ charityId, onBack }) => {
 
   if (error || !charityData) {
     return (
-      <div className="max-w-sm mx-auto bg-gray-50 min-h-screen">
-        {/* Header */}
-        <div className="bg-white px-4 py-4 border-b border-gray-200">
+      <div className="max-w-sm mx-auto bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+        {/* Header - Clean vendor-style header */}
+        <div className="bg-white px-4 py-6 border-b border-gray-100 shadow-md">
           <div className="flex items-center gap-3">
             <button onClick={onBack} className="p-1 hover:bg-gray-100 rounded">
               <ArrowLeft className="w-6 h-6 text-gray-700" />
             </button>
-            <span className="text-lg font-medium text-gray-900">Charity Profile</span>
+            <span className="text-xl font-bold text-gray-900">Charity Profile</span>
           </div>
         </div>
         
@@ -83,7 +83,7 @@ const CharityProfile = ({ charityId, onBack }) => {
   }
 
   return (
-    <div className="max-w-sm mx-auto bg-gray-50 min-h-screen">
+    <div className="max-w-sm mx-auto bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
       {/* Status Bar */}
       <div className="flex justify-between items-center px-4 py-2 bg-white text-sm font-medium">
         <span>9:30</span>
@@ -93,13 +93,13 @@ const CharityProfile = ({ charityId, onBack }) => {
         </div>
       </div>
 
-      {/* Header */}
-      <div className="bg-white px-4 py-4 border-b border-gray-200">
+      {/* Header - Clean vendor-style header */}
+      <div className="bg-white px-4 py-6 border-b border-gray-100 shadow-md">
         <div className="flex items-center gap-3">
           <button onClick={onBack} className="p-1 hover:bg-gray-100 rounded">
             <ArrowLeft className="w-6 h-6 text-gray-700" />
           </button>
-          <span className="text-lg font-medium text-gray-900">Charity Profile</span>
+          <span className="text-xl font-bold text-gray-900">Charity Profile</span>
         </div>
       </div>
 
