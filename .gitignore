@@ -119,3 +119,6 @@ build/Release
 # VSCode Extension Test
 .vscode-test
 node_modules/
+
+# Firebase Account Key
+server/serviceAccountKey.json
