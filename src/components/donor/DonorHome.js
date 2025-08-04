@@ -274,9 +274,9 @@ export default function DonorHome({
     });
 
   return (
-    <div className="max-w-sm mx-auto bg-gray-50 min-h-screen relative">
-      {/* Top Blue Header Section - Made shorter and more proportional */}
-      <div className="bg-blue-300 px-4 pt-4 pb-3 rounded-b-3xl">
+    <div className="max-w-sm mx-auto bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen relative">
+      {/* Top Blue Header Section - Harmonized with background */}
+      <div className="bg-gradient-to-r from-blue-300 to-blue-400 px-4 pt-4 pb-3 rounded-b-3xl">
         {/* Top row with profile - Reduced spacing */}
         <div className="flex items-center gap-3 mb-3">
           {/* Profile Picture - Made smaller */}
@@ -297,7 +297,7 @@ export default function DonorHome({
             )}
           </button>
           
-          {/* Welcome Message - Adjusted spacing and sizing */}
+          {/* Welcome Message - Back to original colors */}
           <div className="flex flex-col justify-center">
             <p className="text-gray-700 text-xs">Welcome back,</p>
             <h1 className="text-gray-900 text-base font-semibold">
@@ -362,8 +362,8 @@ export default function DonorHome({
                 <Filter className="w-4 h-4" />
                 Filter
               </button>
-              {showFilterMenu && (
-                <div className="absolute top-6 right-0 bg-white border border-gray-200 rounded shadow-md text-sm text-gray-700 min-w-[500px]">
+                {showFilterMenu && (
+                  <div className="absolute top-6 right-0 bg-white border border-gray-200 rounded shadow-md text-sm text-gray-700 min-w-[500px]">
                   <div className="p-4">
                     {/* Filter Options */}
                     <div className="flex gap-8 mb-4">

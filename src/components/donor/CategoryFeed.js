@@ -249,7 +249,7 @@ const CategoryFeed = ({ onBack, onSelectPost, categoryName = "Natural Disasters"
   }
 
   return (
-    <div className="max-w-sm mx-auto p-4 bg-gray-50 min-h-screen relative">
+    <div className="max-w-sm mx-auto p-4 bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen relative">
       {/* Status Bar */}
       <div className="bg-white px-4 py-2 flex justify-between items-center text-sm text-gray-600 -mx-4">
         <span>9:30</span>
@@ -259,19 +259,19 @@ const CategoryFeed = ({ onBack, onSelectPost, categoryName = "Natural Disasters"
         </div>
       </div>
 
-      {/* Header */}
-      <div className="bg-white px-4 py-4 border-b border-gray-200 -mx-4 mb-4">
+      {/* Header - Clean vendor-style header */}
+      <div className="bg-white px-4 py-6 border-b border-gray-100 shadow-md -mx-4 mb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={onBack} className="p-1 hover:bg-gray-100 rounded">
               <ArrowLeft className="w-6 h-6 text-gray-700" />
             </button>
-            <h1 className="text-xl font-medium text-gray-900">{categoryName}</h1>
+            <h1 className="text-xl font-bold text-gray-900">{categoryName}</h1>
           </div>
           <div className="relative z-10">
             <button
               onClick={() => setShowFilterMenu(prev => !prev)}
-              className="flex items-center gap-1 text-gray-600 text-sm hover:text-gray-800 border rounded px-2 py-1 bg-white"
+              className="flex items-center gap-1 text-gray-700 text-sm hover:text-gray-900 border border-gray-200 rounded px-3 py-1.5 bg-white shadow-sm hover:bg-gray-50 transition-colors"
             >
               <Filter className="w-4 h-4" />
               Filter
