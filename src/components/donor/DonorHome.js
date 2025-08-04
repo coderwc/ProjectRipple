@@ -67,20 +67,20 @@ const calculateKindnessCupPercentage = async (post) => {
     // Fetch donation totals from separate collection
     const donationTotals = await getItemDonationTotals(post.id);
     
-    let totalFulfillment = 0;
-    let itemCount = 0;
-    
-    post.items.forEach(item => {
-      if (item.quantity > 0) {
-        const normalizedItemName = normalizeItemName(item.name);
-        const donatedQuantity = donationTotals[normalizedItemName] || 0;
-        const itemFulfillment = Math.min((donatedQuantity / item.quantity) * 100, 100);
-        totalFulfillment += itemFulfillment;
-        itemCount++;
-      }
-    });
-    
-    return itemCount > 0 ? Math.round(totalFulfillment / itemCount) : 0;
+    let totalNeeded = 0;
+let totalDonated = 0;
+
+post.items.forEach(item => {
+  if (item.quantity > 0) {
+    const normalizedItemName = normalizeItemName(item.name);
+    const donatedQuantity = donationTotals[normalizedItemName] || 0;
+
+    totalNeeded += item.quantity;
+    totalDonated += Math.min(donatedQuantity, item.quantity); // Prevents overcounting
+  }
+});
+
+return totalNeeded > 0 ? Math.round((totalDonated / totalNeeded) * 100) : 0;
   } catch (error) {
     console.error('❌ Error calculating kindness cup percentage:', error);
     return 0;

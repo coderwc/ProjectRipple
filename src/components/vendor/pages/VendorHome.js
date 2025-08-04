@@ -127,7 +127,7 @@ const VendorHome = ({
           onClick={onNavigateToOrders}
           className="w-full flex items-center gap-4 p-4 bg-white border border-blue-200 rounded-xl shadow hover:bg-blue-50 transition-colors"
         >
-          <ClipboardList className="w-6 h-6 text-sky-600" />
+          <ClipboardList className="w-6 h-6 text-blue-600" />
           <div className="text-left">
             <h2 className="text-md font-semibold text-gray-900">My Orders</h2>
             <p className="text-sm text-gray-500">Manage shipping and status</p>
@@ -138,7 +138,7 @@ const VendorHome = ({
           onClick={onNavigateToWallet}
           className="w-full flex items-center gap-4 p-4 bg-white border border-blue-200 rounded-xl shadow hover:bg-blue-50 transition-colors"
         >
-          <Wallet className="w-6 h-6 text-cyan-700" />
+          <Wallet className="w-6 h-6 text-blue-700" />
           <div className="text-left">
             <h2 className="text-md font-semibold text-gray-900">My Wallet</h2>
             <p className="text-sm text-gray-500">Check your balance and earnings</p>
