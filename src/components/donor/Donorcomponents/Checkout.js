@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { createItemDonationAPI } from '../../../api/posts';
+import { useCart } from '../../shared/CartContext';
+import { clearUserCart } from '../../../firebase/cart';
 
-const DonationCheckout = ({ onGoBack, selectedCharity, cartItems, user }) => {
+const DonationCheckout = ({ onGoBack, onCheckoutSuccess, selectedCharity, cartItems, user }) => {
+  const { clearCart } = useCart();
   const [email, setEmail] = useState(user?.email || 'example@gmail.com');
   const [emailConsent, setEmailConsent] = useState(false);
   const [prayerMessage, setPrayerMessage] = useState('');
@@ -58,9 +61,26 @@ const DonationCheckout = ({ onGoBack, selectedCharity, cartItems, user }) => {
       
       if (result.success) {
         alert('🎉 Donation completed successfully! The charity will be notified.');
-        // Clear form and go back
+        
+        // Clear cart from both Firestore and local context
+        try {
+          await clearUserCart(); // Clear from Firestore
+          clearCart(); // Clear from local context
+          console.log('✅ Cart cleared successfully after donation');
+        } catch (cartError) {
+          console.error('❌ Error clearing cart:', cartError);
+          // Still proceed with going back even if cart clearing fails
+        }
+        
+        // Clear form and navigate to charity post
         setPrayerMessage('');
-        onGoBack();
+        
+        // Use checkout success handler if available, otherwise fall back to onGoBack
+        if (onCheckoutSuccess) {
+          onCheckoutSuccess();
+        } else {
+          onGoBack();
+        }
       } else {
         throw new Error(result.error || 'Failed to complete donation');
       }

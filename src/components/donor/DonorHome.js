@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 import { useCart } from '../shared/CartContext';
-import { getLatestCharityPosts } from '../../firebase/posts';
+import { getLatestCharityPosts, getItemDonationTotals } from '../../firebase/posts';
 import { auth, db } from '../../firebase/config';
 import { doc, onSnapshot } from 'firebase/firestore';
 
@@ -30,6 +30,62 @@ const categories = [
   { name: 'Orphanage', icon: Home },
   { name: 'Infrastructure', icon: Building2 },
 ];
+
+// Helper function to normalize item names for matching (same as in CharityPost.js)
+const normalizeItemName = (itemName) => {
+  if (!itemName) return '';
+  
+  // Remove vendor names and common variations
+  let normalized = itemName
+    .toLowerCase()
+    .trim()
+    // Remove vendor names
+    .replace(/\s*-\s*(gomgom|premium mart|coldstorage|cold storage|vendor\d+).*$/i, '')
+    // Remove brand prefixes 
+    .replace(/^(gomgom|premium mart|coldstorage|cold storage)\s*/i, '')
+    // Remove water brand names (Dasani, Evian, etc.)
+    .replace(/\s*(dasani|evian|aquafina|nestle|pure life|ice mountain)\s*/gi, ' ')
+    // Normalize water product variations
+    .replace(/\s*(bottle|btl|container)\s*/gi, ' ')
+    .replace(/\s*(250ml|500ml|1l|1.5l|2l|litre|liter|ml)\s*/gi, ' ')
+    // Normalize plural/singular
+    .replace(/s$/, '') // Remove trailing 's'
+    .replace(/ies$/, 'y') // flies -> fly
+    .replace(/es$/, '') // boxes -> box
+    // Remove extra spaces and clean up
+    .replace(/\s+/g, ' ')
+    .trim();
+    
+  return normalized;
+};
+
+// Calculate kindness cup percentage based on 'we currently need' items fulfillment
+const calculateKindnessCupPercentage = async (post) => {
+  try {
+    if (!post.items || post.items.length === 0) return 0;
+    
+    // Fetch donation totals from separate collection
+    const donationTotals = await getItemDonationTotals(post.id);
+    
+    let totalFulfillment = 0;
+    let itemCount = 0;
+    
+    post.items.forEach(item => {
+      if (item.quantity > 0) {
+        const normalizedItemName = normalizeItemName(item.name);
+        const donatedQuantity = donationTotals[normalizedItemName] || 0;
+        const itemFulfillment = Math.min((donatedQuantity / item.quantity) * 100, 100);
+        totalFulfillment += itemFulfillment;
+        itemCount++;
+      }
+    });
+    
+    return itemCount > 0 ? Math.round(totalFulfillment / itemCount) : 0;
+  } catch (error) {
+    console.error('❌ Error calculating kindness cup percentage:', error);
+    return 0;
+  }
+};
 
 export default function DonorHome({ 
   user, 
@@ -73,17 +129,20 @@ export default function DonorHome({
       try {
         const response = await getLatestCharityPosts(8);
         if (response.success && response.posts) {
-          const formattedPosts = response.posts.map(post => {
+          const formattedPosts = await Promise.all(response.posts.map(async post => {
             const today = new Date();
             const target = new Date(post.deadline);
             const diffDays = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
             const daysLeft = diffDays > 0 ? diffDays : 0;
 
+            // Calculate kindness cup percentage based on items fulfillment
+            const progress = await calculateKindnessCupPercentage(post);
+
             return {
               id: post.id,
               title: post.headline,
               org: post.charityName || 'Unknown Org',
-              progress: post.donationsReceived || 0,
+              progress,
               daysLeft,
               imageUrl: post.imageUrl,
               category: post.category || 'Uncategorized',
@@ -93,7 +152,7 @@ export default function DonorHome({
                 description: post.storyDescription
               }
             };
-          });
+          }));
 
           setExploreDrives(formattedPosts);
         }

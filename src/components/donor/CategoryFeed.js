@@ -1,8 +1,65 @@
 import React, { useEffect, useState } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { getItemDonationTotals } from '../../firebase/posts';
 
 import { ArrowLeft, Filter } from 'lucide-react';
+
+// Helper function to normalize item names for matching (same as in other components)
+const normalizeItemName = (itemName) => {
+  if (!itemName) return '';
+  
+  // Remove vendor names and common variations
+  let normalized = itemName
+    .toLowerCase()
+    .trim()
+    // Remove vendor names
+    .replace(/\s*-\s*(gomgom|premium mart|coldstorage|cold storage|vendor\d+).*$/i, '')
+    // Remove brand prefixes 
+    .replace(/^(gomgom|premium mart|coldstorage|cold storage)\s*/i, '')
+    // Remove water brand names (Dasani, Evian, etc.)
+    .replace(/\s*(dasani|evian|aquafina|nestle|pure life|ice mountain)\s*/gi, ' ')
+    // Normalize water product variations
+    .replace(/\s*(bottle|btl|container)\s*/gi, ' ')
+    .replace(/\s*(250ml|500ml|1l|1.5l|2l|litre|liter|ml)\s*/gi, ' ')
+    // Normalize plural/singular
+    .replace(/s$/, '') // Remove trailing 's'
+    .replace(/ies$/, 'y') // flies -> fly
+    .replace(/es$/, '') // boxes -> box
+    // Remove extra spaces and clean up
+    .replace(/\s+/g, ' ')
+    .trim();
+    
+  return normalized;
+};
+
+// Calculate kindness cup percentage based on 'we currently need' items fulfillment
+const calculateKindnessCupPercentage = async (post) => {
+  try {
+    if (!post.items || post.items.length === 0) return 0;
+    
+    // Fetch donation totals from separate collection
+    const donationTotals = await getItemDonationTotals(post.id);
+    
+    let totalFulfillment = 0;
+    let itemCount = 0;
+    
+    post.items.forEach(item => {
+      if (item.quantity > 0) {
+        const normalizedItemName = normalizeItemName(item.name);
+        const donatedQuantity = donationTotals[normalizedItemName] || 0;
+        const itemFulfillment = Math.min((donatedQuantity / item.quantity) * 100, 100);
+        totalFulfillment += itemFulfillment;
+        itemCount++;
+      }
+    });
+    
+    return itemCount > 0 ? Math.round(totalFulfillment / itemCount) : 0;
+  } catch (error) {
+    console.error('❌ Error calculating kindness cup percentage:', error);
+    return 0;
+  }
+};
 
 const kindnessCupOptions = [
   { label: 'All', value: 'all' },
@@ -40,7 +97,6 @@ const CategoryFeed = ({ onBack, onSelectPost, categoryName = "Natural Disasters"
           const matchedCategory = (data.category || '').toLowerCase() === categoryName.toLowerCase();
 
           if (matchedCategory) {
-            const donations = data.donationsReceived || 0;
             const deadlineStr = data.deadline || '';
             const remainingDays = calculateRemainingDays(deadlineStr);
 
@@ -48,15 +104,26 @@ const CategoryFeed = ({ onBack, onSelectPost, categoryName = "Natural Disasters"
               id: doc.id,
               headline: data.headline,
               source: data.charityName || 'Unknown Charity',
-              progress: donations,
-              kindness: donations,
+              progress: 0, // Will be calculated later
+              kindness: 0, // Will be calculated later
               remainingDays,
-              imageUrl: data.imageUrl // Include the image URL
+              imageUrl: data.imageUrl,
+              items: data.items || [] // Include items for calculation
             });
           }
         });
 
-        setPosts(fetchedPosts);
+        // Calculate kindness cup percentage for each post
+        const postsWithProgress = await Promise.all(fetchedPosts.map(async post => {
+          const progress = await calculateKindnessCupPercentage(post);
+          return {
+            ...post,
+            progress,
+            kindness: progress
+          };
+        }));
+
+        setPosts(postsWithProgress);
       } catch (error) {
         console.error("Error fetching posts:", error);
       } finally {

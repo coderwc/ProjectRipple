@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import DonorHome from './DonorHome';
 import CategoryFeed from './CategoryFeed';
-import CharityPost from './charitypost';
+import CharityPost from './CharityPost';
 import CharityProfile from './CharityProfile';
 import AvailableVendors from './AvailableVendors';
 import VendorProducts from './VendorProducts';
@@ -23,6 +23,7 @@ function DonorApp({ user, onLogout }) {
   const [selectedItemFilter, setSelectedItemFilter] = useState(null);
   const [previousView, setPreviousView] = useState('home');
   const [selectedPostData, setSelectedPostData] = useState(null);
+  const [originalPostForCheckout, setOriginalPostForCheckout] = useState(null);
 
   const { setCharity, clearCart, getTotalItems, getUniqueProducts } = useCart();
 
@@ -38,13 +39,19 @@ function DonorApp({ user, onLogout }) {
     setSelectedCharity(null);
     setSelectedVendor(null);
     setPreviousView('home');
+    setOriginalPostForCheckout(null);
   };
 
 
   const handleBackFromPost = () => {
-    // Go back to where we came from (home or category)
-    setCurrentView(previousView || 'home');
+    // Always go back to home from post to ensure consistent navigation
+    // This prevents getting stuck due to corrupted previousView state
+    setCurrentView('home');
     setSelectedPost(null);
+    setSelectedCharity(null);
+    setSelectedVendor(null);
+    setPreviousView('home');
+    setOriginalPostForCheckout(null);
   };
 
   const handleSelectPost = (postId) => {
@@ -58,6 +65,12 @@ function DonorApp({ user, onLogout }) {
     setCharity(charity);
     setSelectedItemFilter(charity.selectedItem || null);
     setPreviousView(currentView);
+    
+    // Preserve the original post for checkout return navigation
+    if (currentView === 'post' && selectedPost) {
+      setOriginalPostForCheckout(selectedPost);
+    }
+    
     setCurrentView('shop');
   };
 
@@ -74,7 +87,16 @@ function DonorApp({ user, onLogout }) {
   };
 
   const handleBackFromVendors = () => {
-    setCurrentView('post');
+    // Go back to the post that started the shopping journey
+    const postToReturn = originalPostForCheckout || selectedPost;
+    if (postToReturn) {
+      setSelectedPost(postToReturn);
+      setCurrentView('post');
+      setPreviousView('home'); // Ensure post can go back to home
+    } else {
+      // Fallback to home if no post is available
+      setCurrentView('home');
+    }
     setSelectedVendor(null);
     setSelectedItemFilter(null);
   };
@@ -89,7 +111,17 @@ function DonorApp({ user, onLogout }) {
   };
 
   const handleBackFromCart = () => {
-    setCurrentView(previousView || 'home');
+    // Go back to previous view, defaulting to home if not set
+    const viewToReturn = previousView || 'home';
+    setCurrentView(viewToReturn);
+    
+    // Clean up navigation state
+    if (viewToReturn === 'home') {
+      setSelectedPost(null);
+      setSelectedCharity(null);
+      setSelectedVendor(null);
+      setPreviousView('home');
+    }
   };
 
   const handleGoToCheckout = () => {
@@ -99,6 +131,25 @@ function DonorApp({ user, onLogout }) {
 
   const handleBackFromCheckout = () => {
     setCurrentView('cart');
+  };
+
+  const handleCheckoutSuccess = () => {
+    // After successful checkout, return to charity post if we have one preserved
+    const postToReturn = originalPostForCheckout || selectedPost;
+    if (postToReturn) {
+      setSelectedPost(postToReturn);
+      setCurrentView('post');
+      // Ensure clean navigation state for reliable back button behavior
+      setPreviousView('home');
+      setSelectedCharity(null);
+      setSelectedVendor(null);
+      setSelectedItemFilter(null);
+      // Clear the preserved post after using it
+      setOriginalPostForCheckout(null);
+    } else {
+      // Fallback to home if no post is selected
+      handleBackToHome(); // Use existing home handler for clean state
+    }
   };
 
   const handleLogout = () => {
@@ -208,12 +259,14 @@ function DonorApp({ user, onLogout }) {
         <ShoppingCart
           onGoBack={handleBackFromCart}
           onGoToCheckout={handleGoToCheckout}
+          onCheckoutSuccess={handleCheckoutSuccess}
         />
       )}
 
       {currentView === 'checkout' && (
         <Checkout
           onGoBack={handleBackFromCheckout}
+          onCheckoutSuccess={handleCheckoutSuccess}
           selectedCharity={selectedCharity}
           cartItems={getUniqueProducts()}
           user={user}

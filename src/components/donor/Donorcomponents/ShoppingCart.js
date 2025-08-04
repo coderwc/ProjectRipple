@@ -10,7 +10,7 @@ import {
 import { useCart } from '../../shared/CartContext';
 
 // Replace mock data with real data from firestore
-const ShoppingCart = ({ onGoBack }) => {
+const ShoppingCart = ({ onGoBack, onGoToCheckout, onCheckoutSuccess }) => {
   const { removeFromCart } = useCart();
   const [cartItems, setCartItems] = useState([]); // ← real data will load here
   const [selectAll, setSelectAll] = useState(true);
@@ -280,7 +280,7 @@ const deleteItem = async (id) => {
             <span className="text-lg font-semibold text-gray-900">
               Total: ${getTotal()}
             </span>
-            <button // michk, 27/7, change checkout button
+            <button
   className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
   onClick={async () => {
     try {
@@ -288,6 +288,11 @@ const deleteItem = async (id) => {
       alert('✅ Order placed successfully!');
       const items = await getUserCartItems();
       setCartItems(items); // reload cart
+      
+      // Navigate back to charity post after successful checkout
+      if (onCheckoutSuccess) {
+        onCheckoutSuccess();
+      }
     } catch (err) {
       console.error('❌ Checkout error:', err.message);
       alert('Checkout failed. Please try again.');

@@ -320,14 +320,19 @@ const normalizeItemName = (itemName) => {
     .toLowerCase()
     .trim()
     // Remove vendor names
-    .replace(/\s*-\s*(gomgom|premium mart|vendor\d+).*$/i, '')
+    .replace(/\s*-\s*(gomgom|premium mart|coldstorage|cold storage|vendor\d+).*$/i, '')
     // Remove brand prefixes 
-    .replace(/^(gomgom|premium mart)\s*/i, '')
+    .replace(/^(gomgom|premium mart|coldstorage|cold storage)\s*/i, '')
+    // Remove water brand names (Dasani, Evian, etc.)
+    .replace(/\s*(dasani|evian|aquafina|nestle|pure life|ice mountain)\s*/gi, ' ')
+    // Normalize water product variations
+    .replace(/\s*(bottle|btl|container)\s*/gi, ' ')
+    .replace(/\s*(250ml|500ml|1l|1.5l|2l|litre|liter|ml)\s*/gi, ' ')
     // Normalize plural/singular
     .replace(/s$/, '') // Remove trailing 's'
     .replace(/ies$/, 'y') // flies -> fly
     .replace(/es$/, '') // boxes -> box
-    // Remove extra spaces
+    // Remove extra spaces and clean up
     .replace(/\s+/g, ' ')
     .trim();
     

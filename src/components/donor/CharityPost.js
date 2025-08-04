@@ -13,17 +13,23 @@ const normalizeItemName = (itemName) => {
     .toLowerCase()
     .trim()
     // Remove vendor names
-    .replace(/\s*-\s*(gomgom|premium mart|vendor\d+).*$/i, '')
+    .replace(/\s*-\s*(gomgom|premium mart|coldstorage|cold storage|vendor\d+).*$/i, '')
     // Remove brand prefixes 
-    .replace(/^(gomgom|premium mart)\s*/i, '')
+    .replace(/^(gomgom|premium mart|coldstorage|cold storage)\s*/i, '')
+    // Remove water brand names (Dasani, Evian, etc.)
+    .replace(/\s*(dasani|evian|aquafina|nestle|pure life|ice mountain)\s*/gi, ' ')
+    // Normalize water product variations
+    .replace(/\s*(bottle|btl|container)\s*/gi, ' ')
+    .replace(/\s*(250ml|500ml|1l|1.5l|2l|litre|liter|ml)\s*/gi, ' ')
     // Normalize plural/singular
     .replace(/s$/, '') // Remove trailing 's'
     .replace(/ies$/, 'y') // flies -> fly
     .replace(/es$/, '') // boxes -> box
-    // Remove extra spaces
+    // Remove extra spaces and clean up
     .replace(/\s+/g, ' ')
     .trim();
     
+  console.log(`🔄 [CharityPost] Normalized "${itemName}" -> "${normalized}"`);
   return normalized;
 };
 
@@ -43,24 +49,27 @@ const CharityPost = ({
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        console.log('🔍 Fetching post with ID:', postId);
+        if (!postId) {
+          setLoading(false);
+          return;
+        }
+        
         const docRef = doc(db, 'charities', postId);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const rawData = docSnap.data();
-          console.log('✅ Post data retrieved:', rawData);
           setPostData(rawData);
 
           // Fetch donation totals from separate collection
           const donationTotals = await getItemDonationTotals(postId);
-          console.log('🎁 Donation totals retrieved:', donationTotals);
 
           const formatted = rawData.items?.map((item) => {
             // Normalize charity post item name to match donation records
             const normalizedCharityItemName = normalizeItemName(item.name);
             const donatedQuantity = donationTotals[normalizedCharityItemName] || 0;
             
-            console.log(`🔍 Matching charity item "${item.name}" (normalized: "${normalizedCharityItemName}") with donations: ${donatedQuantity}`);
+            console.log(`🔍 [CharityPost] Matching charity item "${item.name}" (normalized: "${normalizedCharityItemName}") with donations: ${donatedQuantity}`);
+            console.log(`🔍 [CharityPost] Available donation totals:`, donationTotals);
             
             return {
               type: item.name || 'Unknown',
@@ -71,8 +80,6 @@ const CharityPost = ({
           }) || [];
 
           setTransformedItems(formatted);
-        } else {
-          console.warn('❌ No post found with ID:', postId);
         }
       } catch (error) {
         console.error('❌ Error loading post:', error);
@@ -83,11 +90,31 @@ const CharityPost = ({
 
     if (postId) {
       fetchPost();
+    } else {
+      // If no postId, stop loading immediately
+      setLoading(false);
     }
+
+    // Add timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      setLoading(false);
+    }, 10000); // 10 second timeout
+
+    return () => clearTimeout(timeout);
   }, [postId]);
 
   if (loading) {
-    return <div className="text-center mt-8 text-sm text-gray-500">Loading post...</div>;
+    return (
+      <div className="text-center mt-8 p-4">
+        <div className="text-sm text-gray-500 mb-4">Loading post...</div>
+        <button 
+          onClick={onBack}
+          className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm"
+        >
+          Go Back
+        </button>
+      </div>
+    );
   }
 
   if (!postData) {
@@ -96,6 +123,12 @@ const CharityPost = ({
         <div className="text-sm text-red-500 mb-2">Post not found.</div>
         <div className="text-xs text-gray-500">PostID: {postId}</div>
         <div className="text-xs text-gray-500">Check browser console for details</div>
+        <button 
+          onClick={onBack}
+          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Go Back
+        </button>
       </div>
     );
   }
@@ -116,6 +149,24 @@ const CharityPost = ({
     const target = new Date(deadline);
     const diff = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
     return diff > 0 ? diff : 0;
+  })();
+
+  // Calculate kindness cup percentage based on 'we currently need' items fulfillment
+  const kindnessCupPercentage = (() => {
+    if (!transformedItems || transformedItems.length === 0) return 0;
+    
+    let totalFulfillment = 0;
+    let itemCount = 0;
+    
+    transformedItems.forEach(item => {
+      if (item.target > 0) {
+        const itemFulfillment = Math.min((item.current / item.target) * 100, 100);
+        totalFulfillment += itemFulfillment;
+        itemCount++;
+      }
+    });
+    
+    return itemCount > 0 ? Math.round(totalFulfillment / itemCount) : 0;
   })();
 
   const handleItemClick = (item) => {
@@ -173,7 +224,7 @@ const CharityPost = ({
 
           <div className="space-y-2">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-blue-600">Kindness Cup: {donationsReceived}%</span>
+              <span className="text-blue-600">Kindness Cup: {kindnessCupPercentage}%</span>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-blue-500 rounded" />
                 <span className="text-gray-500 text-xs">{remainingDays} More Days</span>
@@ -182,7 +233,7 @@ const CharityPost = ({
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
                 className="bg-blue-500 h-2 rounded-full transition-all"
-                style={{ width: `${Math.min(donationsReceived || 0, 100)}%` }}
+                style={{ width: `${kindnessCupPercentage}%` }}
               />
             </div>
           </div>
