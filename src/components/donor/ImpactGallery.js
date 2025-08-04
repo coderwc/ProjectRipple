@@ -7,6 +7,7 @@ import { db } from '../../firebase/config';
 const ImpactGallery = ({ onBack, postId }) => {
   const [impactPosts, setImpactPosts] = useState([]);
   const [charityInfo, setCharityInfo] = useState(null);
+  const [charityImageUrl, setCharityImageUrl] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,6 +30,24 @@ const ImpactGallery = ({ onBack, postId }) => {
           name: postData.charityName,
           driveName: driveName
         });
+        
+        // Fetch charity profile image from publicCharities collection
+        if (charityId) {
+          try {
+            const publicProfileRef = doc(db, 'publicCharities', charityId);
+            const publicProfileSnap = await getDoc(publicProfileRef);
+
+            if (publicProfileSnap.exists()) {
+              const publicProfileData = publicProfileSnap.data();
+              console.log('📥 ImpactGallery - Charity profile data for image:', publicProfileData);
+              setCharityImageUrl(publicProfileData.imageUrl || null);
+            } else {
+              console.log('⚠️ ImpactGallery - No public charity profile found for ID:', charityId);
+            }
+          } catch (error) {
+            console.log('⚠️ ImpactGallery - Error fetching charity profile image:', error);
+          }
+        }
         
         // Fetch impact posts for this charity
         const response = await getImpactPosts(charityId);
@@ -117,10 +136,18 @@ const ImpactGallery = ({ onBack, postId }) => {
                 <p className="text-xs text-gray-400 mb-2">{formatDate(post.timestamp || post.createdAt)}</p>
                 
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 font-semibold text-sm">
-                      {charityInfo?.name?.charAt(0).toUpperCase() || 'C'}
-                    </span>
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-blue-100 flex items-center justify-center">
+                    {charityImageUrl ? (
+                      <img
+                        src={charityImageUrl}
+                        alt="Charity Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-blue-600 font-semibold text-sm">
+                        {charityInfo?.name?.charAt(0).toUpperCase() || 'C'}
+                      </span>
+                    )}
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-gray-800">{charityInfo?.name || 'Charity'}</p>
