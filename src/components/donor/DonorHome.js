@@ -275,53 +275,43 @@ export default function DonorHome({
 
   return (
     <div className="max-w-sm mx-auto bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen relative">
-      {/* Top Blue Header Section - Harmonized with background */}
-      <div className="bg-gradient-to-r from-blue-300 to-blue-400 px-4 pt-4 pb-3 rounded-b-3xl">
-        {/* Top row with profile - Reduced spacing */}
-        <div className="flex items-center gap-3 mb-3">
-          {/* Profile Picture - Made smaller */}
-          <button 
-            onClick={onGoToProfile}
-            className="w-12 h-12 bg-gray-300 rounded-full hover:bg-gray-400 transition-colors cursor-pointer overflow-hidden border-2 border-white shadow-md flex-shrink-0"
-          >
-            {donorProfile?.imageUrl ? (
-              <img 
-                src={donorProfile.imageUrl} 
-                alt="Profile" 
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                <User className="w-6 h-6 text-gray-600" />
-              </div>
-            )}
-          </button>
-          
-          {/* Welcome Message - Back to original colors */}
-          <div className="flex flex-col justify-center">
-            <p className="text-gray-700 text-xs">Welcome back,</p>
-            <h1 className="text-gray-900 text-base font-semibold">
-              {donorProfile?.name || user?.displayName || 'John Doe'}
-            </h1>
-          </div>
-        </div>
-        
-        {/* Search Bar and Cart - Reduced height */}
-        <div className="flex items-center gap-3">
-          {/* Search Bar */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search here"
-              className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border-0 rounded-full shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+      {/* Top Blue Header Section - Clean and streamlined */}
+      <div className="bg-gradient-to-r from-blue-300 to-blue-400 px-4 py-5 rounded-b-3xl">
+        {/* Header content - Profile, Welcome, and Cart */}
+        <div className="flex items-center justify-between">
+          {/* Left side - Profile and Welcome */}
+          <div className="flex items-center gap-3">
+            {/* Profile Picture */}
+            <button 
+              onClick={onGoToProfile}
+              className="w-12 h-12 bg-gray-300 rounded-full hover:bg-gray-400 transition-colors cursor-pointer overflow-hidden border-2 border-white shadow-md flex-shrink-0"
+            >
+              {donorProfile?.imageUrl ? (
+                <img 
+                  src={donorProfile.imageUrl} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                  <User className="w-6 h-6 text-gray-600" />
+                </div>
+              )}
+            </button>
+            
+            {/* Welcome Message */}
+            <div className="flex flex-col justify-center">
+              <p className="text-white/80 text-xs">Welcome back,</p>
+              <h1 className="text-white text-base font-semibold">
+                {donorProfile?.name || user?.displayName || 'John Doe'}
+              </h1>
+            </div>
           </div>
           
-          {/* Cart Button - Made smaller */}
+          {/* Right side - Cart Button */}
           <button 
             onClick={onGoToCart}
-            className="relative w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm hover:shadow-md transition-all flex-shrink-0"
+            className="relative w-11 h-11 bg-white rounded-full flex items-center justify-center shadow-md hover:shadow-lg transition-all flex-shrink-0"
           >
             <ShoppingCart className="w-5 h-5 text-gray-700" />
             {getTotalItems() > 0 && (
