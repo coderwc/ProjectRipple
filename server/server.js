@@ -71,43 +71,43 @@ app.post('/api/ai-recommendation', async (req, res) => {
         return res.status(400).json({ error: 'Description is required' });
       }
   
-      const prompt = `Analyze this disaster and generate relief items with quantities:
-  
-  ${description}
-  
-  Context:
-  - Headline: ${headline || 'Not provided'}
-  - Location: ${location || 'Not specified'}
-  
-  Respond with ONLY valid JSON in this exact format (no extra text, no markdown):
-  {
-    "severity": "medium",
-    "affected_population": 1000,
-    "location": "affected area",
-    "cause_type": "natural_disaster",
-    "urgency_level": "high",
-    "recommended_items": [
-      {
-        "item": "Emergency Tents",
-        "quantity": "100 units",
-        "purpose": "Temporary shelter for displaced families",
-        "priority": "high"
-      },
-      {
-        "item": "Food Rations",
-        "quantity": "500 packages",
-        "purpose": "Emergency food supply",
-        "priority": "critical"
-      }
-    ]
-  }`;
+      const prompt = `Analyze this situation and generate appropriate relief items:
+
+Description: ${description}
+Headline: ${headline || 'Not provided'}
+Location: ${location || 'Not specified'}
+
+Based on the description, determine what type of cause this is and what items are needed:
+
+- If it's about natural disasters (floods, earthquakes, etc.): suggest emergency supplies like tents, water, food, medical kits
+- If it's about education: suggest school supplies, books, computers, uniforms, furniture
+- If it's about medical needs: suggest medicines, medical equipment, hospital supplies
+- If it's about poverty: suggest food packages, clothing, household items
+- If it's about community development: suggest infrastructure materials, tools, equipment
+
+Return ONLY this JSON format with no extra text, no explanation, no markdown:
+{
+  "severity": "low/medium/high",
+  "affected_population": number,
+  "location": "location from input",
+  "cause_type": "education/medical/natural_disaster/poverty/community_development/humanitarian",
+  "urgency_level": "low/medium/high/critical",
+  "recommended_items": [
+    {
+      "item": "specific item name",
+      "quantity": "number with unit",
+      "purpose": "why this item is needed",
+      "priority": "low/medium/high/critical"
+    }
+  ]
+}`;
   
       const response = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
         messages: [
           { 
             role: "system", 
-            content: "You are a disaster relief expert. Respond ONLY with valid JSON, no markdown formatting or extra text." 
+            content: "You are a relief and humanitarian aid expert. You MUST respond with ONLY valid JSON. Do not include any text before or after the JSON. Do not use markdown code blocks. Do not provide explanations. Just return the raw JSON object." 
           },
           { role: "user", content: prompt }
         ],
@@ -117,24 +117,42 @@ app.post('/api/ai-recommendation', async (req, res) => {
   
       const result = response.choices[0].message.content.trim();
       console.log('🤖 Raw AI Response:', result);
+      console.log('🔍 Response length:', result.length);
+      console.log('🔍 First 100 chars:', result.substring(0, 100));
   
       let cleanedResult = result;
+      
+      // Remove markdown code blocks
       if (result.startsWith('```json')) {
         cleanedResult = result.replace(/```json\n?/, '').replace(/\n?```$/, '');
-      }
-      if (result.startsWith('```')) {
+      } else if (result.startsWith('```')) {
         cleanedResult = result.replace(/```\n?/, '').replace(/\n?```$/, '');
+      }
+      
+      // Remove any leading/trailing text that isn't JSON
+      const jsonStart = cleanedResult.indexOf('{');
+      const jsonEnd = cleanedResult.lastIndexOf('}');
+      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+        cleanedResult = cleanedResult.substring(jsonStart, jsonEnd + 1);
       }
   
       console.log('🧹 Cleaned Response:', cleanedResult);
+      console.log('🔍 Cleaned length:', cleanedResult.length);
   
       try {
         const parsedResult = JSON.parse(cleanedResult);
         console.log('✅ Successfully parsed JSON');
         res.json({ success: true, analysis: parsedResult });
       } catch (parseError) {
-        console.error('❌ JSON Parse Error:', parseError);
+        console.error('❌ JSON Parse Error:', parseError.message);
         console.log('📝 Failed to parse:', cleanedResult);
+        console.log('🔍 Error at position:', parseError.message.match(/position (\d+)/)?.[1] || 'unknown');
+        
+        // Try to find the exact problematic character
+        if (cleanedResult.length > 0) {
+          console.log('🔍 First 200 chars of failed JSON:', cleanedResult.substring(0, 200));
+          console.log('🔍 Last 200 chars of failed JSON:', cleanedResult.substring(Math.max(0, cleanedResult.length - 200)));
+        }
         
         res.json({
           success: true,

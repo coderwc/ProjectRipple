@@ -255,9 +255,9 @@ const VendorProducts = ({ vendor, charity, onBack, onSelectVendor, onGoToCart, i
   }, [selectedProduct]);
 
   const ProductCard = ({ product }) => (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+    <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm hover:shadow-md transition-all duration-200">
       {/* Product Image */}
-      <div className="w-full h-32 bg-gray-300 rounded-lg mb-3 overflow-hidden">
+      <div className="w-full h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-4 overflow-hidden">
         {product.image ? (
           <img 
             src={product.image} 
@@ -265,37 +265,58 @@ const VendorProducts = ({ vendor, charity, onBack, onSelectVendor, onGoToCart, i
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full bg-gray-300"></div>
+          <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+            <span className="text-gray-400 text-xs font-medium">No Image</span>
+          </div>
         )}
       </div>
-      <div className="space-y-2">
-        <h3 className="font-medium text-gray-900 text-sm leading-tight">
+      
+      {/* Product Info */}
+      <div className="space-y-3">
+        {/* Product Name */}
+        <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2">
           {product.name}
         </h3>
-        <p className="text-lg font-semibold text-gray-900">
+        
+        {/* Price */}
+        <p className="text-lg font-bold text-gray-900">
           ${parseFloat(product.price || 0).toFixed(2)}
         </p>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-1">
-            <div className="w-4 h-4 bg-gray-400 rounded-full"></div>
-            <span className="text-xs text-gray-600">
-              {product.vendorName || product.vendor}
-            </span>
+        
+        {/* Stock info */}
+        {product.quantity && (
+          <p className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full inline-block">
+            Stock: {product.quantity}
+          </p>
+        )}
+        
+        {/* Vendor and Add Button Row */}
+        <div className="flex items-center justify-between pt-1">
+          <div className="flex-1 mr-2">
+            <button 
+              onClick={() => {
+                const vendorData = {
+                  id: product.vendorId,
+                  name: product.vendorName || product.vendor,
+                  vendorId: product.vendorId,
+                  vendorName: product.vendorName || product.vendor
+                };
+                onSelectVendor && onSelectVendor(vendorData);
+              }}
+              className="hover:bg-blue-50 rounded-lg px-2 py-1.5 transition-colors w-full text-left"
+            >
+              <span className="text-xs text-blue-600 font-medium truncate block">
+                {product.vendorName || product.vendor || 'Unknown Vendor'}
+              </span>
+            </button>
           </div>
           <button
             onClick={() => openProductModal(product)}
-            className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
+            className="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors shadow-sm"
           >
             <Plus className="w-4 h-4 text-white" />
           </button>
         </div>
-        {/* Additional product info */}
-        {product.quantity && (
-          <p className="text-xs text-gray-500">Stock: {product.quantity}</p>
-        )}
-        {product.condition && (
-          <p className="text-xs text-gray-500">Condition: {product.condition}</p>
-        )}
       </div>
     </div>
   );
@@ -386,11 +407,8 @@ const VendorProducts = ({ vendor, charity, onBack, onSelectVendor, onGoToCart, i
                   console.log('VendorProducts Modal - Vendor data passed:', vendorData);
                   onSelectVendor && onSelectVendor(vendorData);
                 }}
-                className="flex items-center space-x-2 mb-6 hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors"
+                className="mb-6 hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors"
               >
-                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                  <div className="w-4 h-4 bg-gray-500 rounded-full"></div>
-                </div>
                 <span className="text-gray-600 font-medium underline">
                   {selectedProduct.vendorName || selectedProduct.vendor}
                 </span>
@@ -436,7 +454,7 @@ const VendorProducts = ({ vendor, charity, onBack, onSelectVendor, onGoToCart, i
   };
 
   return (
-    <div className="max-w-sm mx-auto p-4 bg-gray-50 min-h-screen relative">
+    <div className="max-w-sm mx-auto p-4 bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen relative">
       {/* Status Bar */}
       <div className="bg-white px-4 py-2 flex justify-between items-center text-sm text-gray-600 -mx-4">
         <span>9:30</span>
@@ -446,27 +464,22 @@ const VendorProducts = ({ vendor, charity, onBack, onSelectVendor, onGoToCart, i
         </div>
       </div>
 
-      {/* Header */}
-      <div className="bg-white px-4 py-4 border-b border-gray-200 -mx-4 mb-4">
+      {/* Header - Clean vendor-style header */}
+      <div className="bg-white px-4 py-6 border-b border-gray-100 shadow-md -mx-4 mb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <button className="p-1" onClick={onBack}>
+            <button className="p-1 hover:bg-gray-100 rounded" onClick={onBack}>
               <ArrowLeft className="w-6 h-6 text-gray-700" />
             </button>
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                <div className="w-4 h-4 bg-gray-500 rounded-full"></div>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-lg font-medium text-gray-900">
-                  {vendor?.name || vendor?.vendorName || vendor}
+            <div className="flex flex-col">
+              <span className="text-xl font-bold text-gray-900">
+                {vendor?.name || vendor?.vendorName || vendor}
+              </span>
+              {isProfile && (
+                <span className="text-sm text-gray-500">
+                  All Listings ({products.length} items)
                 </span>
-                {isProfile && (
-                  <span className="text-sm text-gray-500">
-                    All Listings ({products.length} items)
-                  </span>
-                )}
-              </div>
+              )}
             </div>
           </div>
           <button className="p-1 relative" onClick={onGoToCart}>
