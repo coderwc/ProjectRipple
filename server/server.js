@@ -77,15 +77,22 @@ Description: ${description}
 Headline: ${headline || 'Not provided'}
 Location: ${location || 'Not specified'}
 
-Based on the description, determine what type of cause this is and what items are needed:
+Generate 4-6 essential relief items. Make items GENERAL and USEFUL, not too specific. Use proper Title Case for item names.
 
-- If it's about natural disasters (floods, earthquakes, etc.): suggest emergency supplies like tents, water, food, medical kits
-- If it's about education: suggest school supplies, books, computers, uniforms, furniture
-- If it's about medical needs: suggest medicines, medical equipment, hospital supplies
-- If it's about poverty: suggest food packages, clothing, household items
-- If it's about community development: suggest infrastructure materials, tools, equipment
+Based on the cause type, suggest these categories:
+- Natural disasters: Emergency Tents, Food Packages, Clean Water, First Aid Kits, Blankets, Flashlights
+- Education: School Supplies, Textbooks, Computers, Desks, Uniforms
+- Medical: Medical Supplies, Medicines, Hospital Equipment, Health Kits
+- Poverty: Food Packages, Clothing, Household Items, Personal Care Items
+- Community: Construction Materials, Tools, Equipment
 
-Return ONLY this JSON format with no extra text, no explanation, no markdown:
+IMPORTANT RULES:
+1. Item names must be in Title Case (e.g., "Emergency Tents", "Food Packages", "Clean Water")
+2. Keep items GENERAL, not overly specific (e.g., "Food Packages" not "Special Rice for Elderly")
+3. Use practical quantities with units (e.g., "500 units", "200 packages", "100 kits")
+4. Generate 4-6 items maximum
+
+Return ONLY this JSON format:
 {
   "severity": "low/medium/high",
   "affected_population": number,
@@ -94,7 +101,7 @@ Return ONLY this JSON format with no extra text, no explanation, no markdown:
   "urgency_level": "low/medium/high/critical",
   "recommended_items": [
     {
-      "item": "specific item name",
+      "item": "Title Case Item Name",
       "quantity": "number with unit",
       "purpose": "why this item is needed",
       "priority": "low/medium/high/critical"
@@ -107,7 +114,7 @@ Return ONLY this JSON format with no extra text, no explanation, no markdown:
         messages: [
           { 
             role: "system", 
-            content: "You are a relief and humanitarian aid expert. You MUST respond with ONLY valid JSON. Do not include any text before or after the JSON. Do not use markdown code blocks. Do not provide explanations. Just return the raw JSON object." 
+            content: "You are a relief and humanitarian aid expert. You MUST respond with ONLY valid JSON. All item names must be in Title Case (e.g., 'School Supplies', 'Food Packages', 'Clean Water'). Keep items general, not overly specific. Generate 4-6 items. Do not include any text before or after the JSON. Do not use markdown code blocks." 
           },
           { role: "user", content: prompt }
         ],
@@ -141,6 +148,17 @@ Return ONLY this JSON format with no extra text, no explanation, no markdown:
   
       try {
         const parsedResult = JSON.parse(cleanedResult);
+        
+        // Ensure proper Title Case for item names
+        if (parsedResult.recommended_items) {
+          parsedResult.recommended_items = parsedResult.recommended_items.map(item => ({
+            ...item,
+            item: item.item.split(' ').map(word => 
+              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            ).join(' ')
+          }));
+        }
+        
         console.log('✅ Successfully parsed JSON');
         res.json({ success: true, analysis: parsedResult });
       } catch (parseError) {
@@ -159,21 +177,39 @@ Return ONLY this JSON format with no extra text, no explanation, no markdown:
           analysis: {
             severity: "medium",
             affected_population: 1000,
-            location: "Analysis area",
+            location: "Emergency Area",
             cause_type: "emergency",
-            urgency_level: "medium",
+            urgency_level: "high",
             recommended_items: [
               {
-                item: "Emergency Supplies",
-                quantity: "500 units",
-                purpose: "Basic relief items",
+                item: "Emergency Tents",
+                quantity: "200 units",
+                purpose: "Temporary shelter for displaced families",
                 priority: "high"
               },
               {
                 item: "Food Packages",
-                quantity: "300 units",
-                purpose: "Nutritional support",
+                quantity: "500 packages",
+                purpose: "Nutritional support for affected population",
                 priority: "critical"
+              },
+              {
+                item: "Clean Water",
+                quantity: "1000 liters",
+                purpose: "Safe drinking water supply",
+                priority: "critical"
+              },
+              {
+                item: "First Aid Kits",
+                quantity: "100 kits",
+                purpose: "Basic medical care and treatment",
+                priority: "high"
+              },
+              {
+                item: "Blankets",
+                quantity: "300 units",
+                purpose: "Warmth and comfort for individuals",
+                priority: "medium"
               }
             ]
           },
