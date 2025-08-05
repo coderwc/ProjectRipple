@@ -460,7 +460,7 @@ const CreatePostPage = ({
       <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-white border-t border-gray-300 px-4 py-4">
         <button 
           onClick={onPostNeed}
-          className="w-full bg-green-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-green-700 transition-colors"
+          className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-blue-700 transition-colors"
         >
           Post Need
         </button>

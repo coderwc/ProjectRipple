@@ -231,6 +231,28 @@ const VendorProducts = ({ vendor, charity, onBack, onSelectVendor, onGoToCart, i
     setQuantity(prev => Math.max(1, prev + change));
   };
 
+  const handleQuantityInput = (e) => {
+    const value = e.target.value;
+    const numValue = parseInt(value);
+    
+    // Allow the user to clear the field or type
+    if (value === '' || !isNaN(numValue)) {
+      setQuantity(value === '' ? '' : numValue);
+    }
+  };
+
+  // Handle when user leaves the input field to ensure valid number
+  const handleQuantityBlur = () => {
+    if (quantity === '' || quantity < 1) {
+      setQuantity(1);
+    } else {
+      const maxStock = selectedProduct?.quantity || selectedProduct?.stock || 999;
+      if (quantity > maxStock) {
+        setQuantity(maxStock);
+      }
+    }
+  };
+
   // Handle ESC key to close modal
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -426,6 +448,7 @@ const VendorProducts = ({ vendor, charity, onBack, onSelectVendor, onGoToCart, i
                   >
                     <Minus className="w-5 h-5 text-gray-600" />
                   </button>
+
                   
                   <input 
                     type="text" 
@@ -443,6 +466,7 @@ const VendorProducts = ({ vendor, charity, onBack, onSelectVendor, onGoToCart, i
                   />
                   
                   <button 
+
                     onClick={() => updateQuantity(1)}
                     className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-300 transition-colors"
                     disabled={quantity >= (selectedProduct.quantity || selectedProduct.stock || 999)}
