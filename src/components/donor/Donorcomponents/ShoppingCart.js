@@ -4,7 +4,6 @@ import {
   getUserCartItems,
   updateCartItemQuantity,
   updateCartItemSelection,
-  deleteCartItem,
   createOrdersFromCart // ✅ Checkout logic
 } from '../../../firebase/cart';
 import { useCart } from '../../shared/CartContext';

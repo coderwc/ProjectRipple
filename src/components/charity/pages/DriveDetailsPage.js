@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, MapPin, Calendar, DollarSign, Users, CheckCircle2, Package } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, Users, Package } from 'lucide-react';
 import { getItemDonationTotals } from '../../../firebase/posts';
 
 // Using keyword-based matching from posts.js - no need for local normalization

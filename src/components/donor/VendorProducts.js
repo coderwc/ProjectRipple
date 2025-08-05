@@ -4,7 +4,6 @@ import { useCart } from '../shared/CartContext';
 import { saveCartItem } from '../../firebase/cart';
 import { 
   collection, 
-  getDocs, 
   query, 
   where, 
   orderBy, 
@@ -14,7 +13,7 @@ import {
 import { db } from '../../firebase/config';
 
 const VendorProducts = ({ vendor, charity, onBack, onSelectVendor, onGoToCart, isProfile = false }) => {
-  const { addToCart, getTotalItems, reloadCart } = useCart();
+  const { getTotalItems, reloadCart } = useCart();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [vendorListings, setVendorListings] = useState([]);
@@ -231,27 +230,6 @@ const VendorProducts = ({ vendor, charity, onBack, onSelectVendor, onGoToCart, i
     setQuantity(prev => Math.max(1, prev + change));
   };
 
-  const handleQuantityInput = (e) => {
-    const value = e.target.value;
-    const numValue = parseInt(value);
-    
-    // Allow the user to clear the field or type
-    if (value === '' || !isNaN(numValue)) {
-      setQuantity(value === '' ? '' : numValue);
-    }
-  };
-
-  // Handle when user leaves the input field to ensure valid number
-  const handleQuantityBlur = () => {
-    if (quantity === '' || quantity < 1) {
-      setQuantity(1);
-    } else {
-      const maxStock = selectedProduct?.quantity || selectedProduct?.stock || 999;
-      if (quantity > maxStock) {
-        setQuantity(maxStock);
-      }
-    }
-  };
 
   // Handle ESC key to close modal
   useEffect(() => {

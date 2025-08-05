@@ -86,7 +86,7 @@ function App() {
     });
 
     return () => unsubscribe();
-  }, [isAuthenticating]);
+  }, [isAuthenticating, showAuth, userType]);
 
   const handleSelectUserType = (type) => {
     setUserType(type);

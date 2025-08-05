@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { ChevronDown, Home, Plus, User, CheckCircle2 } from 'lucide-react';
 import DriveCard from '../common/DriveCard';
 

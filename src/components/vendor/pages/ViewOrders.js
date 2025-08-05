@@ -194,6 +194,7 @@ const ViewOrders = ({ onNavigateToHome }) => {
         unsubscribe();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateOrderStatus = async (orderId, newStatus) => {

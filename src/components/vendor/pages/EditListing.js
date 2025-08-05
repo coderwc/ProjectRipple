@@ -195,6 +195,7 @@ const EditListing = ({ user, listingId, onBack }) => {
     if (user && listingId) {
       fetchListingDetails();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, listingId]);
 
   return (

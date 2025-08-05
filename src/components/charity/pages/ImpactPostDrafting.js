@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { ArrowLeft, Upload, X, Plus, MapPin, Calendar } from 'lucide-react';
+import { ArrowLeft, Upload, X, Plus, MapPin } from 'lucide-react';
 
 const ImpactPostDrafting = ({ onBack, onShare, availableDrives = [] }) => {
   const [uploadedImages, setUploadedImages] = useState([]);
