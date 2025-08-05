@@ -107,10 +107,18 @@ const ImpactGallery = ({ onBack, postId }) => {
           <button onClick={onBack} className="p-1 hover:bg-gray-100 rounded">
             <ArrowLeft className="w-6 h-6 text-gray-700" />
           </button>
-          <div>
+          <div className="flex-1 min-w-0">
             <span className="text-xl font-bold text-gray-900">Impact Gallery</span>
             {charityInfo && (
-              <p className="text-sm text-gray-500">{charityInfo.driveName}</p>
+              <p className="text-sm text-gray-500 overflow-hidden w-full"
+                 style={{
+                   display: '-webkit-box',
+                   WebkitLineClamp: 1,
+                   WebkitBoxOrient: 'vertical',
+                   wordBreak: 'break-word'
+                 }}>
+                {charityInfo.driveName}
+              </p>
             )}
           </div>
         </div>

@@ -374,17 +374,17 @@ if (publicCharityId) {
             <h3 className="font-medium text-gray-900">We currently need</h3>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 items-stretch">
             {transformedItems.map((item, index) => (
-              <div key={index} className="relative h-32">
+              <div key={index} className="relative h-full">
                 <div
-                  className={`p-4 rounded-lg border h-full flex flex-col justify-between transition-all ${
+                  className={`p-4 rounded-xl border flex flex-col transition-all min-h-[8rem] h-full ${
                     item.available ? 'bg-blue-50 border-blue-200 hover:bg-blue-100 cursor-pointer hover:shadow-md' : 'bg-gray-50 border-gray-200'
                   }`}
                   onClick={() => handleItemClick(item)}
                 >
-                  <div className="flex flex-col">
-                    <span className={`text-sm font-medium mb-1 ${item.available ? 'text-gray-900' : 'text-gray-500'}`}>
+                  <div className="flex flex-col flex-1 mb-3">
+                    <span className={`text-sm font-medium mb-2 leading-tight ${item.available ? 'text-gray-900' : 'text-gray-500'}`}>
                       {item.type}
                     </span>
                     {item.available && (

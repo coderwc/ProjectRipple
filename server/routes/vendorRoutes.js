@@ -23,12 +23,26 @@ router.post("/init", async (req, res) => {
 // Get vendor profile
 router.get("/profile", async (req, res) => {
   try {
+    console.log("🔍 Getting vendor profile for UID:", req.user.uid);
+    console.log("🔍 User email:", req.user.email);
+    
     const vendorRef = db.collection("vendors").doc(req.user.uid);
+    console.log("🔍 Querying vendors collection...");
+    
     const doc = await vendorRef.get();
+    console.log("🔍 Document exists:", doc.exists);
 
-    if (!doc.exists) return res.status(404).json({ error: "Vendor not found" });
+    if (!doc.exists) {
+      console.log("❌ Vendor document not found for UID:", req.user.uid);
+      return res.status(404).json({ error: "Vendor not found" });
+    }
     
     const vendorData = doc.data();
+    console.log("✅ Vendor data retrieved:", { 
+      name: vendorData.name, 
+      email: vendorData.email,
+      hasBalance: !!vendorData.balance 
+    });
     
     // Return vendor profile with company name
     res.json({
@@ -44,7 +58,10 @@ router.get("/profile", async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error fetching vendor profile:", error);
-    res.status(500).json({ error: "Failed to fetch vendor profile" });
+    console.error("❌ Error details:", error.message);
+    console.error("❌ Error code:", error.code);
+    console.error("❌ Error stack:", error.stack);
+    res.status(500).json({ error: "Failed to fetch vendor profile", details: error.message });
   }
 });
 

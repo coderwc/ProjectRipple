@@ -358,9 +358,17 @@ const CategoryFeed = ({ onBack, onSelectPost, categoryName = "Natural Disasters"
                 {/* Content - improved spacing and hierarchy */}
                 <div className="flex-1 min-w-0 flex flex-col justify-between h-20">
                   {/* Title and source with better spacing */}
-                  <div className="space-y-1.5">
-                    <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2">{item.headline}</h3>
-                    <p className="text-xs text-blue-600 font-medium">{item.source}</p>
+                  <div className="space-y-1.5 w-full">
+                    <h3 className="font-semibold text-gray-900 text-sm leading-tight overflow-hidden w-full"
+                        style={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          wordBreak: 'break-word'
+                        }}>
+                      {item.headline}
+                    </h3>
+                    <p className="text-xs text-blue-600 font-medium truncate">{item.source}</p>
                   </div>
                   
                   {/* Progress section - more compact */}
