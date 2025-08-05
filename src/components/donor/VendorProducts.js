@@ -292,7 +292,7 @@ const VendorProducts = ({ vendor, charity, onBack, onSelectVendor, onGoToCart, i
         
         {/* Vendor and Add Button Row */}
         <div className="flex items-center justify-between pt-1">
-          <div className="flex-1 mr-2">
+          <div className="flex-1 mr-2 min-w-0">
             <button 
               onClick={() => {
                 const vendorData = {
@@ -303,7 +303,8 @@ const VendorProducts = ({ vendor, charity, onBack, onSelectVendor, onGoToCart, i
                 };
                 onSelectVendor && onSelectVendor(vendorData);
               }}
-              className="hover:bg-blue-50 rounded-lg px-2 py-1.5 transition-colors w-full text-left"
+              className="hover:bg-blue-50 rounded-lg px-2 py-1.5 transition-colors w-full text-left min-w-0"
+              title={product.vendorName || product.vendor || 'Unknown Vendor'}
             >
               <span className="text-xs text-blue-600 font-medium truncate block">
                 {product.vendorName || product.vendor || 'Unknown Vendor'}
@@ -312,7 +313,7 @@ const VendorProducts = ({ vendor, charity, onBack, onSelectVendor, onGoToCart, i
           </div>
           <button
             onClick={() => openProductModal(product)}
-            className="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors shadow-sm"
+            className="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors shadow-sm flex-shrink-0"
           >
             <Plus className="w-4 h-4 text-white" />
           </button>
