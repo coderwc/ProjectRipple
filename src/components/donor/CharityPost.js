@@ -74,11 +74,14 @@ if (publicCharityId) {
               console.log(`✅ MATCH FOUND! "${item.name}" received ${donatedQuantity} donations`);
             }
             
+            const isCompleted = donatedQuantity >= item.quantity && item.quantity > 0;
+            
             return {
               type: item.name || 'Unknown',
               current: donatedQuantity, // Use keyword-matched donation totals
               target: item.quantity || 0,
-              available: item.quantity > 0 && donatedQuantity < item.quantity
+              available: item.quantity > 0 && donatedQuantity < item.quantity,
+              completed: isCompleted
             };
           }) || [];
 
@@ -363,20 +366,31 @@ if (publicCharityId) {
               <div key={index} className="relative h-full">
                 <div
                   className={`p-4 rounded-xl border flex flex-col transition-all min-h-[8rem] h-full ${
-                    item.available ? 'bg-blue-50 border-blue-200 hover:bg-blue-100 cursor-pointer hover:shadow-md' : 'bg-gray-50 border-gray-200'
+                    item.completed 
+                      ? 'bg-green-50 border-green-200' 
+                      : item.available 
+                        ? 'bg-blue-50 border-blue-200 hover:bg-blue-100 cursor-pointer hover:shadow-md' 
+                        : 'bg-gray-50 border-gray-200'
                   }`}
                   onClick={() => handleItemClick(item)}
                 >
                   <div className="flex flex-col flex-1 mb-3">
-                    <span className={`text-sm font-medium mb-2 leading-tight ${item.available ? 'text-gray-900' : 'text-gray-500'}`}>
+                    <span className={`text-sm font-medium mb-2 leading-tight ${
+                      item.completed ? 'text-green-900' : item.available ? 'text-gray-900' : 'text-gray-500'
+                    }`}>
                       {item.type}
                     </span>
-                    {item.available && (
+                    {item.completed && (
+                      <span className="text-xs text-green-600 mb-3 font-medium">
+                        ✅ Goal Achieved!
+                      </span>
+                    )}
+                    {item.available && !item.completed && (
                       <span className="text-xs text-blue-600 mb-3">
                         Click to shop
                       </span>
                     )}
-                    {!item.available && (
+                    {!item.available && !item.completed && (
                       <span className="text-xs text-gray-400 mb-3">Not Available</span>
                     )}
                   </div>
@@ -384,8 +398,10 @@ if (publicCharityId) {
                     <div className="text-lg font-bold text-gray-900 mb-2">{item.current}/{item.target}</div>
                     <div className="w-full bg-gray-200 rounded-full h-1.5">
                       <div
-                        className={`h-1.5 rounded-full transition-all ${item.available ? 'bg-blue-500' : 'bg-gray-400'}`}
-                        style={{ width: `${(item.current / item.target) * 100}%` }}
+                        className={`h-1.5 rounded-full transition-all ${
+                          item.completed ? 'bg-green-500' : item.available ? 'bg-blue-500' : 'bg-gray-400'
+                        }`}
+                        style={{ width: `${Math.min((item.current / item.target) * 100, 100)}%` }}
                       />
                     </div>
                   </div>
