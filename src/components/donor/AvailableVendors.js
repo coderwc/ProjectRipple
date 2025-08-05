@@ -296,7 +296,7 @@ const addToCartHandler = async (product, qty = 1) => {
       {/* Product Info */}
       <div className="space-y-3">
         {/* Product Name */}
-        <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2">
+        <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2" title={product.name}>
           {product.name}
         </h3>
         
@@ -306,9 +306,9 @@ const addToCartHandler = async (product, qty = 1) => {
         </p>
         
         {/* Stock info */}
-        {product.quantity && (
+        {(product.quantity || product.stock) && (
           <p className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full inline-block">
-            Stock: {product.quantity}
+            Stock: {product.quantity || product.stock}
           </p>
         )}
         
@@ -329,7 +329,7 @@ const addToCartHandler = async (product, qty = 1) => {
               }}
               className="hover:bg-blue-50 rounded-lg px-2 py-1.5 transition-colors w-full text-left"
             >
-              <span className="text-xs text-blue-600 font-medium truncate block">
+              <span className="text-xs text-blue-600 font-medium truncate block" title={product.vendorName || product.vendor || 'Unknown Vendor'}>
                 {product.vendorName || product.vendor || 'Unknown Vendor'}
               </span>
             </button>
