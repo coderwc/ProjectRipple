@@ -20,7 +20,7 @@ const AIAnalysisPage = ({
   };
 
   return (
-    <div className="max-w-sm mx-auto bg-gray-50 min-h-screen">
+    <div className="max-w-sm mx-auto bg-gradient-to-b from-blue-200 via-blue-100 to-white min-h-screen">
       {/* Status Bar */}
       <div className="flex justify-between items-center px-4 py-2 bg-white text-sm font-medium">
         <span>9:30</span>
@@ -43,7 +43,7 @@ const AIAnalysisPage = ({
       {/* Content */}
       <div className="px-4 py-6 pb-24">
         {/* Article Input */}
-        <div className="mb-6">
+        <div className="mb-6 bg-white rounded-lg p-4 border border-gray-400">
           <label className="block text-lg font-bold text-gray-900 mb-2">
             Paste Article or Disaster Description
           </label>
@@ -51,7 +51,7 @@ const AIAnalysisPage = ({
             rows="8"
             value={articleText}
             onChange={(e) => setArticleText(e.target.value)}
-            className="w-full p-4 bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full p-4 bg-gray-100 rounded-lg border-none focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             placeholder="Paste news article, disaster report, or description here...
 
 Example: 'Earthquake in Turkey: 7.8 magnitude earthquake hits southern Turkey. At least 50,000 people affected, many buildings collapsed. Emergency shelters needed urgently for displaced families.'"
@@ -90,7 +90,7 @@ Example: 'Earthquake in Turkey: 7.8 magnitude earthquake hits southern Turkey. A
         {aiAnalysis && !aiAnalysis.loading && !aiAnalysis.error && generatedItems.length > 0 && (
           <div className="space-y-6">
             {/* Analysis Summary */}
-            <div className="bg-blue-50 rounded-lg p-4">
+            <div className="bg-white rounded-lg p-4 border border-gray-400 border-l-4 border-l-blue-500">
               <h3 className="font-bold text-gray-900 mb-2">Analysis Summary</h3>
               <div className="space-y-1 text-sm">
                 <p><span className="font-medium">Cause Type:</span> {aiAnalysis.cause_type}</p>
@@ -101,12 +101,12 @@ Example: 'Earthquake in Turkey: 7.8 magnitude earthquake hits southern Turkey. A
             </div>
 
             {/* Generated Items - NOW EDITABLE! */}
-            <div>
+            <div className="bg-white rounded-lg p-4 border border-gray-400">
               <h3 className="font-bold text-gray-900 mb-3">Generated Relief Items</h3>
-              <p className="text-sm text-gray-600 mb-3">💡 Click on quantities to edit them!</p>
+              <p className="text-sm text-blue-600 mb-3">💡 Click on quantities to edit them!</p>
               <div className="space-y-3">
                 {generatedItems.map((item, index) => (
-                  <div key={index} className="bg-white rounded-lg p-4 border border-gray-200">
+                  <div key={index} className="bg-blue-50 rounded-lg p-4 border border-gray-400">
                     <div className="flex justify-between items-start mb-2">
                       <h4 className="font-semibold text-gray-900 flex-1">{item.item}</h4>
                       {/* EDITABLE QUANTITY */}
@@ -114,7 +114,7 @@ Example: 'Earthquake in Turkey: 7.8 magnitude earthquake hits southern Turkey. A
                         type="text"
                         value={item.quantity}
                         onChange={(e) => updateQuantity(index, e.target.value)}
-                        className="text-blue-600 font-bold bg-blue-50 border border-blue-200 rounded px-3 py-1 text-sm w-28 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white ml-2"
+                        className="text-blue-600 font-bold bg-white border border-gray-400 rounded px-3 py-1 text-sm w-28 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white ml-2"
                         placeholder="Edit qty"
                       />
                     </div>
@@ -134,7 +134,7 @@ Example: 'Earthquake in Turkey: 7.8 magnitude earthquake hits southern Turkey. A
             {/* Use Items Button */}
             <button 
               onClick={onUseItems}
-              className="w-full bg-green-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-green-700 transition-colors"
+              className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-blue-700 transition-colors"
             >
               USE THESE ITEMS IN POST ({generatedItems.length} items)
             </button>
@@ -143,24 +143,24 @@ Example: 'Earthquake in Turkey: 7.8 magnitude earthquake hits southern Turkey. A
 
         {/* Quick Test Examples */}
         {!aiAnalysis && (
-          <div className="bg-gray-100 rounded-lg p-4">
+          <div className="bg-white rounded-lg p-4 border border-gray-400">
             <h4 className="font-medium text-gray-900 mb-2">Quick Test Examples:</h4>
             <div className="space-y-2">
               <button 
                 onClick={() => setArticleText('Earthquake in Turkey: 7.8 magnitude earthquake hits southern Turkey. At least 50,000 people affected, many buildings collapsed. Emergency shelters needed urgently for displaced families.')}
-                className="text-left text-sm text-blue-600 hover:text-blue-800 block"
+                className="text-left text-sm text-blue-600 hover:text-blue-800 block hover:bg-blue-50 p-2 rounded w-full"
               >
                 • Earthquake disaster example
               </button>
               <button 
                 onClick={() => setArticleText('School in rural Bangladesh needs support: 500 students lack basic supplies. No textbooks, pencils, or notebooks available. Children walking 5km to attend classes in damaged building.')}
-                className="text-left text-sm text-blue-600 hover:text-blue-800 block"
+                className="text-left text-sm text-blue-600 hover:text-blue-800 block hover:bg-blue-50 p-2 rounded w-full"
               >
                 • Education need example
               </button>
               <button 
                 onClick={() => setArticleText('Hospital in Yemen running out of medical supplies: 200 patients daily, critical shortage of medicines, bandages, and equipment. Staff working without proper resources.')}
-                className="text-left text-sm text-blue-600 hover:text-blue-800 block"
+                className="text-left text-sm text-blue-600 hover:text-blue-800 block hover:bg-blue-50 p-2 rounded w-full"
               >
                 • Medical emergency example
               </button>

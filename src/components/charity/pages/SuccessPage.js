@@ -12,7 +12,7 @@ const SuccessPage = ({ onNavigate }) => {
   }, [onNavigate]);
 
   return (
-    <div className="max-w-sm mx-auto bg-white min-h-screen flex flex-col">
+    <div className="max-w-sm mx-auto bg-gradient-to-b from-blue-200 via-blue-100 to-white min-h-screen flex flex-col">
       {/* Status Bar */}
       <div className="flex justify-between items-center px-4 py-2 bg-white text-sm font-medium">
         <span>9:30</span>
@@ -24,15 +24,15 @@ const SuccessPage = ({ onNavigate }) => {
 
       {/* Close Button */}
       <div className="flex justify-end px-4 py-2">
-        <button onClick={() => onNavigate('dashboard')} className="p-1">
-          <X className="w-6 h-6 text-gray-400" />
+        <button onClick={() => onNavigate('dashboard')} className="p-1 hover:bg-white/20 rounded">
+          <X className="w-6 h-6 text-gray-600" />
         </button>
       </div>
 
       {/* Success Content */}
       <div className="flex-1 flex flex-col items-center justify-center px-4 pb-20">
         {/* Success Icon */}
-        <div className="w-24 h-24 bg-gray-400 rounded-full flex items-center justify-center mb-8">
+        <div className="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center mb-8 shadow-lg">
           <CheckCircle2 className="w-12 h-12 text-white" />
         </div>
 
@@ -41,9 +41,9 @@ const SuccessPage = ({ onNavigate }) => {
         <h2 className="text-2xl font-bold text-gray-900 mb-8">Is Published!</h2>
 
         {/* Quote */}
-        <div className="text-center px-4 mb-8">
-          <p className="text-gray-500 mb-2">Individually We Are One Drop, Together We Are An Ocean</p>
-          <p className="text-gray-400 text-sm">-Ryunosuke Satoro</p>
+        <div className="text-center px-4 mb-8 bg-white/60 backdrop-blur-sm rounded-lg p-6 border border-gray-200">
+          <p className="text-gray-700 mb-2 font-medium">Individually We Are One Drop, Together We Are An Ocean</p>
+          <p className="text-gray-500 text-sm">-Ryunosuke Satoro</p>
         </div>
 
     

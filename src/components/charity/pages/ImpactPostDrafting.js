@@ -69,7 +69,7 @@ const ImpactPostDrafting = ({ onBack, onShare, availableDrives = [] }) => {
   const isShareEnabled = (uploadedImages.length > 0 || caption.trim().length > 0) && selectedDrive;
 
   return (
-    <div className="max-w-sm mx-auto bg-gray-50 min-h-screen">
+    <div className="max-w-sm mx-auto bg-gradient-to-b from-blue-200 via-blue-100 to-white min-h-screen">
       {/* Status Bar */}
       <div className="flex justify-between items-center px-4 py-2 bg-white text-sm font-medium">
         <span>9:30</span>
@@ -108,12 +108,12 @@ const ImpactPostDrafting = ({ onBack, onShare, availableDrives = [] }) => {
       {/* Content */}
       <div className="px-4 py-6 pb-24 space-y-6">
         {/* Image Upload Section */}
-        <div className="mb-6">
+        <div className="mb-6 bg-white rounded-lg p-4 border border-gray-400">
           <label className="block text-lg font-bold text-gray-900 mb-2">Photos ({uploadedImages.length}/10)</label>
           
           {/* Main Upload Area - similar to CreatePostPage but for multiple images */}
           {uploadedImages.length === 0 && (
-            <div className="w-full h-48 bg-gray-200 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center hover:border-gray-400 transition-colors mb-3">
+            <div className="w-full h-48 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex flex-col items-center justify-center hover:border-gray-500 transition-colors mb-3">
               <button
                 onClick={triggerFileInput}
                 className="flex flex-col items-center justify-center w-full h-full"
@@ -150,7 +150,7 @@ const ImpactPostDrafting = ({ onBack, onShare, availableDrives = [] }) => {
               {uploadedImages.length < 10 && (
                 <button
                   onClick={triggerFileInput}
-                  className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-500 hover:border-blue-400 hover:text-blue-500 transition-colors"
+                  className="aspect-square border-2 border-dashed border-gray-400 rounded-lg flex flex-col items-center justify-center text-gray-500 hover:border-gray-500 hover:text-gray-600 transition-colors"
                 >
                   <Plus className="w-6 h-6 mb-1" />
                   <span className="text-xs">Add</span>
@@ -158,7 +158,6 @@ const ImpactPostDrafting = ({ onBack, onShare, availableDrives = [] }) => {
               )}
             </div>
           )}
-
 
           <input
             ref={fileInputRef}
@@ -171,14 +170,14 @@ const ImpactPostDrafting = ({ onBack, onShare, availableDrives = [] }) => {
         </div>
 
         {/* Caption Section */}
-        <div className="mb-6">
+        <div className="mb-6 bg-white rounded-lg p-4 border border-gray-400">
           <label className="block text-lg font-bold text-gray-900 mb-2">Caption</label>
           <textarea
             rows="6"
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             placeholder="Share the story behind your impact... Tell people about the lives you've touched, the difference you've made, or the progress of your mission. What would you like the community to know?"
-            className="w-full p-4 bg-gray-100 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full p-4 bg-gray-100 rounded-lg border-none focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             maxLength={500}
           />
           <div className="text-right text-xs text-gray-500 mt-1">
@@ -187,12 +186,12 @@ const ImpactPostDrafting = ({ onBack, onShare, availableDrives = [] }) => {
         </div>
 
         {/* Drive Selection */}
-        <div className="mb-6">
+        <div className="mb-6 bg-white rounded-lg p-4 border border-gray-400">
           <label className="block text-lg font-bold text-gray-900 mb-2">Related Drive *</label>
           <select
             value={selectedDrive}
             onChange={(e) => setSelectedDrive(e.target.value)}
-            className="w-full p-4 bg-gray-100 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-4 bg-gray-100 rounded-lg border-none focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           >
             <option value="">Select a drive...</option>
@@ -203,7 +202,7 @@ const ImpactPostDrafting = ({ onBack, onShare, availableDrives = [] }) => {
         </div>
 
         {/* Location */}
-        <div className="mb-6">
+        <div className="mb-6 bg-white rounded-lg p-4 border border-gray-400">
           <label className="block text-lg font-bold text-gray-900 mb-2">Location</label>
           <div className="relative">
             <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -212,15 +211,15 @@ const ImpactPostDrafting = ({ onBack, onShare, availableDrives = [] }) => {
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="Where was this impact made?"
-              className="w-full pl-10 pr-4 py-4 bg-gray-100 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-4 bg-gray-100 rounded-lg border-none focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
 
         {/* Writing Guidance */}
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <h3 className="text-sm font-medium text-blue-900 mb-2">💡 Impact Sharing Tips</h3>
-          <ul className="text-xs text-blue-700 space-y-1">
+        <div className="bg-white p-4 rounded-lg border border-gray-400">
+          <h3 className="text-sm font-medium text-gray-900 mb-2">💡 Impact Sharing Tips</h3>
+          <ul className="text-xs text-gray-600 space-y-1">
             <li>• Show the real difference your work makes</li>
             <li>• Include before/after photos when possible</li>
             <li>• Share stories of people you've helped</li>
