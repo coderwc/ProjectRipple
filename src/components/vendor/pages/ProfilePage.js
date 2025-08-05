@@ -172,14 +172,6 @@ const ProfilePage = ({ currentPage, setCurrentPage, onLogout }) => {
 
   return (
     <div className="max-w-sm mx-auto min-h-screen bg-gradient-to-b from-blue-200 via-blue-100 to-white relative">
-      {/* Status Bar */}
-      <div className="flex justify-between items-center px-4 py-2 bg-white text-sm font-medium text-gray-700">
-        <span>9:30</span>
-        <div className="flex gap-1">
-          <div className="w-4 h-2 bg-black rounded-sm"></div>
-          <div className="w-4 h-2 bg-black rounded-sm"></div>
-        </div>
-      </div>
 
       {/* Header */}
       <div className="bg-white px-4 py-6 border-b border-gray-100 shadow-md">

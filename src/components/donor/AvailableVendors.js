@@ -448,23 +448,36 @@ const addToCartHandler = async (product, qty = 1) => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <span className="text-lg font-medium text-gray-700">Quantity</span>
-                <div className="flex items-center border border-gray-300 rounded-lg">
-                  <button
+                <div className="flex items-center gap-4">
+                  <button 
                     onClick={() => updateQuantity(-1)}
-                    className="w-12 h-12 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                    className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-300 transition-colors"
                     disabled={quantity <= 1}
                   >
-                    <Minus className="w-4 h-4 text-gray-600" />
+                    <Minus className="w-5 h-5 text-gray-600" />
                   </button>
-                  <span className="w-12 h-12 flex items-center justify-center bg-gray-50 text-lg font-medium">
-                    {quantity}
-                  </span>
-                  <button
+                  
+                  <input 
+                    type="text" 
+                    value={quantity}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '' || /^\d+$/.test(value)) {
+                        const newQty = value === '' ? 1 : parseInt(value);
+                        const maxQty = selectedProduct.quantity || selectedProduct.stock || 999;
+                        setQuantity(Math.max(1, Math.min(newQty, maxQty)));
+                      }
+                    }}
+                    className="w-16 p-4 bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg font-semibold"
+                    placeholder="1"
+                  />
+                  
+                  <button 
                     onClick={() => updateQuantity(1)}
-                    className="w-12 h-12 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                    className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-300 transition-colors"
                     disabled={quantity >= (selectedProduct.quantity || selectedProduct.stock || 999)}
                   >
-                    <Plus className="w-4 h-4 text-gray-600" />
+                    <Plus className="w-5 h-5 text-gray-600" />
                   </button>
                 </div>
               </div>
@@ -486,14 +499,6 @@ const addToCartHandler = async (product, qty = 1) => {
 
   return (
     <div className="max-w-sm mx-auto p-4 bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen relative">
-      {/* Status Bar */}
-      <div className="bg-white px-4 py-2 flex justify-between items-center text-sm text-gray-600 -mx-4">
-        <span>9:30</span>
-        <div className="flex items-center gap-1">
-          <div className="w-4 h-2 bg-black rounded-sm"></div>
-          <div className="w-1 h-1 bg-black rounded-full"></div>
-        </div>
-      </div>
 
       {/* Header - Clean and simplified */}
       <div className="bg-white px-4 py-6 border-b border-gray-100 shadow-md -mx-4 mb-4">
