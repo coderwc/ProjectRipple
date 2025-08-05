@@ -274,7 +274,7 @@ const VendorProducts = ({ vendor, charity, onBack, onSelectVendor, onGoToCart, i
       {/* Product Info */}
       <div className="space-y-3">
         {/* Product Name */}
-        <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2">
+        <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2" title={product.name}>
           {product.name}
         </h3>
         
@@ -284,15 +284,15 @@ const VendorProducts = ({ vendor, charity, onBack, onSelectVendor, onGoToCart, i
         </p>
         
         {/* Stock info */}
-        {product.quantity && (
+        {(product.quantity || product.stock) && (
           <p className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full inline-block">
-            Stock: {product.quantity}
+            Stock: {product.quantity || product.stock}
           </p>
         )}
         
         {/* Vendor and Add Button Row */}
         <div className="flex items-center justify-between pt-1">
-          <div className="flex-1 mr-2 min-w-0">
+          <div className="flex-1 mr-2">
             <button 
               onClick={() => {
                 const vendorData = {
@@ -303,17 +303,16 @@ const VendorProducts = ({ vendor, charity, onBack, onSelectVendor, onGoToCart, i
                 };
                 onSelectVendor && onSelectVendor(vendorData);
               }}
-              className="hover:bg-blue-50 rounded-lg px-2 py-1.5 transition-colors w-full text-left min-w-0"
-              title={product.vendorName || product.vendor || 'Unknown Vendor'}
+              className="hover:bg-blue-50 rounded-lg px-2 py-1.5 transition-colors w-full text-left"
             >
-              <span className="text-xs text-blue-600 font-medium truncate block">
+              <span className="text-xs text-blue-600 font-medium truncate block" title={product.vendorName || product.vendor || 'Unknown Vendor'}>
                 {product.vendorName || product.vendor || 'Unknown Vendor'}
               </span>
             </button>
           </div>
           <button
             onClick={() => openProductModal(product)}
-            className="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors shadow-sm flex-shrink-0"
+            className="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors shadow-sm"
           >
             <Plus className="w-4 h-4 text-white" />
           </button>
