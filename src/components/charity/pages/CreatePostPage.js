@@ -213,7 +213,7 @@ const CreatePostPage = ({
   const days = getDaysInMonth();
 
   return (
-    <div className="max-w-sm mx-auto bg-gray-50 min-h-screen">
+    <div className="max-w-sm mx-auto bg-gradient-to-b from-blue-200 via-blue-100 to-white min-h-screen">
       {/* Status Bar */}
       <div className="flex justify-between items-center px-4 py-2 bg-white text-sm font-medium">
         <span>9:30</span>
@@ -245,7 +245,7 @@ const CreatePostPage = ({
             id="image-upload" 
           />
           <label htmlFor="image-upload" className="cursor-pointer block">
-            <div className="w-full h-48 bg-gray-200 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center hover:border-gray-400 transition-colors overflow-hidden">
+            <div className="w-full h-48 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex flex-col items-center justify-center hover:border-gray-500 transition-colors overflow-hidden">
               {selectedImage ? (
                 <img 
                   src={selectedImage} 
@@ -279,7 +279,7 @@ const CreatePostPage = ({
             type="text" 
             value={formData.headline || ''}
             onChange={(e) => setFormData({...formData, headline: e.target.value})}
-            className="w-full p-4 bg-gray-100 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-4 bg-gray-100 rounded-lg border border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter your headline..."
           />
         </div>
@@ -291,7 +291,7 @@ const CreatePostPage = ({
             rows="6"
             value={formData.storyDescription || ''}
             onChange={(e) => setFormData({...formData, storyDescription: e.target.value})}
-            className="w-full p-4 bg-gray-100 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full p-4 bg-gray-100 rounded-lg border border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             placeholder="Tell your story..."
           />
         </div>
@@ -303,7 +303,7 @@ const CreatePostPage = ({
     <select
       value={formData.category || ''}
       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-      className="w-full p-3 pr-8 bg-white border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      className="w-full p-3 pr-8 bg-white border border-gray-400 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       required
     >
       <option value="">Select a category</option>
@@ -326,9 +326,9 @@ const CreatePostPage = ({
           <div className="relative" ref={calendarRef}>
             {/* Calendar Dropdown */}
             {isCalendarOpen && (
-              <div className="absolute bottom-full left-0 mb-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+              <div className="absolute bottom-full left-0 mb-2 w-full bg-white border border-gray-400 rounded-lg shadow-lg z-10">
                 {/* Header */}
-                <div className="flex items-center justify-between p-3 border-b border-gray-200">
+                <div className="flex items-center justify-between p-3 border-b border-gray-300">
                   <h3 className="font-medium text-gray-900">
                     {months[currentMonth.getMonth()]} {currentMonth.getFullYear()}
                   </h3>
@@ -385,7 +385,7 @@ const CreatePostPage = ({
                 </div>
 
                 {/* Footer */}
-                <div className="flex justify-between items-center p-3 border-t border-gray-200">
+                <div className="flex justify-between items-center p-3 border-t border-gray-300">
                   <button
                     onClick={handleClear}
                     className="text-sm text-blue-600 hover:text-blue-800"
@@ -410,7 +410,7 @@ const CreatePostPage = ({
                 onChange={(e) => setFormData({...formData, deadline: e.target.value})}
                 onClick={() => setIsCalendarOpen(!isCalendarOpen)}
                 placeholder="dd/mm/yyyy"
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+                className="w-full px-4 py-3 bg-white border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
                 readOnly
               />
               <button
@@ -418,7 +418,7 @@ const CreatePostPage = ({
                 className="absolute right-3 top-1/2 transform -translate-y-1/2"
                 type="button"
               >
-                <div className="w-5 h-5 border border-gray-400 rounded flex items-center justify-center">
+                <div className="w-5 h-5 border border-gray-500 rounded flex items-center justify-center">
                   <Calendar className="w-3 h-3 text-gray-600" />
                 </div>
               </button>
@@ -431,7 +431,7 @@ const CreatePostPage = ({
           <label className="block text-lg font-bold text-gray-900 mb-2">Add Items needed</label>
           <div className="flex flex-wrap gap-3">
             {addedItems.map((item) => (
-              <div key={item.id} className="bg-white border border-gray-200 rounded-lg p-3 flex items-center gap-2 min-w-0">
+              <div key={item.id} className="bg-white border border-gray-400 rounded-lg p-3 flex items-center gap-2 min-w-0">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
                   <p className="text-xs text-gray-500">{item.category} • Qty: {item.quantity}</p>
@@ -446,7 +446,7 @@ const CreatePostPage = ({
             ))}
             <button 
               onClick={onAddItems}
-              className="w-32 h-24 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center hover:border-gray-400 transition-colors"
+              className="w-32 h-24 border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center hover:border-gray-500 transition-colors"
             >
               <Plus className="w-8 h-8 text-gray-400" />
             </button>
@@ -466,7 +466,7 @@ const CreatePostPage = ({
       </div>
 
       {/* Fixed Bottom Button */}
-      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-white border-t border-gray-200 px-4 py-4">
+      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-white border-t border-gray-300 px-4 py-4">
         <button 
           onClick={onPostNeed}
           className="w-full bg-green-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-green-700 transition-colors"
