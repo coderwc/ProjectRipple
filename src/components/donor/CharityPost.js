@@ -4,34 +4,7 @@ import { getDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { getItemDonationTotals } from '../../firebase/posts';
 
-// Helper function to normalize item names for matching (same as in posts.js)
-const normalizeItemName = (itemName) => {
-  if (!itemName) return '';
-  
-  // Remove vendor names and common variations
-  let normalized = itemName
-    .toLowerCase()
-    .trim()
-    // Remove vendor names
-    .replace(/\s*-\s*(gomgom|premium mart|coldstorage|cold storage|vendor\d+).*$/i, '')
-    // Remove brand prefixes 
-    .replace(/^(gomgom|premium mart|coldstorage|cold storage)\s*/i, '')
-    // Remove water brand names (Dasani, Evian, etc.)
-    .replace(/\s*(dasani|evian|aquafina|nestle|pure life|ice mountain)\s*/gi, ' ')
-    // Normalize water product variations
-    .replace(/\s*(bottle|btl|container)\s*/gi, ' ')
-    .replace(/\s*(250ml|500ml|1l|1.5l|2l|litre|liter|ml)\s*/gi, ' ')
-    // Normalize plural/singular
-    .replace(/s$/, '') // Remove trailing 's'
-    .replace(/ies$/, 'y') // flies -> fly
-    .replace(/es$/, '') // boxes -> box
-    // Remove extra spaces and clean up
-    .replace(/\s+/g, ' ')
-    .trim();
-    
-  console.log(`🔄 [CharityPost] Normalized "${itemName}" -> "${normalized}"`);
-  return normalized;
-};
+// Using keyword-based matching from posts.js - no need for local normalization
 
 const CharityPost = ({
   onBack,
@@ -46,6 +19,13 @@ const CharityPost = ({
   const [transformedItems, setTransformedItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [charityImageUrl, setCharityImageUrl] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Function to refresh post data (e.g., after donations)
+  const refreshPostData = () => {
+    console.log('🔄 Refreshing charity post data...');
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -80,20 +60,23 @@ if (publicCharityId) {
   }
 }
 
-          // Fetch donation totals from separate collection
-          const donationTotals = await getItemDonationTotals(postId);
+          // Fetch donation totals from separate collection using keyword matching
+          const donationTotals = await getItemDonationTotals(postId, rawData.items);
 
           const formatted = rawData.items?.map((item) => {
-            // Normalize charity post item name to match donation records
-            const normalizedCharityItemName = normalizeItemName(item.name);
-            const donatedQuantity = donationTotals[normalizedCharityItemName] || 0;
+            // Use direct item name matching from keyword-based donation totals
+            const donatedQuantity = donationTotals[item.name] || 0;
             
-            console.log(`🔍 [CharityPost] Matching charity item "${item.name}" (normalized: "${normalizedCharityItemName}") with donations: ${donatedQuantity}`);
+            console.log(`🔍 [CharityPost] Charity item "${item.name}" received ${donatedQuantity} donations`);
             console.log(`🔍 [CharityPost] Available donation totals:`, donationTotals);
+            
+            if (donatedQuantity > 0) {
+              console.log(`✅ MATCH FOUND! "${item.name}" received ${donatedQuantity} donations`);
+            }
             
             return {
               type: item.name || 'Unknown',
-              current: donatedQuantity, // Use donation totals from separate collection
+              current: donatedQuantity, // Use keyword-matched donation totals
               target: item.quantity || 0,
               available: item.quantity > 0 && donatedQuantity < item.quantity
             };
@@ -131,7 +114,7 @@ if (publicCharityId) {
     }, 10000); // 10 second timeout
 
     return () => clearTimeout(timeout);
-  }, [postId]);
+  }, [postId, refreshTrigger]);
 
   if (loading) {
     return (
@@ -218,20 +201,28 @@ if (publicCharityId) {
 
   // Calculate kindness cup percentage based on 'we currently need' items fulfillment
   const kindnessCupPercentage = (() => {
-    if (!transformedItems || transformedItems.length === 0) return 0;
+    if (!transformedItems || transformedItems.length === 0) {
+      console.log('🔍 Kindness cup: No transformed items available');
+      return 0;
+    }
     
     let totalFulfillment = 0;
     let itemCount = 0;
+    
+    console.log('🔍 Kindness cup calculation - Items:', transformedItems);
     
     transformedItems.forEach(item => {
       if (item.target > 0) {
         const itemFulfillment = Math.min((item.current / item.target) * 100, 100);
         totalFulfillment += itemFulfillment;
         itemCount++;
+        console.log(`🔍 Item "${item.type}": ${item.current}/${item.target} = ${itemFulfillment.toFixed(1)}%`);
       }
     });
     
-    return itemCount > 0 ? Math.round(totalFulfillment / itemCount) : 0;
+    const finalPercentage = itemCount > 0 ? Math.round(totalFulfillment / itemCount) : 0;
+    console.log(`🔍 Final kindness cup percentage: ${finalPercentage}% (${itemCount} items processed)`);
+    return finalPercentage;
   })();
 
   const handleItemClick = (item) => {
@@ -239,7 +230,8 @@ if (publicCharityId) {
       const charityData = {
         id: postId,
         name: charityName,
-        selectedItem: item.type
+        selectedItem: item.type,
+        refreshPostData: refreshPostData // Pass refresh function to parent
       };
       onCharitySelect(charityData);
     }

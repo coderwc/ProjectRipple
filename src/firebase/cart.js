@@ -163,8 +163,9 @@ export const createOrdersFromCart = async () => {
       }));
       
       console.log('🎁 Recording item donations for charityId:', charityId, 'items:', itemDonations);
+      console.log('🔍 Debug - Cart items being processed:', items.map(i => ({ name: i.name, quantity: i.quantity, charityId: i.charityId })));
       await recordItemDonations(charityId, itemDonations, user.uid, user.displayName || user.email);
-      console.log('✅ Item donations recorded successfully');
+      console.log('✅ Item donations recorded successfully for postId:', charityId);
     } catch (error) {
       console.error('❌ Failed to record item donations:', error);
       // Don't throw error to avoid breaking order creation

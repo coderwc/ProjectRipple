@@ -1,32 +1,66 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, MapPin, Calendar, DollarSign, Users, CheckCircle2, Package } from 'lucide-react';
-import { calculateDriveProgress, formatProgressText, getProgressBarColor } from '../../../utils/progressCalculation';
-import { getDonationsByPost } from '../../../firebase/donations'; // ✅ Fixed path
+import { getItemDonationTotals } from '../../../firebase/posts';
+
+// Using keyword-based matching from posts.js - no need for local normalization
 
 const DriveDetailsPage = ({ drive, onBack, user, onDriveImpactClick, impactPosts = [] }) => {
-  const [donations, setDonations] = useState([]);
-  const [loadingDonations, setLoadingDonations] = useState(true);
+  const [progressData, setProgressData] = useState({ percentage: 0, itemsCollected: 0, totalItemsNeeded: 0 });
+  const [loadingProgress, setLoadingProgress] = useState(true);
 
   // ✅ Always call hooks unconditionally
   useEffect(() => {
-    const fetchDonations = async () => {
-      if (drive?.id) {
+    const fetchProgress = async () => {
+      if (drive?.id && drive?.items) {
         try {
-          setLoadingDonations(true);
-          const donationsData = await getDonationsByPost(drive.id);
-          setDonations(donationsData);
-          console.log('✅ Loaded donations for drive:', drive.id, donationsData);
+          setLoadingProgress(true);
+          
+          // Fetch donation totals using keyword matching
+          const donationTotals = await getItemDonationTotals(drive.id, drive.items);
+          
+          // Calculate progress using same logic as kindness cup
+          let totalFulfillment = 0;
+          let itemCount = 0;
+          let totalItemsNeeded = 0;
+          let totalItemsCollected = 0;
+          
+          drive.items.forEach(item => {
+            if (item.quantity > 0) {
+              const donatedQuantity = donationTotals[item.name] || 0;
+              const itemFulfillment = Math.min((donatedQuantity / item.quantity) * 100, 100);
+              
+              totalFulfillment += itemFulfillment;
+              itemCount++;
+              totalItemsNeeded += item.quantity;
+              totalItemsCollected += donatedQuantity;
+              
+              console.log(`🔍 [DriveDetails] Item "${item.name}": ${donatedQuantity}/${item.quantity} = ${itemFulfillment.toFixed(1)}%`);
+            }
+          });
+          
+          const percentage = itemCount > 0 ? Math.round(totalFulfillment / itemCount) : 0;
+          
+          setProgressData({
+            percentage,
+            itemsCollected: totalItemsCollected,
+            totalItemsNeeded,
+            progressText: `${percentage}% collected`
+          });
+          
+          console.log('✅ Charity progress calculated:', { percentage, itemsCollected: totalItemsCollected, totalItemsNeeded });
         } catch (error) {
-          console.error('❌ Error loading donations:', error);
-          setDonations([]);
+          console.error('❌ Error calculating progress:', error);
+          setProgressData({ percentage: 0, itemsCollected: 0, totalItemsNeeded: 0 });
         } finally {
-          setLoadingDonations(false);
+          setLoadingProgress(false);
         }
+      } else {
+        setLoadingProgress(false);
       }
     };
 
-    fetchDonations();
-  }, [drive?.id]); // ✅ Prevent crash on undefined drive
+    fetchProgress();
+  }, [drive?.id, drive?.items]); // ✅ Recalculate when drive data changes
 
   if (!drive) return null;
 
@@ -38,9 +72,12 @@ const DriveDetailsPage = ({ drive, onBack, user, onDriveImpactClick, impactPosts
 
   const itemsList = formatItemsList(drive.items);
   
-  const progressData = calculateDriveProgress(drive, donations);
+  // Keep progress bar blue regardless of percentage
+  const getProgressBarColor = (percentage) => {
+    return 'bg-blue-500';
+  };
+  
   const progressBarColor = getProgressBarColor(progressData.percentage);
-  const progressText = formatProgressText(progressData);
 
   return (
     <div className="max-w-sm mx-auto min-h-screen bg-gradient-to-b from-white via-blue-100 to-blue-200">
@@ -124,7 +161,7 @@ const DriveDetailsPage = ({ drive, onBack, user, onDriveImpactClick, impactPosts
         <div className="bg-white rounded-lg p-4 mb-6 shadow-sm border-2 border-blue-200">
           <div className="flex justify-between items-center mb-2">
             <p className="text-sm font-medium text-gray-900">Collection Progress</p>
-            {loadingDonations ? (
+            {loadingProgress ? (
               <p className="text-sm text-gray-400">Loading...</p>
             ) : (
               <p className="text-sm text-gray-600">{progressData.progressText}</p>
@@ -137,12 +174,12 @@ const DriveDetailsPage = ({ drive, onBack, user, onDriveImpactClick, impactPosts
             ></div>
           </div>
           <div className="flex justify-between text-xs text-gray-500">
-            {loadingDonations ? (
+            {loadingProgress ? (
               <span>Calculating progress...</span>
             ) : (
-              <span>{progressText}</span>
+              <span>{progressData.itemsCollected} items collected</span>
             )}
-            <span>{progressData.donorCount} supporter{progressData.donorCount === 1 ? '' : 's'}</span>
+            <span>{progressData.percentage}% complete</span>
           </div>
         </div>
 
