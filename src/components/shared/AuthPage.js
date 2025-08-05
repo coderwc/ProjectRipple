@@ -61,21 +61,30 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack, setIsAuthentica
     } catch (error) {
       console.error('Authentication error:', error);
       
-      // Handle specific Firebase errors
+      // Handle specific Firebase errors with user-friendly messages
       let errorMessage = 'An error occurred. Please try again.';
       
       if (error.code === 'auth/user-not-found') {
-        errorMessage = 'No account found with this email address.';
+        errorMessage = 'Email address not found. Please check your email or sign up.';
       } else if (error.code === 'auth/wrong-password') {
-        errorMessage = 'Incorrect password.';
+        errorMessage = 'Incorrect password. Please try again.';
+      } else if (error.code === 'auth/invalid-credential') {
+        errorMessage = 'Invalid email or password. Please check your credentials.';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many failed attempts. Please try again later.';
       } else if (error.code === 'auth/email-already-in-use') {
-        errorMessage = 'An account with this email already exists.';
+        errorMessage = 'This email is already registered. Please sign in instead.';
       } else if (error.code === 'auth/weak-password') {
-        errorMessage = 'Password should be at least 6 characters.';
+        errorMessage = 'Password must be at least 6 characters long.';
       } else if (error.code === 'auth/invalid-email') {
-        errorMessage = 'Invalid email address.';
-      } else if (error.message) {
-        errorMessage = error.message;
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      } else {
+        // For any other Firebase errors, show generic message
+        errorMessage = isSignIn ? 
+          'Incorrect email or password. Please try again.' : 
+          'Unable to create account. Please check your information and try again.';
       }
       
       setError(errorMessage);
@@ -102,10 +111,20 @@ const AuthPage = ({ onLogin, userType: selectedUserType, onBack, setIsAuthentica
     } catch (error) {
       console.error('Google sign in error:', error);
       
-      // Use the specific error message (including role validation errors)
+      // Handle Google sign-in errors with user-friendly messages
       let errorMessage = 'Google sign in failed. Please try again.';
-      if (error.message) {
+      
+      if (error.code === 'auth/popup-closed-by-user') {
+        errorMessage = 'Sign in was cancelled. Please try again.';
+      } else if (error.code === 'auth/popup-blocked') {
+        errorMessage = 'Pop-up blocked. Please allow pop-ups and try again.';
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      } else if (error.message && error.message.includes('role')) {
+        // Keep role validation errors as they are informative
         errorMessage = error.message;
+      } else {
+        errorMessage = 'Google sign in failed. Please try again or use email sign in.';
       }
       
       setError(errorMessage);

@@ -26,6 +26,11 @@ out
 .env.test.local
 .env.production.local
 
+# Server environment variables - NEVER COMMIT THESE!
+server/.env
+server/.env.local
+server/.env.production
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
