@@ -24,6 +24,7 @@ function DonorApp({ user, onLogout }) {
   const [previousView, setPreviousView] = useState('home');
   const [selectedPostData, setSelectedPostData] = useState(null);
   const [originalPostForCheckout, setOriginalPostForCheckout] = useState(null);
+  const [charityPostRefresh, setCharityPostRefresh] = useState(null);
 
   const { setCharity, clearCart, getTotalItems, getUniqueProducts } = useCart();
 
@@ -65,6 +66,11 @@ function DonorApp({ user, onLogout }) {
     setCharity(charity);
     setSelectedItemFilter(charity.selectedItem || null);
     setPreviousView(currentView);
+    
+    // Store refresh function for later use after checkout
+    if (charity.refreshPostData) {
+      setCharityPostRefresh(() => charity.refreshPostData);
+    }
     
     // Preserve the original post for checkout return navigation
     if (currentView === 'post' && selectedPost) {
@@ -133,7 +139,7 @@ function DonorApp({ user, onLogout }) {
     setCurrentView('cart');
   };
 
-  const handleCheckoutSuccess = () => {
+  const handleCheckoutSuccess = (data = {}) => {
     // After successful checkout, return to charity post if we have one preserved
     const postToReturn = originalPostForCheckout || selectedPost;
     if (postToReturn) {
@@ -146,6 +152,16 @@ function DonorApp({ user, onLogout }) {
       setSelectedItemFilter(null);
       // Clear the preserved post after using it
       setOriginalPostForCheckout(null);
+      
+      // Refresh charity post data to show updated progress
+      if (data.refreshData && charityPostRefresh) {
+        console.log('🔄 Triggering charity post refresh after checkout...');
+        setTimeout(() => {
+          console.log('🔄 Executing charity post refresh now...');
+          charityPostRefresh();
+          setCharityPostRefresh(null); // Clear after use
+        }, 2000); // Longer delay to ensure Firestore writes complete
+      }
     } else {
       // Fallback to home if no post is selected
       handleBackToHome(); // Use existing home handler for clean state

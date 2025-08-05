@@ -299,11 +299,14 @@ export const recordItemDonations = async (postId, itemDonations, donorId, donorN
         createdAt: serverTimestamp()
       };
       
-      return addDoc(collection(db, 'item_donations'), donationRecord);
+      console.log('🔍 Creating donation record:', donationRecord);
+      const docRef = await addDoc(collection(db, 'item_donations'), donationRecord);
+      console.log('🔍 Donation record created with ID:', docRef.id);
+      return docRef;
     });
     
-    await Promise.all(donationPromises);
-    console.log('✅ Item donations recorded successfully for post:', postId);
+    const results = await Promise.all(donationPromises);
+    console.log('✅ Item donations recorded successfully for post:', postId, 'Created', results.length, 'records');
     return { success: true };
   } catch (error) {
     console.error('❌ Item donations record error:', error);
@@ -311,38 +314,85 @@ export const recordItemDonations = async (postId, itemDonations, donorId, donorN
   }
 };
 
-// Helper function to normalize item names for matching
-const normalizeItemName = (itemName) => {
-  if (!itemName) return '';
+// Extract meaningful keywords from item names for semantic matching
+const extractItemKeywords = (itemName) => {
+  if (!itemName) return [];
   
-  // Remove vendor names and common variations
-  let normalized = itemName
+  // Clean and normalize the item name
+  let cleaned = itemName
     .toLowerCase()
     .trim()
-    // Remove vendor names
+    // Remove vendor names and brands
     .replace(/\s*-\s*(gomgom|premium mart|coldstorage|cold storage|vendor\d+).*$/i, '')
-    // Remove brand prefixes 
     .replace(/^(gomgom|premium mart|coldstorage|cold storage)\s*/i, '')
-    // Remove water brand names (Dasani, Evian, etc.)
     .replace(/\s*(dasani|evian|aquafina|nestle|pure life|ice mountain)\s*/gi, ' ')
-    // Normalize water product variations
-    .replace(/\s*(bottle|btl|container)\s*/gi, ' ')
-    .replace(/\s*(250ml|500ml|1l|1.5l|2l|litre|liter|ml)\s*/gi, ' ')
-    // Normalize plural/singular
-    .replace(/s$/, '') // Remove trailing 's'
-    .replace(/ies$/, 'y') // flies -> fly
-    .replace(/es$/, '') // boxes -> box
-    // Remove extra spaces and clean up
+    // Remove size/quantity indicators
+    .replace(/\s*(250ml|500ml|1l|1.5l|2l|litre|liter|ml|kg|g|pack|box|bottle|can)\s*/gi, ' ')
+    // Remove descriptive prefixes but keep semantic meaning
     .replace(/\s+/g, ' ')
     .trim();
+
+  // Split into words and filter out common stop words
+  const stopWords = ['a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'];
+  const words = cleaned.split(' ').filter(word => 
+    word.length > 2 && !stopWords.includes(word)
+  );
+
+  // Extract root keywords by removing common prefixes/suffixes
+  const keywords = words.map(word => {
+    // Remove common prefixes
+    let keyword = word.replace(/^(emergency|medical|basic|essential|portable|instant|fresh|hot|cold|warm|cotton|wool|fleece|canned|dried|packaged|frozen)/, '');
+    // Remove plural endings
+    keyword = keyword.replace(/(s|es|ies)$/, '');
+    // Remove -ed, -ing endings
+    keyword = keyword.replace(/(ed|ing)$/, '');
     
-  console.log(`🔄 Normalized "${itemName}" -> "${normalized}"`);
-  return normalized;
+    return keyword || word; // Return original if nothing left after cleaning
+  }).filter(keyword => keyword.length > 1);
+
+  console.log(`🔍 Keywords extracted from "${itemName}": [${keywords.join(', ')}]`);
+  return keywords;
 };
 
-// Get total donated quantities for a charity post
-export const getItemDonationTotals = async (postId) => {
+// Find the best matching charity item for a donated item using keyword overlap
+const findBestItemMatch = (donatedItemName, charityItems) => {
+  const donatedKeywords = extractItemKeywords(donatedItemName);
+  let bestMatch = null;
+  let bestScore = 0;
+
+  charityItems.forEach(charityItem => {
+    const charityKeywords = extractItemKeywords(charityItem.name);
+    
+    // Calculate overlap score between keywords
+    const commonKeywords = donatedKeywords.filter(keyword => 
+      charityKeywords.some(charityKeyword => 
+        charityKeyword.includes(keyword) || keyword.includes(charityKeyword)
+      )
+    );
+    
+    const score = commonKeywords.length / Math.max(donatedKeywords.length, charityKeywords.length);
+    
+    console.log(`🔍 Matching "${donatedItemName}" vs "${charityItem.name}": score=${score.toFixed(2)} (common: [${commonKeywords.join(', ')}])`);
+    
+    if (score > bestScore && score > 0.3) { // Minimum 30% keyword overlap
+      bestMatch = charityItem;
+      bestScore = score;
+    }
+  });
+
+  if (bestMatch) {
+    console.log(`✅ Best match for "${donatedItemName}": "${bestMatch.name}" (score: ${bestScore.toFixed(2)})`);
+  } else {
+    console.log(`❌ No good match found for "${donatedItemName}"`);
+  }
+
+  return bestMatch;
+};
+
+// Get total donated quantities for a charity post using keyword matching
+export const getItemDonationTotals = async (postId, charityItems = []) => {
   try {
+    console.log('🔍 Fetching donation totals for postId:', postId);
     const q = query(
       collection(db, 'item_donations'),
       where('postId', '==', postId)
@@ -351,20 +401,40 @@ export const getItemDonationTotals = async (postId) => {
     const querySnapshot = await getDocs(q);
     const donationTotals = {};
     
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      const rawItemName = data.itemName;
-      const normalizedItemName = normalizeItemName(rawItemName);
-      
-      if (!donationTotals[normalizedItemName]) {
-        donationTotals[normalizedItemName] = 0;
-      }
-      donationTotals[normalizedItemName] += data.quantity;
-      
-      console.log(`🎁 Added ${data.quantity} for "${rawItemName}" -> normalized: "${normalizedItemName}"`);
+    console.log(`🔍 Found ${querySnapshot.docs.length} donation records for postId: ${postId}`);
+    
+    // Initialize totals for all charity items
+    charityItems.forEach(item => {
+      donationTotals[item.name] = 0;
     });
     
-    console.log('✅ Retrieved donation totals for post:', postId, donationTotals);
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      const donatedItemName = data.itemName;
+      
+      console.log(`🔍 Processing donation: "${donatedItemName}" (quantity: ${data.quantity})`);
+      
+      if (charityItems.length > 0) {
+        // Use keyword matching to find best charity item match
+        const matchedCharityItem = findBestItemMatch(donatedItemName, charityItems);
+        
+        if (matchedCharityItem) {
+          donationTotals[matchedCharityItem.name] += data.quantity;
+          console.log(`✅ "${donatedItemName}" matched to "${matchedCharityItem.name}" (+${data.quantity})`);
+        } else {
+          console.log(`❌ No match found for "${donatedItemName}"`);
+        }
+      } else {
+        // Fallback: use old normalization method if no charity items provided
+        const normalizedItemName = donatedItemName.toLowerCase().replace(/s$/, '');
+        if (!donationTotals[normalizedItemName]) {
+          donationTotals[normalizedItemName] = 0;
+        }
+        donationTotals[normalizedItemName] += data.quantity;
+      }
+    });
+    
+    console.log('✅ Final donation totals:', donationTotals);
     return donationTotals;
   } catch (error) {
     console.error('❌ Error fetching donation totals:', error);

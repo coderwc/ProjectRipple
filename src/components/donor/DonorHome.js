@@ -43,6 +43,8 @@ const normalizeItemName = (itemName) => {
     .replace(/\s*-\s*(gomgom|premium mart|coldstorage|cold storage|vendor\d+).*$/i, '')
     // Remove brand prefixes 
     .replace(/^(gomgom|premium mart|coldstorage|cold storage)\s*/i, '')
+    // Remove descriptive prefixes that don't affect the core item
+    .replace(/^(emergency|medical|basic|essential|portable|instant|fresh|hot|cold|warm)\s+/i, '')
     // Remove water brand names (Dasani, Evian, etc.)
     .replace(/\s*(dasani|evian|aquafina|nestle|pure life|ice mountain)\s*/gi, ' ')
     // Normalize water product variations
@@ -64,16 +66,15 @@ const calculateKindnessCupPercentage = async (post) => {
   try {
     if (!post.items || post.items.length === 0) return 0;
     
-    // Fetch donation totals from separate collection
-    const donationTotals = await getItemDonationTotals(post.id);
+    // Fetch donation totals using keyword matching
+    const donationTotals = await getItemDonationTotals(post.id, post.items);
     
     let totalFulfillment = 0;
     let itemCount = 0;
     
     post.items.forEach(item => {
       if (item.quantity > 0) {
-        const normalizedItemName = normalizeItemName(item.name);
-        const donatedQuantity = donationTotals[normalizedItemName] || 0;
+        const donatedQuantity = donationTotals[item.name] || 0;
         const itemFulfillment = Math.min((donatedQuantity / item.quantity) * 100, 100);
         totalFulfillment += itemFulfillment;
         itemCount++;

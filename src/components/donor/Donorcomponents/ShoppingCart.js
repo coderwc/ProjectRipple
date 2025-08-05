@@ -316,7 +316,8 @@ const deleteItem = async (id) => {
       
       // Navigate back to charity post after successful checkout
       if (onCheckoutSuccess) {
-        onCheckoutSuccess();
+        // Pass a flag to indicate that data should be refreshed to show updated progress
+        onCheckoutSuccess({ refreshData: true });
       }
     } catch (err) {
       console.error('❌ Checkout error:', err.message);
