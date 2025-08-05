@@ -121,7 +121,7 @@ const deleteItem = async (id) => {
   }, {});
 
   return (
-    <div className="max-w-sm mx-auto bg-gray-50 min-h-screen relative">
+    <div className="max-w-sm mx-auto bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen relative">
       {/* Status Bar - matching AvailableVendors */}
       <div className="bg-white px-4 py-2 flex justify-between items-center text-sm text-gray-600 -mx-4">
         <span>9:30</span>
