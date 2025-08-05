@@ -10,7 +10,7 @@ const MyListings = ({ user, onNavigateToAdd, onNavigateToEdit, onNavigateToHome 
   try {
     const user = auth.currentUser;
     const token = await user.getIdToken();
-    const response = await axios.get('http://localhost:5001/api/vendor/listings', {
+    const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/vendor/listings`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     setListings(response.data);
@@ -23,7 +23,7 @@ const handleDelete = async (listingId) => {
   try {
     const user = auth.currentUser;
     const token = await user.getIdToken(); 
-    await axios.delete(`http://localhost:5001/api/vendor/listings/${listingId}`, {
+    await axios.delete(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/vendor/listings/${listingId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     setListings(prev => prev.filter(item => item.id !== listingId));

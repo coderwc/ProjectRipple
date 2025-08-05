@@ -107,7 +107,7 @@ const EditListing = ({ user, listingId, onBack }) => {
     try {
       const currentUser = auth.currentUser;
       const token = await currentUser.getIdToken();
-      const response = await axios.get(`http://localhost:5001/api/vendor/listings`, {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/vendor/listings`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const listing = response.data.find(item => item.id === listingId);
@@ -164,7 +164,7 @@ const EditListing = ({ user, listingId, onBack }) => {
       console.log("📦 Updated data being sent:", updatedData);
 
       const response = await axios.put(
-        `http://localhost:5001/api/vendor/listings/${listingId}`,
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/vendor/listings/${listingId}`,
         updatedData,
         { headers: { Authorization: `Bearer ${token}` } }
       );

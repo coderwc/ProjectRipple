@@ -28,7 +28,7 @@ const VendorHome = ({
       try {
         // First get data from your API
         const token = await auth.currentUser.getIdToken();
-        const res = await fetch("http://localhost:5001/api/vendor/profile", {
+        const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/vendor/profile`, {
           headers: {
             Authorization: `Bearer ${token}`
           }

@@ -292,7 +292,7 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
     try {
       setAiAnalysis({ loading: true });
 
-      const response = await fetch('http://localhost:5001/api/ai-recommendation', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/ai-recommendation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -72,7 +72,7 @@ Example: 'Earthquake in Turkey: 7.8 magnitude earthquake hits southern Turkey. A
             <p className="text-red-700 font-medium">Error:</p>
             <p className="text-red-600">{aiAnalysis.error}</p>
             <p className="text-sm text-gray-600 mt-2">
-              Make sure your backend server is running on http://localhost:5001
+              Make sure your backend server is running on {process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5001'}
             </p>
           </div>
         )}

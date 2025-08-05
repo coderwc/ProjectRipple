@@ -13,7 +13,7 @@ import { auth, db } from './config';
 const initVendorProfile = async (name, email) => {
   const token = await auth.currentUser.getIdToken();
 
-  await fetch("http://localhost:5001/api/vendor/init", {
+  await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/vendor/init`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

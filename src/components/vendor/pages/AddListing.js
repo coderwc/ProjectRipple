@@ -152,7 +152,7 @@ const AddListing = ({ user, onBack }) => {
 
       // Send to your backend API
       const response = await axios.post(
-        'http://localhost:5001/api/vendor/listings',
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/vendor/listings`,
         listingData,
         {
           headers: { Authorization: `Bearer ${token}` }
