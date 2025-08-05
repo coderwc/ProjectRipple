@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, Package, FileText, ArrowRight, Users, Droplets, Sparkles } from 'lucide-react';
+import { Heart, Package, FileText, ArrowRight } from 'lucide-react';
 
 const LandingPage = ({ onSelectUserType }) => {
   const [hoveredButton, setHoveredButton] = useState(null);

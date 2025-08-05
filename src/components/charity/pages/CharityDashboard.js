@@ -9,14 +9,13 @@ import DriveDetailsPage from './DriveDetailsPage';
 import SelectPostType from './SelectPostType';
 import ImpactPostDrafting from './ImpactPostDrafting';
 import ImpactGallery from './ImpactGallery';
-import { createPost, getAIRecommendations, getCharityPosts } from '../../../api/posts';
+import { createPost, getCharityPosts } from '../../../api/posts';
 import { deletePost, createImpactPost, getImpactPosts, deleteImpactPost, updateImpactPost } from '../../../firebase/posts';
 import { itemCategories } from '../constants/categories';
 
 const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
   // Page navigation
   const [currentPage, setCurrentPage] = useState('dashboard');
-  const [loading, setLoading] = useState(false);
 
   // Create post form state
   const [selectedImage, setSelectedImage] = useState(null);
@@ -55,7 +54,6 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
     const loadUserData = async () => {
       if (user?.id) {
         try {
-          setLoadingPosts(true);
           console.log('🔍 Loading posts for user:', user.id);
           
           // Load fundraising posts
@@ -107,7 +105,7 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
     };
 
     loadUserData();
-  }, [user?.id]);
+  }, [user?.id, user?.name]);
 
   // Image upload handler
   const handleImageUpload = (file) => {
@@ -155,7 +153,6 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
     }
 
     try {
-      setLoading(true);
       
   const postData = {
   headline: formData.headline,
@@ -208,14 +205,12 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
       console.error('Error creating post:', error);
       alert(`Failed to create post: ${error.message}`);
     } finally {
-      setLoading(false);
     }
   };
 
   // Handle impact post creation (Firebase for text and images)
   const handleImpactPost = async (postData) => {
     try {
-      setLoading(true);
       
       const impactData = {
         images: postData.images || [],
@@ -284,7 +279,6 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
       setCurrentPage('success');
       console.log('✅ Impact post saved locally (complete fallback)');
     } finally {
-      setLoading(false);
     }
   };
 
@@ -424,7 +418,6 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
     if (!confirmDelete) return;
     
     try {
-      setLoading(true);
       
       await deletePost(user.id, drive.id);
       
@@ -437,13 +430,11 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
       console.error('Error deleting drive:', error);
       alert(`Failed to delete drive: ${error.message}`);
     } finally {
-      setLoading(false);
     }
   };
 
   const handleDeleteImpactPost = async (post) => {
     try {
-      setLoading(true);
       
       await deleteImpactPost(user.id, post.id);
       
@@ -456,13 +447,11 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
       console.error('Error deleting impact post:', error);
       throw error;
     } finally {
-      setLoading(false);
     }
   };
 
   const handleUpdateImpactPost = async (postId, updateData) => {
     try {
-      setLoading(true);
       
       await updateImpactPost(postId, updateData);
       
@@ -479,7 +468,6 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
       console.error('Error updating impact post:', error);
       throw error;
     } finally {
-      setLoading(false);
     }
   };
 

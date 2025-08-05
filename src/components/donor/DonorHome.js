@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Search,
   ShoppingCart,
   PawPrint,
   Book,
@@ -31,35 +30,7 @@ const categories = [
   { name: 'Infrastructure', icon: Building2 },
 ];
 
-// Helper function to normalize item names for matching (same as in CharityPost.js)
-const normalizeItemName = (itemName) => {
-  if (!itemName) return '';
-  
-  // Remove vendor names and common variations
-  let normalized = itemName
-    .toLowerCase()
-    .trim()
-    // Remove vendor names
-    .replace(/\s*-\s*(gomgom|premium mart|coldstorage|cold storage|vendor\d+).*$/i, '')
-    // Remove brand prefixes 
-    .replace(/^(gomgom|premium mart|coldstorage|cold storage)\s*/i, '')
-    // Remove descriptive prefixes that don't affect the core item
-    .replace(/^(emergency|medical|basic|essential|portable|instant|fresh|hot|cold|warm)\s+/i, '')
-    // Remove water brand names (Dasani, Evian, etc.)
-    .replace(/\s*(dasani|evian|aquafina|nestle|pure life|ice mountain)\s*/gi, ' ')
-    // Normalize water product variations
-    .replace(/\s*(bottle|btl|container)\s*/gi, ' ')
-    .replace(/\s*(250ml|500ml|1l|1.5l|2l|litre|liter|ml)\s*/gi, ' ')
-    // Normalize plural/singular
-    .replace(/s$/, '') // Remove trailing 's'
-    .replace(/ies$/, 'y') // flies -> fly
-    .replace(/es$/, '') // boxes -> box
-    // Remove extra spaces and clean up
-    .replace(/\s+/g, ' ')
-    .trim();
-    
-  return normalized;
-};
+// Note: This function was replaced by keyword extraction in posts.js
 
 // Calculate kindness cup percentage based on 'we currently need' items fulfillment
 const calculateKindnessCupPercentage = async (post) => {
