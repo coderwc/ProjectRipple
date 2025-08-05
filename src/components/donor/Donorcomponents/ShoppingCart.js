@@ -228,20 +228,39 @@ const deleteItem = async (id) => {
                       {/* Quantity Controls */}
                       {!isEditMode && (
                         <div className="flex items-center space-x-3">
-                          <div className="flex items-center border border-gray-300 rounded-lg">
+                          <div className="flex items-center gap-3">
                             <button
                               onClick={() => updateQuantity(item.id, -1)}
-                              className="w-10 h-10 flex items-center justify-center hover:bg-gray-50 transition-colors rounded-l-lg"
+                              className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-300 transition-colors"
                               disabled={item.quantity <= 1}
                             >
                               <Minus className="w-4 h-4 text-gray-600" />
                             </button>
-                            <span className="w-12 h-10 flex items-center justify-center bg-gray-50 text-base font-medium border-l border-r border-gray-300">
-                              {item.quantity}
-                            </span>
+                            
+                            <input
+                              type="text"
+                              value={item.quantity}
+                              onChange={async (e) => {
+                                const value = e.target.value;
+                                if (value === '' || /^\d+$/.test(value)) {
+                                  const newQty = value === '' ? 1 : Math.max(1, parseInt(value));
+                                  setCartItems(items =>
+                                    items.map(i => i.id === item.id ? { ...i, quantity: newQty } : i)
+                                  );
+                                  try {
+                                    await updateCartItemQuantity(item.id, newQty);
+                                  } catch (err) {
+                                    console.error('❌ Failed to update quantity in Firestore:', err.message);
+                                  }
+                                }
+                              }}
+                              className="w-16 p-2 bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-base font-semibold"
+                              placeholder="1"
+                            />
+                            
                             <button
                               onClick={() => updateQuantity(item.id, 1)}
-                              className="w-10 h-10 flex items-center justify-center hover:bg-gray-50 transition-colors rounded-r-lg"
+                              className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-300 transition-colors"
                             >
                               <Plus className="w-4 h-4 text-gray-600" />
                             </button>

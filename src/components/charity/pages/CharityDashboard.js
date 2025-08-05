@@ -325,6 +325,49 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
     }
   };
 
+  // Function to categorize AI generated items properly
+  const categorizeItem = (itemName) => {
+    const name = itemName.toLowerCase();
+    
+    // Food category
+    if (name.includes('food') || name.includes('meal') || name.includes('ration') || 
+        name.includes('nutrition') || name.includes('feed') || name.includes('cooking') ||
+        name.includes('rice') || name.includes('bread') || name.includes('packages')) {
+      return 'Food';
+    }
+    
+    // Water category  
+    if (name.includes('water') || name.includes('drink') || name.includes('hydration') ||
+        name.includes('clean water') || name.includes('drinking')) {
+      return 'Water';
+    }
+    
+    // Shelter category
+    if (name.includes('tent') || name.includes('shelter') || name.includes('blanket') || 
+        name.includes('housing') || name.includes('mattress') || name.includes('sleeping') ||
+        name.includes('emergency shelter') || name.includes('tarp') || name.includes('bedding')) {
+      return 'Shelter';
+    }
+    
+    // Medical Supplies category
+    if (name.includes('medical') || name.includes('health') || name.includes('medicine') || 
+        name.includes('first aid') || name.includes('bandage') || name.includes('kit') ||
+        name.includes('hospital') || name.includes('treatment') || name.includes('care') ||
+        (name.includes('supplies') && (name.includes('medical') || name.includes('health')))) {
+      return 'Medical Supplies';
+    }
+    
+    // Sanitation category
+    if (name.includes('hygiene') || name.includes('sanitation') || name.includes('soap') || 
+        name.includes('toilet') || name.includes('cleaning') || name.includes('waste') ||
+        name.includes('personal care') || name.includes('toothbrush') || name.includes('shampoo')) {
+      return 'Sanitation';
+    }
+    
+    // Default to Others for anything else (tools, electronics, etc.)
+    return 'Others';
+  };
+
   const useGeneratedItems = () => {
     const convertedItems = generatedItems.map((item, index) => {
       let quantityNumber = 1;
@@ -336,9 +379,12 @@ const CharityDashboard = ({ user, onLogout, onUserUpdate }) => {
         quantityNumber = item.quantity;
       }
 
+      const category = categorizeItem(item.item);
+      console.log(`🏷️ Categorizing "${item.item}" -> "${category}"`);
+      
       return {
         id: Date.now() + index,
-        category: 'AI Generated',
+        category: category,
         name: item.item,
         quantity: quantityNumber
       };

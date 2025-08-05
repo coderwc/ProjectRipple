@@ -21,15 +21,6 @@ const AIAnalysisPage = ({
 
   return (
     <div className="max-w-sm mx-auto bg-gray-50 min-h-screen">
-      {/* Status Bar */}
-      <div className="flex justify-between items-center px-4 py-2 bg-white text-sm font-medium">
-        <span>9:30</span>
-        <div className="flex gap-1">
-          <div className="w-4 h-2 bg-black rounded-sm"></div>
-          <div className="w-4 h-2 bg-black rounded-sm"></div>
-        </div>
-      </div>
-
       {/* Header */}
       <div className="bg-white px-4 py-4 border-b border-gray-100">
         <div className="flex items-center gap-3">

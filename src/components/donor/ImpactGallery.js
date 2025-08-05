@@ -92,14 +92,6 @@ const ImpactGallery = ({ onBack, postId }) => {
 
   return (
     <div className="max-w-sm mx-auto p-4 bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
-      {/* Status Bar */}
-      <div className="bg-white px-4 py-2 flex justify-between items-center text-sm text-gray-600 -mx-4">
-        <span>9:30</span>
-        <div className="flex items-center gap-1">
-          <div className="w-4 h-2 bg-black rounded-sm"></div>
-          <div className="w-1 h-1 bg-black rounded-full"></div>
-        </div>
-      </div>
 
       {/* Header - Clean vendor-style header */}
       <div className="bg-white px-4 py-6 border-b border-gray-100 shadow-md -mx-4 mb-4">
