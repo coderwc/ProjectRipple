@@ -299,22 +299,25 @@ const CreatePostPage = ({
 {/* Post Category Dropdown */}
 <div className="mb-6">
   <label className="block text-lg font-bold text-gray-900 mb-2">Select Category</label>
-  <select
-    value={formData.category || ''}
-    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-    className="w-full p-3 bg-white border border-gray-300 rounded-md"
-    required
-  >
-    <option value="">Select a category</option>
-    <option value="Natural Disasters">Natural Disasters</option>
-    <option value="Animals">Animals</option>
-    <option value="Sustainability">Sustainability</option>
-    <option value="Education">Education</option>
-    <option value="Medical">Medical</option>
-    <option value="Non-profit">Non-profit</option>
-    <option value="Orphanage">Orphanage</option>
-    <option value="Infrastructure">Infrastructure</option>
-  </select>
+  <div className="relative">
+    <select
+      value={formData.category || ''}
+      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+      className="w-full p-3 pr-8 bg-white border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      required
+    >
+      <option value="">Select a category</option>
+      <option value="Natural Disasters">Natural Disasters</option>
+      <option value="Animals">Animals</option>
+      <option value="Sustainability">Sustainability</option>
+      <option value="Education">Education</option>
+      <option value="Medical">Medical</option>
+      <option value="Non-profit">Non-profit</option>
+      <option value="Orphanage">Orphanage</option>
+      <option value="Infrastructure">Infrastructure</option>
+    </select>
+    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+  </div>
 </div>
 
         {/* Deadline with Calendar */}
