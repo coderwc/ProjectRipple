@@ -148,7 +148,7 @@ const Dashboard = ({
     </div>
 
     {/* Bottom Navigation */}
-    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-white border-t border-gray-200 shadow-inner">
+    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-white border-t border-gray-200 shadow-inner z-50">
       <div className="flex justify-around py-3">
         <button 
           onClick={() => setCurrentPage('dashboard')}
