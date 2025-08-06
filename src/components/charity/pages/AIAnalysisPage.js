@@ -132,32 +132,7 @@ Example: 'Earthquake in Turkey: 7.8 magnitude earthquake hits southern Turkey. A
           </div>
         )}
 
-        {/* Quick Test Examples */}
-        {!aiAnalysis && (
-          <div className="bg-white rounded-lg p-4 border border-gray-400">
-            <h4 className="font-medium text-gray-900 mb-2">Quick Test Examples:</h4>
-            <div className="space-y-2">
-              <button 
-                onClick={() => setArticleText('Earthquake in Turkey: 7.8 magnitude earthquake hits southern Turkey. At least 50,000 people affected, many buildings collapsed. Emergency shelters needed urgently for displaced families.')}
-                className="text-left text-sm text-blue-600 hover:text-blue-800 block hover:bg-blue-50 p-2 rounded w-full"
-              >
-                • Earthquake disaster example
-              </button>
-              <button 
-                onClick={() => setArticleText('School in rural Bangladesh needs support: 500 students lack basic supplies. No textbooks, pencils, or notebooks available. Children walking 5km to attend classes in damaged building.')}
-                className="text-left text-sm text-blue-600 hover:text-blue-800 block hover:bg-blue-50 p-2 rounded w-full"
-              >
-                • Education need example
-              </button>
-              <button 
-                onClick={() => setArticleText('Hospital in Yemen running out of medical supplies: 200 patients daily, critical shortage of medicines, bandages, and equipment. Staff working without proper resources.')}
-                className="text-left text-sm text-blue-600 hover:text-blue-800 block hover:bg-blue-50 p-2 rounded w-full"
-              >
-                • Medical emergency example
-              </button>
-            </div>
-          </div>
-        )}
+        
       </div>
     </div>
   );
