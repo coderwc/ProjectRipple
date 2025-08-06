@@ -24,7 +24,8 @@ app.use(cors({
   origin: [
     'http://localhost:3000', 
     'http://localhost:3001',
-    'https://stellular-quokka-9c1914.netlify.app'
+    'https://stellular-quokka-9c1914.netlify.app',
+    'https://rippleproject.netlify.app'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
