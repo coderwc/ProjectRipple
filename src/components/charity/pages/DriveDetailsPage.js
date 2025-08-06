@@ -6,6 +6,7 @@ import { getItemDonationTotals } from '../../../firebase/posts';
 
 const DriveDetailsPage = ({ drive, onBack, user, onDriveImpactClick, impactPosts = [] }) => {
   const [progressData, setProgressData] = useState({ percentage: 0, itemsCollected: 0, totalItemsNeeded: 0 });
+  const [itemDonationTotals, setItemDonationTotals] = useState({});
   const [loadingProgress, setLoadingProgress] = useState(true);
 
   // ✅ Always call hooks unconditionally
@@ -17,6 +18,9 @@ const DriveDetailsPage = ({ drive, onBack, user, onDriveImpactClick, impactPosts
           
           // Fetch donation totals using keyword matching
           const donationTotals = await getItemDonationTotals(drive.id, drive.items);
+          
+          // Store donation totals for individual item display
+          setItemDonationTotals(donationTotals);
           
           // Calculate progress using same logic as kindness cup
           let totalFulfillment = 0;
@@ -195,9 +199,13 @@ const DriveDetailsPage = ({ drive, onBack, user, onDriveImpactClick, impactPosts
                     <p className="text-xs text-gray-500">{item.category || 'Essential Item'}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-blue-600">Qty: {item.quantity}</p>
+                    <p className="font-bold text-blue-600">
+                      {loadingProgress ? `${item.quantity}` : `${itemDonationTotals[item.name] || 0}/${item.quantity}`}
+                    </p>
                     <p className="text-xs text-gray-500">
-                      {progressData.percentage >= 100 ? 'Goal achieved!' : 'Still needed'}
+                      {loadingProgress ? 'Loading...' : (
+                        (itemDonationTotals[item.name] || 0) >= item.quantity ? 'Goal achieved!' : 'In progress'
+                      )}
                     </p>
                   </div>
                 </div>
