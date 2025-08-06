@@ -106,21 +106,26 @@ const Dashboard = ({
               <button
                 key={post.id}
                 onClick={() => onImpactPostClick && onImpactPostClick(post)}
-                className="bg-white rounded-lg p-3 shadow-sm border-2 border-blue-200 hover:border-blue-400 hover:shadow-lg transition-all duration-200 text-left hover:scale-[1.02]"
+                className="bg-white rounded-lg p-3 shadow-sm border-2 border-blue-200 hover:border-blue-400 hover:shadow-lg transition-all duration-200 text-left hover:scale-[1.02] h-32 flex flex-col"
               >
                 {post.images && post.images.length > 0 && (
                   <img
                     src={post.images[0]}
                     alt="Impact"
-                    className="w-full h-20 object-cover rounded-md mb-2"
+                    className="w-full h-16 object-cover rounded-md mb-2 flex-shrink-0"
                   />
                 )}
-                <p className="text-xs text-gray-600 line-clamp-2 mb-1">
-                  {post.caption || 'Impact shared'}
-                </p>
-                <p className="text-xs text-gray-400">
-                  {post.drive}
-                </p>
+                <div className="flex-1 flex flex-col justify-between min-h-0">
+                  <p className="text-xs text-gray-600 leading-tight mb-1 overflow-hidden">
+                    {(post.caption || 'Impact shared').length > 60 
+                      ? `${(post.caption || 'Impact shared').substring(0, 60)}...` 
+                      : (post.caption || 'Impact shared')
+                    }
+                  </p>
+                  <p className="text-xs text-gray-400 truncate">
+                    {post.drive}
+                  </p>
+                </div>
               </button>
             ))}
           </div>
