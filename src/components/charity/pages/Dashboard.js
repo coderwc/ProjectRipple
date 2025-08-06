@@ -106,7 +106,7 @@ const Dashboard = ({
               <button
                 key={post.id}
                 onClick={() => onImpactPostClick && onImpactPostClick(post)}
-                className="bg-white rounded-lg p-3 shadow-sm border-2 border-blue-200 hover:border-blue-400 hover:shadow-lg transition-all duration-200 text-left hover:scale-[1.02] h-32 flex flex-col"
+                className="bg-white rounded-lg p-3 shadow-sm border-2 border-blue-200 hover:border-blue-400 hover:shadow-lg transition-all duration-200 text-left hover:scale-[1.02] h-32 flex flex-col overflow-hidden"
               >
                 {post.images && post.images.length > 0 && (
                   <img
@@ -115,14 +115,17 @@ const Dashboard = ({
                     className="w-full h-16 object-cover rounded-md mb-2 flex-shrink-0"
                   />
                 )}
-                <div className="flex-1 flex flex-col justify-between min-h-0">
-                  <p className="text-xs text-gray-600 leading-tight mb-1 overflow-hidden">
-                    {(post.caption || 'Impact shared').length > 60 
-                      ? `${(post.caption || 'Impact shared').substring(0, 60)}...` 
-                      : (post.caption || 'Impact shared')
-                    }
-                  </p>
-                  <p className="text-xs text-gray-400 truncate">
+                <div className="flex-1 flex flex-col min-h-0 relative z-50">
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-600 leading-tight overflow-hidden relative z-50" style={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical'
+                    }}>
+                      {post.caption || 'Impact shared'}
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-400 truncate mt-1 relative z-50">
                     {post.drive}
                   </p>
                 </div>
